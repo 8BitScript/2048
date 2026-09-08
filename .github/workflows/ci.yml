@@ -1,0 +1,13 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [trunk]
+
+jobs:
+  compile:
+    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@v0.1.0
+    with:
+      targets: vic20,c64,pet,c128,atari8,nes,cx16,mega65,web
+      cli-version: 0.1.0

@@ -1,0 +1,17 @@
+# Dependencies (link:-ed straight to the sibling 8bitscript checkout)
+node_modules/
+.pnpm-store/
+
+# Compiler output
+dist/
+
+# Compiled Commodore/Atari/NES program images, if built outside dist/
+*.prg
+*.xex
+*.nes
+
+# Wrangler local state
+.wrangler/
+
+# OS cruft
+.DS_Store

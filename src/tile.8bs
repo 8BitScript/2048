@@ -1,0 +1,175 @@
+// A tile: layout (how big one is, where the board sits) and drawing (what
+// one looks like) — the portable version, used by every target except the
+// PET, which reads tile.pet.8bs instead (see docs/packages.md's
+// "System-specific files": the machine's name beside the plain filename is
+// its own version, picked up with nothing in main.8bs or 8bs.config.ts
+// naming it). Split out of main.8bs so the PET's version can differ without
+// duplicating the game's rules, board state, or input handling.
+import { text, TextColor } from "@8bitscript/text";
+import { Video } from "@8bitscript/system";
+
+// Exponent to face value — the only place 2^N is ever written down, so
+// SIZE growing (it won't) or MAX_EXPONENT changing is a one-line edit here.
+// Exported because mergeLine() in main.8bs needs it too, for score.
+export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+
+// Exponent to colour, on the six targets with per-cell colour — a
+// deliberately empty function on the other three (PET, Atari 8-bit, NES;
+// see @8bitscript/ui's AGENTS.md for why those three), so this program
+// never has to ask `video.colorPerCell` itself: it draws the same calls
+// everywhere, and the three machines that cannot colour a cell simply do
+// not. Index 0 is the empty square's own colour now (every cell is a
+// filled block — see drawTile()), not an unused slot — and it shares WHITE
+// with the "2" tile rather than using BLACK, since the screen behind the
+// board is black on every target: a black reverse block on a black
+// background is invisible, which would leave the sixteen-square grid
+// unreadable everywhere except the two or three occupied cells.
+const TILE_COLOR: array<utinyint, 12> = [
+    TextColor.WHITE,  // 0: empty
+    TextColor.WHITE,  // 2
+    TextColor.CYAN,   // 4
+    TextColor.GREEN,  // 8
+    TextColor.GREEN,  // 16
+    TextColor.YELLOW, // 32
+    TextColor.YELLOW, // 64
+    TextColor.PURPLE, // 128
+    TextColor.PURPLE, // 256
+    TextColor.RED,    // 512
+    TextColor.RED,    // 1024
+    TextColor.BLUE,   // 2048
+];
+
+const ROW: usmallint = text.COLUMNS; // this machine's row width, so cell = y * ROW + x
+
+// ---- layout -------------------------------------------------------------
+//
+// A tile is a filled block of reverse video, not a number in a strip: a
+// solid square in TILE_COLOR[exponent] (a plain inverted block on the three
+// machines with no per-cell colour), with a one-cell gap between tiles so
+// the sixteen read as separate squares making up one big square, the way
+// https://github.com/gabrielecirulli/2048 draws its own board — the gap
+// matters more than it looks: without it, a whole row of empty (same-
+// coloured) tiles fuses into one bar and the grid disappears (2026-09-07,
+// screenshot, tried on the VIC-20). TILE_H is 3 so a tile reads as a square
+// rather than a one-line strip: a blank row, the digits, another blank
+// row, all three filled.
+//
+// A tile's WIDTH is the harder number, because it has two pulls in
+// opposite directions. Five columns — one wider than "2048" itself needs —
+// gives every digit count from one to four at least one spare cell to
+// centre a number in; four was tried first and rejected (2026-09-07,
+// screenshots): a 4-digit tile filled its whole width with no margin at
+// all, and a 3-digit tile's one spare cell could only be pushed to one
+// side, never split into a real margin either side. But four tiles five
+// wide plus three one-cell gaps is 23 columns, one past the VIC-20's 22 —
+// the only one of the nine targets this narrow — and dropping the gap to
+// fit is the fused-row problem above. So the VIC-20 alone keeps the
+// narrower, 4-wide tile (with its gap intact) and lives with tighter
+// centring, while the other eight get the roomier one. `cellWidth` and
+// `blank` (its matching run of spaces) are `let`s decided once in
+// computeLayout(), not consts, because 8BitScript's `const` only folds a
+// literal or another const's bare name, never an expression or a branch —
+// there is no compile-time `if` to give one machine a different literal
+// (`switch` on `#system()` is designed, not built — docs/project/
+// system-abstraction.md) — so the choice, like the centring itself, has to
+// happen at run time, once, before the game loop starts.
+//
+// This centring is still only exact for an odd number of spare columns
+// split in half by `>>`: a 2-digit number in a 5-wide tile lands 1 left, 2
+// right, not 2 and 2 — the tile.pet.8bs version trades this text font for
+// one built from PET block graphics specifically because a 2-cell-wide
+// digit makes the leftover always even, and so exactly centred, for every
+// digit count from one to four. See that file.
+const FULL_TILE_W: utinyint = 5;
+const NARROW_TILE_W: utinyint = 4; // the VIC-20's own width — see above
+const TILE_H: utinyint = 3;
+const COL_GAP: utinyint = 1; // between tile columns — always on, see above
+const ROW_GAP: utinyint = 1; // between tile rows — never contended for room
+const FULL_BOARD_WIDTH: usmallint = 23;   // 4 tiles * 5 + 3 gaps * 1
+const NARROW_BOARD_WIDTH: usmallint = 19; // 4 tiles * 4 + 3 gaps * 1
+const BOARD_HEIGHT: usmallint = 15;       // 4 tiles * 3 + 3 gaps * 1
+
+// Where the board lands, and how wide one tile is — both worked out once
+// in computeLayout() below rather than hand-picked per machine:
+// `text.COLUMNS` and `Video.ROWS` are only known once a target is linked
+// in, so centring the board on each one's own screen — a VIC-20's 22x23
+// up to a Commander X16's 76x56 — has to happen at run time, not as a
+// const. It is still one-time arithmetic, run once before the game loop
+// starts, not repeated per frame or per tile.
+let cellWidth: usmallint = FULL_TILE_W;
+let blank: string<5> = "     "; // matches cellWidth — see computeLayout()
+export let leftMargin: usmallint = 0;
+export let headerRow: usmallint = 0;
+let boardTop: usmallint = 0;
+export let statusRow: usmallint = 0;
+
+export function computeLayout(): void {
+    let boardWidth: usmallint = FULL_BOARD_WIDTH;
+    if (text.COLUMNS < FULL_BOARD_WIDTH) {
+        cellWidth = NARROW_TILE_W;
+        blank = "    ";
+        boardWidth = NARROW_BOARD_WIDTH;
+    }
+    leftMargin = (text.COLUMNS - boardWidth) >> 1;
+    let totalHeight: usmallint = BOARD_HEIGHT + 4; // header + gap + board + gap + status
+    headerRow = (Video.ROWS - totalHeight) >> 1;
+    boardTop = headerRow + 2; // header row, then one blank row, then the board
+    statusRow = boardTop + BOARD_HEIGHT + 1; // one blank row after the board
+}
+
+// The screen cell a tile's top-left corner starts at.
+function tileCell(row: utinyint, col: utinyint): usmallint {
+    let y: usmallint = boardTop + row * (TILE_H + ROW_GAP);
+    let x: usmallint = leftMargin + col * (cellWidth + COL_GAP);
+    return y * ROW + x;
+}
+
+// ---- drawing --------------------------------------------------------------
+//
+// A tile is a 4-character field, right-aligned, blanked first — never
+// zero-padded: `text.printNumber` always writes exactly the width it is
+// given, so a 3-digit "128" printed at width 4 would come out "0128". This
+// clears the field to spaces and then asks for exactly as many digits as
+// the value has, positioned at the field's right edge.
+
+function tileWidth(value: usmallint): utinyint {
+    if (value >= 1000) {
+        return 4;
+    }
+    if (value >= 100) {
+        return 3;
+    }
+    if (value >= 10) {
+        return 2;
+    }
+    return 1;
+}
+
+// Every tile — empty or not — is a filled cellWidth x TILE_H block of
+// reverse video: `text.setReverse(true)` turns a printed space into a
+// solid block in the current colour on all nine targets (a plain inverted
+// block, no colour, on the three with none), so the same three calls draw
+// a coloured square on a C64 and a monochrome one on a PET. `blank` is
+// exactly `cellWidth` spaces — computeLayout() picked both together — so
+// the same print fills the tile on a five-wide machine or the VIC-20's
+// four. The middle row's blanking print doubles as the field
+// `printNumber` then centres digits into (an odd leftover space, when
+// cellWidth - width is odd, falls to the right — `>> 1` truncates, never
+// rounds up); the top and bottom rows are blank on purpose — they are the
+// rest of the square, not wasted space.
+export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    let origin: usmallint = tileCell(row, col);
+    let value: usmallint = POW2[exponent];
+    text.setColor(TILE_COLOR[exponent]);
+    text.setReverse(true);
+    text.print(origin, blank);
+    let mid: usmallint = origin + ROW;
+    text.print(mid, blank);
+    if (value != 0) {
+        let width: utinyint = tileWidth(value);
+        let offset: utinyint = (cellWidth - width) >> 1;
+        text.printNumber(mid + offset, value, width);
+    }
+    text.print(mid + ROW, blank);
+    text.setReverse(false); // so the next print — this frame's or the next — is not inverted
+}

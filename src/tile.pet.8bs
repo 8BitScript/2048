@@ -1,0 +1,111 @@
+// The PET's own tile: a solid block of quadrant-block pseudo-pixels with
+// the value cut into it in inverted PET block-digits, instead of the
+// portable tile.8bs's reverse-video text field. Picked up automatically
+// for PET builds only — nothing in main.8bs or 8bs.config.ts names this
+// file; see docs/packages.md's "System-specific files" and tile.8bs's own
+// header comment for why a PET version exists at all: `@8bitscript/pet`,
+// not a portable capability, is on this project only because this one file
+// imports it — every other file still builds against the nine-target
+// portable surface.
+//
+// Why the PET needs a different tile at all: text.printNumber's centring
+// (see tile.8bs) is exact only when cellWidth - digitWidth is even, and a
+// 1-character-wide digit makes that parity flip between 1-, 2-, 3- and
+// 4-digit tiles — there is no cellWidth that centres all four. A
+// @8bitscript/pet/blocks digit is 2 cells wide, so the same leftover is
+// always even, and every digit count from "2" to "2048" centres exactly.
+// That gain is PET-only: it is the one target with a fixed-glyph ROM whose
+// quadrant-block characters (see packages/pet/AGENTS.md) this package
+// turns into a font at all; no portable `blocks` capability exists to draw
+// the same thing on the other eight.
+import { text } from "@8bitscript/text";
+import { Video } from "@8bitscript/system";
+import { blocks, digits } from "@8bitscript/pet/blocks";
+
+// Exponent to face value — kept in step with tile.8bs's own copy (it is
+// the one thing this file and that one both need, and the two never build
+// in the same program, so there is nothing to keep in sync at run time).
+export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+
+const ROW: usmallint = text.COLUMNS; // 40, or 80 on an 8032 build
+
+// ---- layout ---------------------------------------------------------------
+//
+// A tile is TILE_W cells wide, TILE_H tall, with a one-cell gap between
+// tiles the same way tile.8bs's does. TILE_W is fixed at 8, not derived:
+// "2048" is 4 digits at 2 cells each, 8 cells exactly, and no PET build is
+// narrow enough (40 columns at least) to need a smaller one the way
+// tile.8bs's VIC-20 case does — see @8bitscript/pet/blocks's own header for
+// the "4*cellWidth + 3 gaps <= 40" arithmetic this width comes from.
+//
+// TILE_H is 5, not 4: the font is 3 cells tall, leaving 2 spare cells to
+// split as a matching blank cell above and below the digits (DIGIT_ROW_
+// OFFSET is 1 either way; the second spare cell falls below on its own,
+// since nothing is drawn there). A screenshot with TILE_H 4 (1 spare cell,
+// all of it above, because that is what "half the leftover, rounded down"
+// gives with only one to place) had the digits sitting noticeably closer
+// to a tile's bottom edge than its top — reported directly, 2026-09-07 —
+// which a single spare cell can never fix, only relocate. Two spare cells
+// can be split evenly, but *only* because the font itself has no blank row
+// of its own left over to tip the balance — see @8bitscript/pet/blocks's
+// DIGIT_TILES comment for the digit-height side of this same fix.
+const TILE_W: utinyint = 8;
+const TILE_H: utinyint = 5;
+const DIGIT_ROW_OFFSET: utinyint = 1; // blank cells above the digits within a tile
+const COL_GAP: utinyint = 1;
+const ROW_GAP: utinyint = 1;
+const BOARD_WIDTH: usmallint = 35;  // 4 tiles * 8 + 3 gaps * 1
+// 4 tiles * 5 + 3 gaps * 1 = 23, which leaves only 2 of a 25-row screen's
+// rows for everything else — computeLayout() below spends both on the
+// header and status rows themselves and drops the blank row tile.8bs
+// keeps on either side of the board (there is no room left for them here).
+const BOARD_HEIGHT: usmallint = 23;
+
+export let leftMargin: usmallint = 0;
+export let headerRow: usmallint = 0;
+let boardTop: usmallint = 0;
+export let statusRow: usmallint = 0;
+
+export function computeLayout(): void {
+    leftMargin = (text.COLUMNS - BOARD_WIDTH) >> 1;
+    let totalHeight: usmallint = BOARD_HEIGHT + 2; // header + board + status, no spare row either side
+    headerRow = (Video.ROWS - totalHeight) >> 1;
+    boardTop = headerRow + 1; // straight from the header row into the board
+    statusRow = boardTop + BOARD_HEIGHT; // straight from the board into the status row
+}
+
+function tileCell(row: utinyint, col: utinyint): usmallint {
+    let y: usmallint = boardTop + row * (TILE_H + ROW_GAP);
+    let x: usmallint = leftMargin + col * (TILE_W + COL_GAP);
+    return y * ROW + x;
+}
+
+// ---- drawing ----------------------------------------------------------
+
+// Every quadrant of every cell in the tile on: blocks.put(..., true, true,
+// true, true) is the solid block, the same green-on-black square every
+// occupied and empty cell alike starts as (see tile.8bs's own comment on
+// why the empty tile is filled, not blank: sixteen filled squares with a
+// gap between them read as one board; sixteen blanks do not).
+function fillTile(origin: usmallint): void {
+    let rowCell: usmallint = origin;
+    let row: utinyint = 0;
+    while (row < TILE_H) {
+        let col: utinyint = 0;
+        while (col < TILE_W) {
+            blocks.put(rowCell + col, true, true, true, true);
+            col++;
+        }
+        rowCell = rowCell + ROW;
+        row++;
+    }
+}
+
+export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    let origin: usmallint = tileCell(row, col);
+    fillTile(origin);
+    let value: usmallint = POW2[exponent];
+    if (value != 0) {
+        digits.printCentered(origin + DIGIT_ROW_OFFSET * ROW, TILE_W, value, true);
+    }
+}

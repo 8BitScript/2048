@@ -1,0 +1,295 @@
+// 2048 — one source file, every 8BitScript target: VIC-20, C64, PET, C128,
+// Atari 8-bit, NES, Commander X16, MEGA65, and the web. Rules follow
+// https://github.com/gabrielecirulli/2048 (MIT): a 4x4 grid, arrows slide
+// every tile as far as it goes, two equal tiles that collide combine into
+// one worth their sum, and a new 2 (usually) or 4 (one time in ten) appears
+// after every move that actually changed the board.
+//
+// The board holds exponents, not face values: 0 is empty, and N is the tile
+// worth 2^N (1 = 2, 2 = 4, ... 11 = 2048). A `utinyint` holds that in one
+// byte where the real value would need two, and "two equal tiles merge"
+// becomes "two equal exponents merge into exponent + 1" — one add instead
+// of a double and a compare.
+import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
+import { text, TextColor } from "@8bitscript/text";
+import { input } from "@8bitscript/input";
+import { random } from "@8bitscript/random";
+import { computeLayout, drawTile, headerRow, leftMargin, statusRow, POW2 } from "./tile.8bs";
+
+const SIZE: utinyint = 4; // 4x4 — 2048's own board, on every target
+const MAX_EXPONENT: utinyint = 11; // 2^11 = 2048, the tile that wins
+
+// The board, and the one scratch row/column a move is worked out in. Both
+// are RAM, not data: a move rewrites them, so neither can be a `const`.
+let board: array<utinyint, 16>;
+let line: array<utinyint, 4>;
+
+let score: usmallint = 0;
+let moved: bool = false; // did the move just played actually change the board?
+let over: bool = false; // no move left that would change the board
+let won: bool = false; // a 2048 has appeared; play continues past it, as upstream does
+
+const ROW: usmallint = text.COLUMNS; // this machine's row width, so cell = y * ROW + x
+
+// ---- moving a line -----------------------------------------------------
+//
+// Every direction is the same three-step slide over a 4-cell line — compress
+// (push non-zero values together, preserving order), merge (equal
+// neighbours combine once, left to right), compress again (a merge leaves a
+// zero where the second tile was). moveLeft/Right/Up/Down below only differ
+// in which 4 board cells they copy into `line` and which order.
+
+function compressLine(): void {
+    let write: utinyint = 0;
+    for (let read: utinyint = 0; read < SIZE; read++) {
+        if (line[read] != 0) {
+            if (write != read) {
+                line[write] = line[read];
+                line[read] = 0;
+                moved = true;
+            }
+            write++;
+        }
+    }
+}
+
+function mergeLine(): void {
+    for (let i: utinyint = 0; i < SIZE - 1; i++) {
+        if (line[i] != 0 && line[i] == line[i + 1]) {
+            line[i] = line[i] + 1; // one higher exponent: double the value
+            line[i + 1] = 0;
+            score = score + POW2[line[i]];
+            moved = true;
+        }
+    }
+}
+
+function processLine(): void {
+    compressLine();
+    mergeLine();
+    compressLine(); // close the gap a merge just left
+}
+
+function moveLeft(): void {
+    for (let row: utinyint = 0; row < SIZE; row++) {
+        let base: utinyint = row * SIZE;
+        line[0] = board[base];
+        line[1] = board[base + 1];
+        line[2] = board[base + 2];
+        line[3] = board[base + 3];
+        processLine();
+        board[base] = line[0];
+        board[base + 1] = line[1];
+        board[base + 2] = line[2];
+        board[base + 3] = line[3];
+    }
+}
+
+function moveRight(): void {
+    for (let row: utinyint = 0; row < SIZE; row++) {
+        let base: utinyint = row * SIZE;
+        line[0] = board[base + 3];
+        line[1] = board[base + 2];
+        line[2] = board[base + 1];
+        line[3] = board[base];
+        processLine();
+        board[base + 3] = line[0];
+        board[base + 2] = line[1];
+        board[base + 1] = line[2];
+        board[base] = line[3];
+    }
+}
+
+function moveUp(): void {
+    for (let col: utinyint = 0; col < SIZE; col++) {
+        line[0] = board[col];
+        line[1] = board[col + 4];
+        line[2] = board[col + 8];
+        line[3] = board[col + 12];
+        processLine();
+        board[col] = line[0];
+        board[col + 4] = line[1];
+        board[col + 8] = line[2];
+        board[col + 12] = line[3];
+    }
+}
+
+function moveDown(): void {
+    for (let col: utinyint = 0; col < SIZE; col++) {
+        line[0] = board[col + 12];
+        line[1] = board[col + 8];
+        line[2] = board[col + 4];
+        line[3] = board[col];
+        processLine();
+        board[col + 12] = line[0];
+        board[col + 8] = line[1];
+        board[col + 4] = line[2];
+        board[col] = line[3];
+    }
+}
+
+// ---- spawning, and knowing when to stop ---------------------------------
+
+function emptyCount(): utinyint {
+    let count: utinyint = 0;
+    for (let i: utinyint = 0; i < 16; i++) {
+        if (board[i] == 0) {
+            count++;
+        }
+    }
+    return count;
+}
+
+// One new tile in a random empty cell: a 2 nine times in ten, a 4 the
+// tenth. random.range() is 8BitScript's own deterministic generator
+// (@8bitscript/random) — explicitly seeded, never hardware entropy — ticked
+// once a frame in main()'s loop below, so the sequence depends on how long
+// the player actually took between moves rather than repeating the same
+// game every run.
+function spawnTile(): void {
+    let empties: utinyint = emptyCount();
+    if (empties == 0) {
+        return;
+    }
+    let target: utinyint = random.range(empties);
+    let exponent: utinyint = 1;
+    if (random.range(10) == 0) {
+        exponent = 2;
+    }
+    let seen: utinyint = 0;
+    for (let i: utinyint = 0; i < 16; i++) {
+        if (board[i] == 0) {
+            if (seen == target) {
+                board[i] = exponent;
+                return;
+            }
+            seen++;
+        }
+    }
+}
+
+function anyTileIsMax(): bool {
+    for (let i: utinyint = 0; i < 16; i++) {
+        if (board[i] == MAX_EXPONENT) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// No empty cell and no adjacent equal pair, in either direction, anywhere:
+// nothing left that any of the four moves could change.
+function hasMoves(): bool {
+    for (let i: utinyint = 0; i < 16; i++) {
+        if (board[i] == 0) {
+            return true;
+        }
+    }
+    for (let row: utinyint = 0; row < SIZE; row++) {
+        for (let col: utinyint = 0; col < SIZE - 1; col++) {
+            if (board[row * SIZE + col] == board[row * SIZE + col + 1]) {
+                return true;
+            }
+        }
+    }
+    for (let col: utinyint = 0; col < SIZE; col++) {
+        for (let row: utinyint = 0; row < SIZE - 1; row++) {
+            if (board[row * SIZE + col] == board[(row + 1) * SIZE + col]) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// ---- drawing --------------------------------------------------------------
+//
+// drawTile() itself lives in tile.8bs (tile.pet.8bs on the PET) — see that
+// file's header for why one target needs its own. Everything else about
+// drawing the board — the header, the status line, laying out the 4x4 grid
+// of tiles, and computeLayout()'s one-time centring — is unchanged by that
+// split and stays here.
+
+function drawStatus(cell: usmallint): void {
+    text.setColor(TextColor.WHITE);
+    text.print(cell, "                   "); // clear the row: messages differ in length, 19 wide like the board
+    if (over) {
+        text.print(cell, "GAME OVER - RESTART");
+    } else if (won) {
+        text.print(cell, "YOU MADE 2048");
+    } else {
+        text.print(cell, "ARROWS TO MOVE");
+    }
+}
+
+// The board itself needs no border drawn around it: sixteen filled squares
+// with a background-coloured gap between them already read as one big
+// square broken into sixteen smaller ones, the way upstream 2048's own CSS
+// board has no outlines either. computeLayout() has already centred
+// leftMargin/boardTop/statusRow on this machine's own screen.
+function drawBoard(): void {
+    text.setColor(TextColor.WHITE);
+    text.print(headerRow * ROW + leftMargin, `2048  SCORE ${score:5}`);
+
+    for (let row: utinyint = 0; row < SIZE; row++) {
+        for (let col: utinyint = 0; col < SIZE; col++) {
+            drawTile(row, col, board[row * SIZE + col]);
+        }
+    }
+
+    drawStatus(statusRow * ROW + leftMargin);
+}
+
+function resetGame(): void {
+    for (let i: utinyint = 0; i < 16; i++) {
+        board[i] = 0;
+    }
+    score = 0;
+    over = false;
+    won = false;
+    spawnTile();
+    spawnTile();
+}
+
+export function main(): void {
+    screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
+    computeLayout();
+    input.begin();
+    resetGame();
+    drawBoard();
+
+    while (true) {
+        waitFrame();
+        input.poll();
+        random.next(); // keep the generator moving between moves — see spawnTile()
+
+        if (over) {
+            if (input.confirm()) {
+                resetGame();
+                drawBoard();
+            }
+        } else {
+            moved = false;
+            if (input.left()) {
+                moveLeft();
+            } else if (input.right()) {
+                moveRight();
+            } else if (input.up()) {
+                moveUp();
+            } else if (input.down()) {
+                moveDown();
+            }
+
+            if (moved) {
+                spawnTile();
+                if (!won) {
+                    won = anyTileIsMax();
+                }
+                if (!hasMoves()) {
+                    over = true;
+                }
+                drawBoard();
+            }
+        }
+    }
+}

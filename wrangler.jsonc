@@ -1,0 +1,20 @@
+{
+  // Cloudflare Workers static assets for the wasm build of 2048.
+  // `8bs build --target web` writes dist/web/ (index.html, worker.js,
+  // program.wasm, _headers). The _headers file sets COOP/COEP so
+  // SharedArrayBuffer / waitFrame() work in the browser.
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
+  "name": "eightbitscript-2048",
+  "compatibility_date": "2026-09-07",
+  "assets": {
+    "directory": "./dist/web",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+  "routes": [
+    {
+      "pattern": "2048.8bitscript.com",
+      "custom_domain": true
+    }
+  ]
+}
