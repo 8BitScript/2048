@@ -1,4 +1,4 @@
-# Dependencies (link:-ed straight to the sibling 8bitscript checkout)
+# Dependencies
 node_modules/
 .pnpm-store/
 

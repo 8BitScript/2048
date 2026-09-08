@@ -32,16 +32,46 @@ joystick/pad, tap on the web) starts a new game once it has.
 
 ## Building it
 
-Once `@8bitscript/cli@0.1.0` is on npm:
-
 ```bash
-pnpm add -D @8bitscript/cli@0.1.0
 pnpm install
 pnpm exec 8bs doctor
 ```
 
-Until then this checkout `link:`s a sibling `../8bitscript` (see `package.json`).
-After `pnpm run release` in that repo, replace every `link:` with `0.1.0`.
+`package.json` pins every `@8bitscript/*` package to the published npm
+version (currently `0.1.2`) — a plain clone and `pnpm install` needs nothing
+else. Bump the pin after each 8bitscript release.
+
+**Developing against a local `../8bitscript` checkout:** if you're changing
+both repos at once, point this checkout at your sibling `8bitscript` working
+copy instead of the registry:
+
+```bash
+pnpm link ../8bitscript/packages/cli ../8bitscript/packages/screen \
+  ../8bitscript/packages/text ../8bitscript/packages/input \
+  ../8bitscript/packages/random ../8bitscript/packages/system \
+  ../8bitscript/packages/vic20 ../8bitscript/packages/c64 \
+  ../8bitscript/packages/pet ../8bitscript/packages/c128 \
+  ../8bitscript/packages/atari8 ../8bitscript/packages/nes \
+  ../8bitscript/packages/cx16 ../8bitscript/packages/mega65 \
+  ../8bitscript/packages/web
+```
+
+`pnpm link` only rewrites `pnpm-lock.yaml` and `node_modules` — `package.json`
+keeps its pinned version, so `git status` shows the link state and it's
+obvious before a commit. Undo it with:
+
+```bash
+pnpm unlink @8bitscript/cli @8bitscript/screen @8bitscript/text \
+  @8bitscript/input @8bitscript/random @8bitscript/system \
+  @8bitscript/vic20 @8bitscript/c64 @8bitscript/pet @8bitscript/c128 \
+  @8bitscript/atari8 @8bitscript/nes @8bitscript/cx16 @8bitscript/mega65 \
+  @8bitscript/web
+```
+
+(or just `git checkout -- pnpm-lock.yaml && pnpm install`, which does the
+same thing). CI runs `pnpm install --frozen-lockfile` against a checkout
+with no `../8bitscript` sibling, so a linked lockfile accidentally pushed
+fails there before it can reach `trunk`.
 
 Then, from this directory:
 

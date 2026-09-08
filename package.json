@@ -28,14 +28,22 @@
     "check": "8bs check src/main.8bs"
   },
   "devDependencies": {
-    "@8bitscript/cli": "link:../8bitscript/packages/cli"
+    "@8bitscript/cli": "0.1.2"
   },
   "dependencies": {
-    "@8bitscript/screen": "link:../8bitscript/packages/screen",
-    "@8bitscript/text": "link:../8bitscript/packages/text",
-    "@8bitscript/input": "link:../8bitscript/packages/input",
-    "@8bitscript/random": "link:../8bitscript/packages/random",
-    "@8bitscript/system": "link:../8bitscript/packages/system",
-    "@8bitscript/pet": "link:../8bitscript/packages/pet"
+    "@8bitscript/screen": "0.1.2",
+    "@8bitscript/text": "0.1.2",
+    "@8bitscript/input": "0.1.2",
+    "@8bitscript/random": "0.1.2",
+    "@8bitscript/system": "0.1.2",
+    "@8bitscript/vic20": "0.1.2",
+    "@8bitscript/c64": "0.1.2",
+    "@8bitscript/pet": "0.1.2",
+    "@8bitscript/c128": "0.1.2",
+    "@8bitscript/atari8": "0.1.2",
+    "@8bitscript/nes": "0.1.2",
+    "@8bitscript/cx16": "0.1.2",
+    "@8bitscript/mega65": "0.1.2",
+    "@8bitscript/web": "0.1.2"
   }
 }
