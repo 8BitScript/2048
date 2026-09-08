@@ -39,7 +39,11 @@ pnpm exec 8bs doctor
 
 `package.json` pins every `@8bitscript/*` package to the published npm
 version (currently `0.1.2`) — a plain clone and `pnpm install` needs nothing
-else. Bump the pin after each 8bitscript release.
+else. Bump the pin after each 8bitscript release. **Adding a target to
+`8bs.config.ts`'s `targets` list means also adding the matching
+`@8bitscript/<target>` to `package.json`'s `dependencies`** — nothing
+enforces the two stay in step, and a target the compiler can't find its
+package for fails the same way an unpinned dependency did.
 
 **Developing against a local `../8bitscript` checkout:** if you're changing
 both repos at once, point this checkout at your sibling `8bitscript` working
