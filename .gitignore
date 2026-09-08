@@ -15,3 +15,7 @@ dist/
 
 # OS cruft
 .DS_Store
+
+# Editor / agent local config (attribution, rules)
+.cursor/cli.json
+.cursor/rules/
