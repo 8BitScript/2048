@@ -19,3 +19,7 @@ dist/
 # Editor / agent local config (attribution, rules)
 .cursor/cli.json
 .cursor/rules/
+
+# Editor state (per-developer, not project config — see .vscode/extensions.json for shared recommendations)
+.vscode/settings.json
+.sonarlint/
