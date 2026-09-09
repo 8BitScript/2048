@@ -32,16 +32,10 @@ joystick/pad, tap on the web) starts a new game once it has.
 
 ## Building it
 
-Once `@8bitscript/cli@0.1.0` is on npm:
-
 ```bash
-pnpm add -D @8bitscript/cli@0.1.0
 pnpm install
 pnpm exec 8bs doctor
 ```
-
-Until then this checkout `link:`s a sibling `../8bitscript` (see `package.json`).
-After `pnpm run release` in that repo, replace every `link:` with `0.1.0`.
 
 Then, from this directory:
 
