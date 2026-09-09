@@ -1,7 +1,30 @@
-# pnpm blocks dependency install scripts unless they are approved here.
-# workerd and esbuild belong to wrangler: workerd is the Workers runtime used
-# by `wrangler deploy`, and esbuild is its bundler. Their postinstall scripts
-# unpack the platform binaries.
+# esbuild and workerd belong to wrangler: workerd is the Workers runtime
+# used by `wrangler dev`/`deploy`, and esbuild is its bundler. Their
+# postinstall scripts unpack platform binaries, so without this the deploy
+# script can't run.
 allowBuilds:
   esbuild: true
   workerd: true
+minimumReleaseAgeExclude:
+  - '@8bitscript/atari8@0.1.2'
+  - '@8bitscript/backend-6502@0.1.2'
+  - '@8bitscript/backend-web@0.1.2'
+  - '@8bitscript/c128@0.1.2'
+  - '@8bitscript/c64@0.1.2'
+  - '@8bitscript/cli@0.1.2'
+  - '@8bitscript/compiler@0.1.2'
+  - '@8bitscript/cx16@0.1.2'
+  - '@8bitscript/input@0.1.2'
+  - '@8bitscript/language-server@0.1.2'
+  - '@8bitscript/mega65@0.1.2'
+  - '@8bitscript/nes@0.1.2'
+  - '@8bitscript/pet@0.1.2'
+  - '@8bitscript/pointer@0.1.2'
+  - '@8bitscript/random@0.1.2'
+  - '@8bitscript/screen@0.1.2'
+  - '@8bitscript/studio@0.1.2'
+  - '@8bitscript/system@0.1.2'
+  - '@8bitscript/text@0.1.2'
+  - '@8bitscript/ui@0.1.2'
+  - '@8bitscript/vic20@0.1.2'
+  - '@8bitscript/web@0.1.2'

@@ -109,33 +109,129 @@ importers:
 
   .:
     dependencies:
+      '@8bitscript/atari8':
+        specifier: 0.1.2
+        version: 0.1.2
+      '@8bitscript/c128':
+        specifier: 0.1.2
+        version: 0.1.2
+      '@8bitscript/c64':
+        specifier: 0.1.2
+        version: 0.1.2
+      '@8bitscript/cx16':
+        specifier: 0.1.2
+        version: 0.1.2
       '@8bitscript/input':
-        specifier: link:../8bitscript/packages/input
-        version: link:../8bitscript/packages/input
+        specifier: 0.1.2
+        version: 0.1.2
+      '@8bitscript/mega65':
+        specifier: 0.1.2
+        version: 0.1.2
+      '@8bitscript/nes':
+        specifier: 0.1.2
+        version: 0.1.2
       '@8bitscript/pet':
-        specifier: link:../8bitscript/packages/pet
-        version: link:../8bitscript/packages/pet
+        specifier: 0.1.2
+        version: 0.1.2
       '@8bitscript/random':
-        specifier: link:../8bitscript/packages/random
-        version: link:../8bitscript/packages/random
+        specifier: 0.1.2
+        version: 0.1.2
       '@8bitscript/screen':
-        specifier: link:../8bitscript/packages/screen
-        version: link:../8bitscript/packages/screen
+        specifier: 0.1.2
+        version: 0.1.2
       '@8bitscript/system':
-        specifier: link:../8bitscript/packages/system
-        version: link:../8bitscript/packages/system
+        specifier: 0.1.2
+        version: 0.1.2
       '@8bitscript/text':
-        specifier: link:../8bitscript/packages/text
-        version: link:../8bitscript/packages/text
+        specifier: 0.1.2
+        version: 0.1.2
+      '@8bitscript/vic20':
+        specifier: 0.1.2
+        version: 0.1.2
+      '@8bitscript/web':
+        specifier: 0.1.2
+        version: 0.1.2
     devDependencies:
       '@8bitscript/cli':
-        specifier: link:../8bitscript/packages/cli
-        version: link:../8bitscript/packages/cli
+        specifier: 0.1.2
+        version: 0.1.2
       wrangler:
         specifier: 4.127.1
         version: 4.127.1
 
 packages:
+
+  '@8bitscript/atari8@0.1.2':
+    resolution: {integrity: sha512-kho85Xi3FA0Opw4P5pVbyfPbBsaL/CT6BnYMr2jkfe9aIZv4nV3W//s/rqJv2bsrBgPmQl3SVFww2PR5Bov0Uw==}
+
+  '@8bitscript/backend-6502@0.1.2':
+    resolution: {integrity: sha512-SeqJgwbzlgnEDf3wSXXd2vp0/MMYrZhZuKHagUV6UO15VKMZ9qcnqtqdiS+1n1+dcO6i0PtBBzjWAM181QGY1w==}
+    engines: {node: '>=26'}
+
+  '@8bitscript/backend-web@0.1.2':
+    resolution: {integrity: sha512-k1iJ2/KONXvjYmswWPWwUM8ZxZ3Xlj3WxEIaMXCNpQoZpDISfIjtNLVKXVCCr66RFmeojaqVaI9cj1hRh7c1LQ==}
+    engines: {node: '>=26'}
+
+  '@8bitscript/c128@0.1.2':
+    resolution: {integrity: sha512-WHCI7bkObme5UjUFZ9F6i9k2Cp/vZmGWrGCdIvnJ3A8zy4CZEHJPegTJ/C+4Gw52n8bYYaTcYZFXGT8IaOpo+A==}
+
+  '@8bitscript/c64@0.1.2':
+    resolution: {integrity: sha512-Kimoxc90T25fRIKzq1rI9izY/qwPwp4NV4FcZqUudNZMTjbdhbBLMrWUUSaEDShU3Z7RXHBvIDsbmKZFJqq+CQ==}
+
+  '@8bitscript/cli@0.1.2':
+    resolution: {integrity: sha512-sXpKiG0hMJ/KBJTGcRCyYLTGgCJzun/EL2ghey4mtbynKl0nLocsxcPzMO360rV8sqFFdhQ9R+Dat9XHZFqllg==}
+    engines: {node: '>=26'}
+    hasBin: true
+
+  '@8bitscript/compiler@0.1.2':
+    resolution: {integrity: sha512-99r7JcUA9WKCUfawE5+k4ehArHbnkR1VqskpaNjAkeLUqtKsXNs5dSZtoNArjae7P1q2V1SjL51yop6FGWLNKQ==}
+    engines: {node: '>=26'}
+
+  '@8bitscript/cx16@0.1.2':
+    resolution: {integrity: sha512-GdCBVMiSaLeAHs4OZjxpqRFcaR3PVRJd/QV8c1FeO9eqton7xfN/yj7RsAXt+yvDo8ewRHreXbmJMHJdlxtrkA==}
+
+  '@8bitscript/input@0.1.2':
+    resolution: {integrity: sha512-YGa+qSN7n4zPf7WokMYs/ATaeSv0JrA7wjrDunOCrfWjqLElCv0rsadnuLQZBm7iR9BxAZTI9fF97+0lrooijw==}
+
+  '@8bitscript/language-server@0.1.2':
+    resolution: {integrity: sha512-pn71Qlu/ficzCmpRgSmi9+WGkdoTFU9tA/goKOIhGSkdP42IAZo08LgIgOwIp8zgFnFyCPULr35WjdtRDwdbXw==}
+    engines: {node: '>=26'}
+
+  '@8bitscript/mega65@0.1.2':
+    resolution: {integrity: sha512-r3A9W1SO6mEqp4BDPb6o/jkAwrzvVFtFe2r41MZxuNdwkJXvosHSguEmcho2XA5C7ZMk4xQ0uJjS9h5OnATgUA==}
+
+  '@8bitscript/nes@0.1.2':
+    resolution: {integrity: sha512-6jDM/ucTqj+WL6hEdXK/MxJBn+FEw2OgsvLdVQOU5RzAQdTPiWHuXEqIjW8Qg3v8MokBjgKRIUqF2UvyHYY60A==}
+
+  '@8bitscript/pet@0.1.2':
+    resolution: {integrity: sha512-OhkXody/Cy/wyPZCXmpHiZwW2kyyHLO4Vc/d9faZLDq8CTeRL9woB0N3UMOiaIjfzHD+ZjHDr+4RYV8yhiIFpQ==}
+
+  '@8bitscript/pointer@0.1.2':
+    resolution: {integrity: sha512-/c21hXcQVHZ20Sx+MicpYhEWneBtpPAYt38fislEYXJ9TpasrJ7sT/u5wkaZ5CTYGW/lI1iK9vq+5jRtxgnCQA==}
+
+  '@8bitscript/random@0.1.2':
+    resolution: {integrity: sha512-WJFKpbCOIwl5c79RiIfVg3dGNfRlooZ1c9Drx2Bm0nVHM1k8GlIDumvq4+E9WOPShOurIRpiRLM+EtsvZ02l0w==}
+
+  '@8bitscript/screen@0.1.2':
+    resolution: {integrity: sha512-WoA2POdAamX1RwE3AZWJcLMf63q/HoMYm987vIy8MN/jzuJRaKfbgvjp/pZGD9RyLGVsiH0A/VeFuOduqV+LvQ==}
+
+  '@8bitscript/studio@0.1.2':
+    resolution: {integrity: sha512-9+R2QvwOegIQUw4LUy7sL9owvTUnIxn8wer4xoF3cdU7pHrrJWFbMhSi17rsWJGtMM/t2lf0kxwd/qCzQ7yi0Q==}
+
+  '@8bitscript/system@0.1.2':
+    resolution: {integrity: sha512-lZB8rpU8D2j8sQUWdwGhsF2jwsPADcnI4ub2PjbrR7yHmqLEHuch1ZFN2/GsUpkRgnTMrVFEBk3uywWo/m4/Eg==}
+
+  '@8bitscript/text@0.1.2':
+    resolution: {integrity: sha512-V4xa9EehrUXoCSOAfZWW/R0Gt4xhRHmOR6yXssjA7X0gamL67Fnyfzjg5BuQUkR0GMMIr36TuZ2gTgWQDWr4Pw==}
+
+  '@8bitscript/ui@0.1.2':
+    resolution: {integrity: sha512-CZyMH7UI5YxECKbvqsSMe3CbVRqLNmCNQS0lq5/HHOkjH1BjRZNkBFcnTqikGxYKGbcoVKZ7Mb8QKNM2UUmjew==}
+
+  '@8bitscript/vic20@0.1.2':
+    resolution: {integrity: sha512-5/0EXjahOLSVfknhVRIANmd6q0r6wQufIHbnl09zHoA4bDlw9PuHGgOSr240Y4JRyo26kAdye/8PrzesD/8jxw==}
+
+  '@8bitscript/web@0.1.2':
+    resolution: {integrity: sha512-ePZY94wq6Sm0hD8aRHEiwnIuYOptX9U0xBO2VzrEPLlfepsg4+oN2G2d/iq4MXJhRm7WDaFctqYRHwFLpXId3Q==}
 
   '@cloudflare/kv-asset-handler@0.5.0':
     resolution: {integrity: sha512-jxQYkj8dSIzc0cD6cMMNdOc1UVjqSqu8BZdor5s8cGjW2I8BjODt/kWPVdY+u9zj3ms75Q5qaZgnxUad83+eAg==}
@@ -531,6 +627,15 @@ packages:
   '@speed-highlight/core@1.2.24':
     resolution: {integrity: sha512-qeW2e1l78afw8VhRPfPQ1Gjj+KU5XFQ/OFV5ti6eTa9bruO7mJyZtA4vw0ofqmA3tKCkROE9xLk3VZoeRc98nw==}
 
+  assemblyscript@0.28.20:
+    resolution: {integrity: sha512-5PM7GZpvcLypHcLmi30aP8mqm5HjU+LL3BdV1xDyA3USGtL2w+iMiUnhtH+vW8+2kOuHlAyPu7M+QgyEw5he1g==}
+    engines: {node: '>=20', npm: '>=10'}
+    hasBin: true
+
+  binaryen@131.0.0-nightly.20260721:
+    resolution: {integrity: sha512-AAQIkhfbYXh4FBObwBrlO+5L+6Rp6OOMOjh6AdT0M+GLNLyrwKWgtW+EzmizNgx9CWDfTJPfDtKoZi62QESbtg==}
+    hasBin: true
+
   blake3-wasm@2.1.5:
     resolution: {integrity: sha512-F1+K8EbfOZE49dtoPtmxUQrpXaBIl3ICvasLh+nJta0xkz+9kF/7uet9fLnwKqhDrmj6g+6K3Tw9yQPUg2ka5g==}
 
@@ -558,6 +663,9 @@ packages:
   kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
+
+  long@5.3.2:
+    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
 
   miniflare@5.20260828.0-alpha:
     resolution: {integrity: sha512-6nbxhZEcz/UET3Y1OnYPsrAUjUmuFoib3ynUqteRdn1YnDxsLg8cwgZJZCk9QmtOmGzXwzXzgE/d/C0dJAPtVw==}
@@ -591,6 +699,23 @@ packages:
 
   unenv@2.0.0-rc.24:
     resolution: {integrity: sha512-i7qRCmY42zmCwnYlh9H2SvLEypEFGye5iRmEMKjcGi7zk9UquigRjFtTLz0TYqr0ZGLZhaMHl/foy1bZR+Cwlw==}
+
+  vscode-jsonrpc@9.0.2:
+    resolution: {integrity: sha512-SbQSV9yRemARxeXw6LU5sS6Zq0e9/DgCCX5yelH263ZQWukbTk8EF8fjTrr1dziasf4GwlJbvTwFnTrnQFWZXQ==}
+    engines: {node: '>=14.0.0'}
+
+  vscode-languageserver-protocol@3.18.3:
+    resolution: {integrity: sha512-DF49+WeV5py4zO5hhobp60jjsDSK0lAqA0OuKBLBvp423HPWQcCbhZz3JgyfIewsEz2f8U+X75xNIFHdiXZm2w==}
+
+  vscode-languageserver-textdocument@1.0.14:
+    resolution: {integrity: sha512-EQyqJMi552E4ZTf46izQ4Fj6XquqxCySR3J5ZSD1SisMf6RfpeOWHxGBE8Gr6V0/3GHIGdAzDn8F8+1nTGCnoQ==}
+
+  vscode-languageserver-types@3.18.3:
+    resolution: {integrity: sha512-XIlzJ7Qp/jzSI1ds7/FwPAWrPeTZA7pAtlW4hdJ1J6xXWJL6dR9QYnDhJOdLzdKhUQ5Mm6mvUMw+3DcOQQasPw==}
+
+  vscode-languageserver@10.1.1:
+    resolution: {integrity: sha512-/cG04Fiq99rEtoDrfPpv0k6NyUFlck5GNtZLQZv1rxkBkc/4FrJNvEKTN5k1Si3O1hRguP++ciYlX9cdjdYxFQ==}
+    hasBin: true
 
   workerd@1.20260828.1:
     resolution: {integrity: sha512-pB9yvt0kkwZDAGZHmpY59r0o3hM0DzdW6BJERqwZOhunZ3ssOyDSgQxOQer2cSZW4YCFeOTIQYN1qwhK5wv/Cw==}
@@ -626,6 +751,125 @@ packages:
     resolution: {integrity: sha512-rLfVLB4FgQneDr0dv1oddCVZmKjcJ6yX6mS4pU82Mq/Dt9a3cLZQ62pDBL4AUO+uVrCvtWz3ZFUL2HFAFJ/BXQ==}
 
 snapshots:
+
+  '@8bitscript/atari8@0.1.2': {}
+
+  '@8bitscript/backend-6502@0.1.2':
+    dependencies:
+      '@8bitscript/compiler': 0.1.2
+
+  '@8bitscript/backend-web@0.1.2':
+    dependencies:
+      '@8bitscript/compiler': 0.1.2
+      assemblyscript: 0.28.20
+
+  '@8bitscript/c128@0.1.2': {}
+
+  '@8bitscript/c64@0.1.2': {}
+
+  '@8bitscript/cli@0.1.2':
+    dependencies:
+      '@8bitscript/atari8': 0.1.2
+      '@8bitscript/backend-6502': 0.1.2
+      '@8bitscript/backend-web': 0.1.2
+      '@8bitscript/c128': 0.1.2
+      '@8bitscript/c64': 0.1.2
+      '@8bitscript/compiler': 0.1.2
+      '@8bitscript/cx16': 0.1.2
+      '@8bitscript/language-server': 0.1.2
+      '@8bitscript/mega65': 0.1.2
+      '@8bitscript/nes': 0.1.2
+      '@8bitscript/pet': 0.1.2
+      '@8bitscript/studio': 0.1.2
+      '@8bitscript/vic20': 0.1.2
+      '@8bitscript/web': 0.1.2
+
+  '@8bitscript/compiler@0.1.2': {}
+
+  '@8bitscript/cx16@0.1.2': {}
+
+  '@8bitscript/input@0.1.2':
+    dependencies:
+      '@8bitscript/atari8': 0.1.2
+      '@8bitscript/c128': 0.1.2
+      '@8bitscript/c64': 0.1.2
+      '@8bitscript/cx16': 0.1.2
+      '@8bitscript/mega65': 0.1.2
+      '@8bitscript/nes': 0.1.2
+      '@8bitscript/pet': 0.1.2
+      '@8bitscript/vic20': 0.1.2
+      '@8bitscript/web': 0.1.2
+
+  '@8bitscript/language-server@0.1.2':
+    dependencies:
+      '@8bitscript/compiler': 0.1.2
+      vscode-languageserver: 10.1.1
+      vscode-languageserver-textdocument: 1.0.14
+
+  '@8bitscript/mega65@0.1.2': {}
+
+  '@8bitscript/nes@0.1.2': {}
+
+  '@8bitscript/pet@0.1.2': {}
+
+  '@8bitscript/pointer@0.1.2':
+    dependencies:
+      '@8bitscript/atari8': 0.1.2
+      '@8bitscript/c128': 0.1.2
+      '@8bitscript/c64': 0.1.2
+      '@8bitscript/cx16': 0.1.2
+      '@8bitscript/input': 0.1.2
+      '@8bitscript/mega65': 0.1.2
+      '@8bitscript/nes': 0.1.2
+      '@8bitscript/pet': 0.1.2
+      '@8bitscript/text': 0.1.2
+      '@8bitscript/vic20': 0.1.2
+      '@8bitscript/web': 0.1.2
+
+  '@8bitscript/random@0.1.2': {}
+
+  '@8bitscript/screen@0.1.2':
+    dependencies:
+      '@8bitscript/atari8': 0.1.2
+      '@8bitscript/c128': 0.1.2
+      '@8bitscript/c64': 0.1.2
+      '@8bitscript/cx16': 0.1.2
+      '@8bitscript/mega65': 0.1.2
+      '@8bitscript/nes': 0.1.2
+      '@8bitscript/pet': 0.1.2
+      '@8bitscript/vic20': 0.1.2
+      '@8bitscript/web': 0.1.2
+
+  '@8bitscript/studio@0.1.2':
+    dependencies:
+      '@8bitscript/input': 0.1.2
+      '@8bitscript/pointer': 0.1.2
+      '@8bitscript/screen': 0.1.2
+      '@8bitscript/system': 0.1.2
+      '@8bitscript/text': 0.1.2
+      '@8bitscript/ui': 0.1.2
+
+  '@8bitscript/system@0.1.2': {}
+
+  '@8bitscript/text@0.1.2':
+    dependencies:
+      '@8bitscript/atari8': 0.1.2
+      '@8bitscript/c128': 0.1.2
+      '@8bitscript/c64': 0.1.2
+      '@8bitscript/cx16': 0.1.2
+      '@8bitscript/mega65': 0.1.2
+      '@8bitscript/nes': 0.1.2
+      '@8bitscript/pet': 0.1.2
+      '@8bitscript/vic20': 0.1.2
+      '@8bitscript/web': 0.1.2
+
+  '@8bitscript/ui@0.1.2':
+    dependencies:
+      '@8bitscript/text': 0.1.2
+
+  '@8bitscript/vic20@0.1.2': {}
+
+  '@8bitscript/web@0.1.2': {}
 
   '@cloudflare/kv-asset-handler@0.5.0': {}
 
@@ -868,6 +1112,13 @@ snapshots:
 
   '@speed-highlight/core@1.2.24': {}
 
+  assemblyscript@0.28.20:
+    dependencies:
+      binaryen: 131.0.0-nightly.20260721
+      long: 5.3.2
+
+  binaryen@131.0.0-nightly.20260721: {}
+
   blake3-wasm@2.1.5: {}
 
   cookie@1.1.1: {}
@@ -909,6 +1160,8 @@ snapshots:
     optional: true
 
   kleur@4.1.5: {}
+
+  long@5.3.2: {}
 
   miniflare@5.20260828.0-alpha:
     dependencies:
@@ -970,6 +1223,21 @@ snapshots:
   unenv@2.0.0-rc.24:
     dependencies:
       pathe: 2.0.3
+
+  vscode-jsonrpc@9.0.2: {}
+
+  vscode-languageserver-protocol@3.18.3:
+    dependencies:
+      vscode-jsonrpc: 9.0.2
+      vscode-languageserver-types: 3.18.3
+
+  vscode-languageserver-textdocument@1.0.14: {}
+
+  vscode-languageserver-types@3.18.3: {}
+
+  vscode-languageserver@10.1.1:
+    dependencies:
+      vscode-languageserver-protocol: 3.18.3
 
   workerd@1.20260828.1:
     optionalDependencies:
