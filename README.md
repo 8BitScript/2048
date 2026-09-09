@@ -54,8 +54,12 @@ Then, from this directory:
 | `pnpm run start:mega65` | MEGA65 |
 | `pnpm run start:web` | Web (see below) |
 
-`pnpm run build` (and its `:c64`, `:pet`, … variants) compiles without
-opening an emulator; `pnpm run check` runs the compiler's diagnostics alone.
+`pnpm run build:vic20` (and its `:c64`, `:pet`, … variants) compiles
+without opening an emulator; `pnpm run check` runs the compiler's
+diagnostics alone. Plain `pnpm run build` targets `web` specifically —
+that's what Cloudflare Workers Builds runs to deploy
+[2048.8bitscript.com](https://2048.8bitscript.com), and a 6502 target
+needs `LLVM_MOS_HOME`, which that build image doesn't have.
 
 `pnpm run start:web` is playable in the browser: arrows or swipe slide
 tiles, Enter or a tap starts a new game once it is over. `pnpm run deploy:web`
