@@ -1,5 +1,8 @@
 # 2048
 
+[![CI](https://github.com/8BitScript/2048/actions/workflows/ci.yml/badge.svg)](https://github.com/8BitScript/2048/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/8BitScript/2048?label=release)](https://github.com/8BitScript/2048/releases)
+
 [2048](https://github.com/gabrielecirulli/2048) (MIT, Gabriele Cirulli), written
 from scratch in [8BitScript](https://github.com/8BitScript/8bitscript) — one
 source file, [`src/main.8bs`](src/main.8bs), running on the VIC-20, C64, PET,
