@@ -5,6 +5,11 @@
   "description": "2048, in 8BitScript, from one source file, on the VIC-20, C64, PET, C128, Atari 8-bit, NES, Commander X16, MEGA65, and the web.",
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=26",
+    "pnpm": ">=12"
+  },
   "scripts": {
     "start": "8bs run vic20",
     "start:c64": "8bs run c64",
@@ -24,11 +29,12 @@
     "build:cx16": "8bs build --target cx16",
     "build:mega65": "8bs build --target mega65",
     "build:web": "8bs build --target web",
-    "deploy:web": "8bs build --target web && npx wrangler deploy",
+    "deploy:web": "8bs build --target web && wrangler deploy",
     "check": "8bs check src/main.8bs"
   },
   "devDependencies": {
-    "@8bitscript/cli": "link:../8bitscript/packages/cli"
+    "@8bitscript/cli": "link:../8bitscript/packages/cli",
+    "wrangler": "4.127.1"
   },
   "dependencies": {
     "@8bitscript/screen": "link:../8bitscript/packages/screen",
