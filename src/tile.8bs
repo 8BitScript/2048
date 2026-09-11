@@ -8,10 +8,10 @@
 import { text, TextColor } from "@8bitscript/text";
 import { Video } from "@8bitscript/system";
 
-// Exponent to face value — the only place 2^N is ever written down, so
-// SIZE growing (it won't) or MAX_EXPONENT changing is a one-line edit here.
-// Exported because mergeLine() in main.8bs needs it too, for score.
-export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+// Exponent to face value — tile.8bs's own copy for drawing. The rules'
+// table lives in main.8bs (score); the two never share a module, and
+// the PET twin needs neither.
+const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 
 // Exponent to colour, on the six targets with per-cell colour — a
 // deliberately empty function on the other three (PET, Atari 8-bit, NES;
@@ -115,6 +115,7 @@ export function computeLayout(): void {
     headerRow = (Video.ROWS - totalHeight) >> 1;
     boardTop = headerRow + 2; // header row, then one blank row, then the board
     statusRow = boardTop + BOARD_HEIGHT + 1; // one blank row after the board
+    return;
 }
 
 // The screen cell a tile's top-left corner starts at.
@@ -157,6 +158,19 @@ function tileWidth(value: usmallint): utinyint {
 // cellWidth - width is odd, falls to the right — `>> 1` truncates, never
 // rounds up); the top and bottom rows are blank on purpose — they are the
 // rest of the square, not wasted space.
+export function drawHud(score: usmallint, over: bool, won: bool): void {
+    text.setColor(TextColor.WHITE);
+    text.print(headerRow * ROW + leftMargin, `2048  SCORE ${score:5}`);
+    if (over) {
+        text.print(statusRow * ROW + leftMargin, "GAME OVER - RESTART");
+    } else if (won) {
+        text.print(statusRow * ROW + leftMargin, "YOU MADE 2048      ");
+    } else {
+        text.print(statusRow * ROW + leftMargin, "ARROWS TO MOVE     ");
+    }
+    return;
+}
+
 export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
     let origin: usmallint = tileCell(row, col);
     let value: usmallint = POW2[exponent];
@@ -172,4 +186,5 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
     }
     text.print(mid + ROW, blank);
     text.setReverse(false); // so the next print — this frame's or the next — is not inverted
+    return;
 }

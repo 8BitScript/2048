@@ -3,109 +3,208 @@
 // portable tile.8bs's reverse-video text field. Picked up automatically
 // for PET builds only — nothing in main.8bs or 8bs.config.ts names this
 // file; see docs/packages.md's "System-specific files" and tile.8bs's own
-// header comment for why a PET version exists at all: `@8bitscript/pet`,
-// not a portable capability, is on this project only because this one file
-// imports it — every other file still builds against the nine-target
-// portable surface.
+// header comment for why a PET version exists at all.
 //
 // Why the PET needs a different tile at all: text.printNumber's centring
 // (see tile.8bs) is exact only when cellWidth - digitWidth is even, and a
 // 1-character-wide digit makes that parity flip between 1-, 2-, 3- and
-// 4-digit tiles — there is no cellWidth that centres all four. A
-// @8bitscript/pet/blocks digit is 2 cells wide, so the same leftover is
-// always even, and every digit count from "2" to "2048" centres exactly.
-// That gain is PET-only: it is the one target with a fixed-glyph ROM whose
-// quadrant-block characters (see packages/pet/AGENTS.md) this package
-// turns into a font at all; no portable `blocks` capability exists to draw
-// the same thing on the other eight.
-import { text } from "@8bitscript/text";
+// 4-digit tiles — there is no cellWidth that centres all four. A PET
+// quadrant-block digit is 2 cells wide, so the same leftover is always
+// even, and every digit count from "2" to "2048" centres exactly. That
+// gain is PET-only: it is the one target with a fixed-glyph ROM whose
+// quadrant-block characters (see packages/pet/AGENTS.md) turn into a
+// font at all; no portable `blocks` capability exists to draw the same
+// thing on the other eight.
+//
+// The font here is the inverted form of @8bitscript/pet/blocks's own
+// DIGIT_TILES (bit 7 flipped): drawn over a solid reverse-video tile,
+// that is dark ink cut into the tile rather than a fresh glyph punching
+// a black rectangle through it. Kept as data in this file so the game
+// never links digits.print / printCentered / patternIndex — 2048 only
+// ever stamps the eleven face values below.
+//
+// The HUD is the same idea one layer up. text.print / printNumber /
+// asciiToScreenCode are a portable conversion pipeline this file does
+// not need: every PET's graphics set puts A–Z at screen codes 1–26
+// (both character ROMs; packages/pet/AGENTS.md), digits and space sit
+// at their ASCII values, and the VIA PCR ($E84C) is one store. A loop
+// over baked codes is smaller than linking the converter, and it is
+// what lets a stock 4K 2001's ~3K of usable RAM hold the game.
 import { Video } from "@8bitscript/system";
-import { blocks, digits } from "@8bitscript/pet/blocks";
 
-// Exponent to face value — kept in step with tile.8bs's own copy (it is
-// the one thing this file and that one both need, and the two never build
-// in the same program, so there is nothing to keep in sync at run time).
-export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+const ROW: usmallint = Video.COLUMNS; // 40, or 80 on an 8032 build
 
-const ROW: usmallint = text.COLUMNS; // 40, or 80 on an 8032 build
-
-// ---- layout ---------------------------------------------------------------
-//
-// A tile is TILE_W cells wide, TILE_H tall, with a one-cell gap between
-// tiles the same way tile.8bs's does. TILE_W is fixed at 8, not derived:
-// "2048" is 4 digits at 2 cells each, 8 cells exactly, and no PET build is
-// narrow enough (40 columns at least) to need a smaller one the way
-// tile.8bs's VIC-20 case does — see @8bitscript/pet/blocks's own header for
-// the "4*cellWidth + 3 gaps <= 40" arithmetic this width comes from.
-//
-// TILE_H is 5, not 4: the font is 3 cells tall, leaving 2 spare cells to
-// split as a matching blank cell above and below the digits (DIGIT_ROW_
-// OFFSET is 1 either way; the second spare cell falls below on its own,
-// since nothing is drawn there). A screenshot with TILE_H 4 (1 spare cell,
-// all of it above, because that is what "half the leftover, rounded down"
-// gives with only one to place) had the digits sitting noticeably closer
-// to a tile's bottom edge than its top — reported directly, 2026-09-07 —
-// which a single spare cell can never fix, only relocate. Two spare cells
-// can be split evenly, but *only* because the font itself has no blank row
-// of its own left over to tip the balance — see @8bitscript/pet/blocks's
-// DIGIT_TILES comment for the digit-height side of this same fix.
-const TILE_W: utinyint = 8;
 const TILE_H: utinyint = 5;
-const DIGIT_ROW_OFFSET: utinyint = 1; // blank cells above the digits within a tile
-const COL_GAP: utinyint = 1;
-const ROW_GAP: utinyint = 1;
-const BOARD_WIDTH: usmallint = 35;  // 4 tiles * 8 + 3 gaps * 1
-// 4 tiles * 5 + 3 gaps * 1 = 23, which leaves only 2 of a 25-row screen's
-// rows for everything else — computeLayout() below spends both on the
-// header and status rows themselves and drops the blank row tile.8bs
-// keeps on either side of the board (there is no room left for them here).
-const BOARD_HEIGHT: usmallint = 23;
 
-export let leftMargin: usmallint = 0;
-export let headerRow: usmallint = 0;
-let boardTop: usmallint = 0;
-export let statusRow: usmallint = 0;
+// Screen code 160 is all four quadrants on — the same reverse-space a
+// filled tile is. Written directly so fillTile is a store, not a call
+// into text.print (five prints of eight spaces cost more than this loop).
+const SOLID: utinyint = 160;
 
+// VIA PCR: $0C selects the graphics character set. A–Z are then screen
+// codes 1–26 on every PET, including the 2001's swapped text ROM, so
+// the HUD table below is one table rather than two.
+const GRAPHICS_SET: utinyint = 0x0C;
+const VIA_PCR: usmallint = 0xE84C;
+const SCREEN: usmallint = 0x8000;
+
+// Decimal digits of 2^exponent, packed without the trailing zeros a
+// four-wide slot would carry, and a 13-entry offset table so count is
+// `TILE_DIGIT_AT[e+1] - TILE_DIGIT_AT[e]`. Pad is 4 − count (TILE_W is 8,
+// a digit is 2 cells, leftover is always even).
+const TILE_DIGIT_AT: array<utinyint, 13> = [0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26];
+const TILE_DIGIT: array<utinyint, 26> = [
+    2, 4, 8,
+    1, 6, 3, 2, 6, 4,
+    1, 2, 8, 2, 5, 6, 5, 1, 2,
+    1, 0, 2, 4, 2, 0, 4, 8,
+];
+
+// Inverted 2×3-cell glyphs for digits 0-9, six screen codes each, matching
+// @8bitscript/pet/blocks's DIGIT_TILES with bit 7 flipped. Index is digit×6.
+const DIGIT_TILES: array<utinyint, 60> = [
+    108, 225, 225, 225, 124, 225,
+    126, 160, 123, 160, 126, 251,
+    98,  225, 226, 225, 124, 251,
+    98,  225, 226, 225, 226, 225,
+    225, 225, 124, 225, 160, 225,
+    108, 254, 124, 251, 226, 225,
+    108, 254, 124, 251, 124, 225,
+    98,  225, 160, 225, 160, 225,
+    108, 225, 124, 225, 124, 225,
+    108, 225, 124, 225, 226, 225,
+];
+
+// Graphics-set screen codes for the HUD. Header is 12, each status line
+// is 19 (the longest message, padded so a shorter one never leaves a
+// leftover glyph). A=1 … Z=26, digits and space unchanged.
+const HUD: array<utinyint, 69> = [
+    50, 48, 52, 56, 32, 32, 19, 3, 15, 18, 5, 32,
+    1, 18, 18, 15, 23, 19, 32, 20, 15, 32, 13, 15, 22, 5, 32, 32, 32, 32, 32,
+    25, 15, 21, 32, 13, 1, 4, 5, 32, 50, 48, 52, 56, 32, 32, 32, 32, 32, 32,
+    7, 1, 13, 5, 32, 15, 22, 5, 18, 32, 45, 32, 18, 5, 19, 20, 1, 18, 20,
+];
+const HUD_HEADER: utinyint = 0;
+const HUD_ARROWS: utinyint = 12;
+const HUD_WON: utinyint = 31;
+const HUD_OVER: utinyint = 50;
+const HUD_HEADER_LEN: utinyint = 12;
+const HUD_STATUS_LEN: utinyint = 19;
+
+const SCORE_PLACES: array<usmallint, 5> = [10000, 1000, 100, 10, 1];
+
+// Top-left cell of each board square. Compile-time data: (1 + row×6)×
+// columns + leftMargin + col×9. The unused table is pruned, and an index
+// is smaller than the 16-bit multiply that would recompute it.
+const ORIGIN_40: array<usmallint, 16> = [
+    42, 51, 60, 69,
+    282, 291, 300, 309,
+    522, 531, 540, 549,
+    762, 771, 780, 789,
+];
+const ORIGIN_80: array<usmallint, 16> = [
+    102, 111, 120, 129,
+    582, 591, 600, 609,
+    1062, 1071, 1080, 1089,
+    1542, 1551, 1560, 1569,
+];
+
+// Layout is a property of the build (40 vs 80 columns), so computeLayout
+// has nothing to work out at run time — an empty body is deleted, and
+// main()'s call to it costs the PET nothing.
 export function computeLayout(): void {
-    leftMargin = (text.COLUMNS - BOARD_WIDTH) >> 1;
-    let totalHeight: usmallint = BOARD_HEIGHT + 2; // header + board + status, no spare row either side
-    headerRow = (Video.ROWS - totalHeight) >> 1;
-    boardTop = headerRow + 1; // straight from the header row into the board
-    statusRow = boardTop + BOARD_HEIGHT; // straight from the board into the status row
 }
 
-function tileCell(row: utinyint, col: utinyint): usmallint {
-    let y: usmallint = boardTop + row * (TILE_H + ROW_GAP);
-    let x: usmallint = leftMargin + col * (TILE_W + COL_GAP);
-    return y * ROW + x;
+function writeCells(cell: usmallint, base: utinyint, count: utinyint): void {
+    let i: utinyint = 0;
+    while (i < count) {
+        memory.write(SCREEN + cell + i, HUD[base + i]);
+        i++;
+    }
+    return;
 }
 
-// ---- drawing ----------------------------------------------------------
+function printScore5(cell: usmallint, value: usmallint): void {
+    let i: utinyint = 0;
+    while (i < 5) {
+        let digit: utinyint = 48;
+        while (value >= SCORE_PLACES[i]) {
+            value = value - SCORE_PLACES[i];
+            digit++;
+        }
+        memory.write(SCREEN + cell + i, digit);
+        i++;
+    }
+    return;
+}
 
-// Every quadrant of every cell in the tile on: blocks.put(..., true, true,
-// true, true) is the solid block, the same green-on-black square every
-// occupied and empty cell alike starts as (see tile.8bs's own comment on
-// why the empty tile is filled, not blank: sixteen filled squares with a
-// gap between them read as one board; sixteen blanks do not).
+export function drawHud(score: usmallint, over: bool, won: bool): void {
+    memory.write(VIA_PCR, GRAPHICS_SET);
+    let headerAt: usmallint = 2;
+    let statusAt: usmallint = 962;
+    if (Video.COLUMNS != 40) {
+        headerAt = 22;
+        statusAt = 1942;
+    }
+    writeCells(headerAt, HUD_HEADER, HUD_HEADER_LEN);
+    printScore5(headerAt + HUD_HEADER_LEN, score);
+    let msg: utinyint = HUD_ARROWS;
+    if (won) {
+        msg = HUD_WON;
+    }
+    if (over) {
+        msg = HUD_OVER;
+    }
+    writeCells(statusAt, msg, HUD_STATUS_LEN);
+    return;
+}
+
 function fillTile(origin: usmallint): void {
     let rowCell: usmallint = origin;
     let row: utinyint = 0;
     while (row < TILE_H) {
         let col: utinyint = 0;
-        while (col < TILE_W) {
-            blocks.put(rowCell + col, true, true, true, true);
+        while (col < 8) {
+            memory.write(SCREEN + rowCell + col, SOLID);
             col++;
         }
         rowCell = rowCell + ROW;
         row++;
     }
+    return;
+}
+
+function drawDigit(cell: usmallint, value: utinyint): void {
+    let base: utinyint = value * 6;
+    let rowCell: usmallint = cell;
+    let row: utinyint = 0;
+    while (row < 3) {
+        memory.write(SCREEN + rowCell, DIGIT_TILES[base]);
+        memory.write(SCREEN + rowCell + 1, DIGIT_TILES[base + 1]);
+        base = base + 2;
+        rowCell = rowCell + ROW;
+        row++;
+    }
+    return;
 }
 
 export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
-    let origin: usmallint = tileCell(row, col);
-    fillTile(origin);
-    let value: usmallint = POW2[exponent];
-    if (value != 0) {
-        digits.printCentered(origin + DIGIT_ROW_OFFSET * ROW, TILE_W, value, true);
+    let cell: utinyint = row * 4 + col;
+    let origin: usmallint = ORIGIN_40[cell];
+    if (Video.COLUMNS != 40) {
+        origin = ORIGIN_80[cell];
     }
+    fillTile(origin);
+    let base: utinyint = TILE_DIGIT_AT[exponent];
+    let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
+    if (count != 0) {
+        let at: usmallint = origin + ROW + (4 - count);
+        let i: utinyint = 0;
+        while (i < count) {
+            drawDigit(at, TILE_DIGIT[base + i]);
+            at = at + 2;
+            i++;
+        }
+    }
+    return;
 }
