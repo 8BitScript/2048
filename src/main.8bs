@@ -292,9 +292,12 @@ function hasMoves(): bool {
 
 // ---- drawing --------------------------------------------------------------
 //
-// drawTile() and drawHud() live in tile.8bs (tile.pet.8bs on the PET) —
-// see that file's header for why one target needs its own. The PET twin
-// writes screen codes directly so this file never links text.print.
+// drawTile() and drawHud() live in tile.8bs (tile.pet.8bs on the PET,
+// tile.web.8bs on the web) —
+// see that file's header for why those two need their own. The PET twin
+// writes screen codes directly so this file never links text.print; the
+// web twin stamps the same digit font through the host's 2×2 block
+// glyphs and keeps text.print for a coloured HUD.
 
 // Only tiles whose exponent changed since last paint are stamped. Sixteen
 // filled squares with a background-coloured gap between them already read

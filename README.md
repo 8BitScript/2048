@@ -109,6 +109,9 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   three never link `setColor`. The other six (VIC-20, C64, C128,
   Commander X16, MEGA65, web) show each tile value in a distinct colour,
   the closest a text-mode board gets to upstream 2048's own tile colours.
+  The PET and the web both stamp a 2×3-cell block-digit into an 8×5
+  square so a "2" fills the tile the way the PET's own ROM digits do;
+  `tile.web.8bs` is the web's twin of `tile.pet.8bs`.
 - **RAM is tiny everywhere.** `8bs build` reports 54 bytes of RAM on a
   PET 2001 and 81 on the web — the board, a 16-byte copy of what is on
   screen (so a tile that did not move is never erased and redrawn), the

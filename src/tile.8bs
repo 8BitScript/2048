@@ -1,10 +1,11 @@
 // A tile: layout (how big one is, where the board sits) and drawing (what
 // one looks like) — the portable version, used by every target except the
-// PET, which reads tile.pet.8bs instead (see docs/packages.md's
-// "System-specific files": the machine's name beside the plain filename is
-// its own version, picked up with nothing in main.8bs or 8bs.config.ts
-// naming it). Split out of main.8bs so the PET's version can differ without
-// duplicating the game's rules, board state, or input handling.
+// PET (tile.pet.8bs) and the web (tile.web.8bs), which read their own
+// twins instead (see docs/packages.md's "System-specific files": the
+// machine's name beside the plain filename is its own version, picked up
+// with nothing in main.8bs or 8bs.config.ts naming it). Split out of
+// main.8bs so those two can differ without duplicating the game's rules,
+// board state, or input handling.
 import { text, TextColor } from "@8bitscript/text";
 import { Video } from "@8bitscript/system";
 
