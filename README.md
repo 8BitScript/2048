@@ -81,6 +81,17 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   so right is step 255 (−1) and down is step 252 (−4) — into a shared
   scratch row; compress, merge, compress again is the entire algorithm,
   and it is the one place a bug would live.
+- **On machines with RAM to spare, the slide is animated.** Builds with
+  at least 4K for the program (`Memory.RAM` is a compile-time fact, so
+  the branch folds away everywhere else) play a move one board cell per
+  frame instead of all at once: every tile that can advance does — into
+  an empty neighbour, or merging onto an equal tile that hasn't merged
+  this move — the changed tiles repaint, and the next step follows a
+  frame later (`ANIM_STEP_FRAMES` in `main.8bs` is the knob). A
+  full-width slide lands in 3 steps, ~50–100ms at 60/50Hz, and settles
+  on exactly the board the instant mover computes — checked exhaustively
+  over all 20,736 line states. The 4K PET 2001, the unexpanded VIC-20,
+  and the NES keep their instant moves and their exact byte counts.
 - **Randomness is [`@8bitscript/random`](../8bitscript/packages/random)**, a
   small deterministic generator added to 8BitScript itself for this —
   nothing in the language had one for any of these nine targets before
@@ -99,9 +110,10 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   Commander X16, MEGA65, web) show each tile value in a distinct colour,
   the closest a text-mode board gets to upstream 2048's own tile colours.
 - **RAM is tiny everywhere.** `8bs build` reports 54 bytes of RAM on a
-  PET 2001 and 64 on the web — the board, a 16-byte copy of what is on
+  PET 2001 and 81 on the web — the board, a 16-byte copy of what is on
   screen (so a tile that did not move is never erased and redrawn), the
-  scratch row, the score, and a handful of flags. The PET program itself is
+  scratch row, the animated builds' merge-lock mask, the score, and a
+  handful of flags. The PET program itself is
   **2440 bytes** on a 2001/4K (down from 2983, and from 4005 before the
   compiler's 0.2.3 leaner 6502 codegen): the PET HUD is baked screen codes
   rather than `text.print` / `printNumber`, the four move helpers are one

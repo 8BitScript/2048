@@ -13,10 +13,25 @@
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
 import { random } from "@8bitscript/random";
+import { Memory } from "@8bitscript/system";
 import { computeLayout, drawHud, drawTile } from "./tile.8bs";
 
 const SIZE: utinyint = 4; // 4x4 — 2048's own board, on every target
 const MAX_EXPONENT: utinyint = 11; // 2^11 = 2048, the tile that wins
+
+// Builds with this much RAM to spare animate a move: tiles slide one board
+// cell per repaint instead of teleporting. Memory.RAM is a build-time fact
+// and the branch on it folds, so the builds below the line — the 4K PET
+// (3071 bytes), the unexpanded VIC-20 (3583), the NES (1536 of work RAM) —
+// carry not one byte of the animation, and keep their instant moves.
+const ANIM_MIN_RAM: usmallint = 4096;
+
+// How long each step of the slide lingers: frames waited after each
+// repaint. 1 makes a full-width slide land in 3 frames (a merge on the way
+// adds a step or two) — 50–100ms at 60/50Hz, upstream 2048's own tempo.
+// Raise it to slow the slide down; the board still settles to exactly the
+// same position, so this is the one knob and it is safe to turn.
+const ANIM_STEP_FRAMES: utinyint = 1;
 
 // Exponent to face value — the only place 2^N is written down in the
 // rules (tile.8bs has its own copy for drawing; the PET twin never
@@ -32,6 +47,15 @@ const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
 let board: array<utinyint, 16>;
 let shown: array<utinyint, 16>;
 let line: array<utinyint, 4>;
+
+// Animated builds only (both fold away below ANIM_MIN_RAM): merged[i]
+// rides along with the tile in cell i for the length of one move, so a
+// tile that has already combined once cannot combine again while it is
+// still sliding — the rule mergeLine() gets for free from its single
+// left-to-right pass. stepped is "did the last step move anything":
+// false ends the move.
+let merged: array<utinyint, 16>;
+let stepped: bool = false;
 
 let score: usmallint = 0;
 let moved: bool = false; // did the move just played actually change the board?
@@ -105,6 +129,98 @@ function moveLines(start: utinyint, step: utinyint, stride: utinyint): void {
         let d: utinyint = c + step;
         slide(a, b, c, d);
         start = start + stride;
+    }
+    return;
+}
+
+// ---- the animated move --------------------------------------------------
+//
+// The same move as compress/merge/compress, taken one cell at a time so
+// there is something to watch: each step, every tile that can advance one
+// cell toward the wall does — into an empty neighbour, or onto an equal
+// tile neither half of which has merged this move — the board is
+// repainted, and the step lingers ANIM_STEP_FRAMES. When a step moves
+// nothing the move is finished, and the board it settles on is exactly the
+// board moveLines() would have written at once: iterating "shift or merge
+// one cell" with the merged[] lock reaches the same fixed point (the lock
+// is what stops 2 2 2 2 collapsing past 4 4, and a fresh 4 swallowing the
+// 4 sliding up behind it).
+
+function stepPair(a: utinyint, b: utinyint): void {
+    // b is the cell one step behind a. One step of one tile: advance
+    // b's tile into a, or merge it onto a's.
+    if (board[b] == 0) {
+        return;
+    }
+    if (board[a] == 0) {
+        board[a] = board[b];
+        merged[a] = merged[b];
+        board[b] = 0;
+        merged[b] = 0;
+        stepped = true;
+        return;
+    }
+    if (board[a] == board[b] && merged[a] == 0 && merged[b] == 0) {
+        board[a] = board[a] + 1; // one higher exponent: double the value
+        merged[a] = 1;
+        board[b] = 0;
+        score = score + POW2[board[a]];
+        if (board[a] == MAX_EXPONENT) {
+            won = true;
+        }
+        stepped = true;
+    }
+    return;
+}
+
+// Front pair first, so a whole line in motion advances together in one
+// step — d follows c into the cell c just left — rather than one tile
+// per step.
+function stepLines(start: utinyint, step: utinyint, stride: utinyint): void {
+    for (let n: utinyint = 0; n < SIZE; n++) {
+        let a: utinyint = start;
+        let b: utinyint = a + step;
+        let c: utinyint = b + step;
+        let d: utinyint = c + step;
+        stepPair(a, b);
+        stepPair(b, c);
+        stepPair(c, d);
+        start = start + stride;
+    }
+    return;
+}
+
+// The per-step repaint: drawBoard()'s tile loop without the HUD — the
+// score a merge just banked appears with the settled board instead, and
+// the header is not repainted five times in 100ms. Its own copy of the
+// loop rather than a helper drawBoard() shares, so the builds that fold
+// the animation away keep drawBoard() — and the 4K PET image — exactly
+// as they were; here it costs a machine with RAM to spare ~30 bytes.
+function drawSlidTiles(): void {
+    for (let i: utinyint = 0; i < 16; i++) {
+        if (board[i] != shown[i]) {
+            drawTile(i >> 2, i & 3, board[i]);
+            shown[i] = board[i];
+        }
+    }
+    return;
+}
+
+function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
+    for (let i: utinyint = 0; i < 16; i++) {
+        merged[i] = 0;
+    }
+    stepped = true;
+    while (stepped) {
+        stepped = false;
+        stepLines(start, step, stride);
+        if (stepped) {
+            moved = true;
+            drawSlidTiles();
+            for (let f: utinyint = 0; f < ANIM_STEP_FRAMES; f++) {
+                waitFrame();
+            }
+        }
     }
     return;
 }
@@ -214,14 +330,32 @@ export function main(): void {
             }
         } else {
             moved = false;
-            if (input.left()) {
-                moveLines(0, 1, 4);
-            } else if (input.right()) {
-                moveLines(3, 255, 4);
-            } else if (input.up()) {
-                moveLines(0, 4, 1);
-            } else if (input.down()) {
-                moveLines(12, 252, 1);
+            // Two copies of the dispatch, one per mover, rather than one
+            // dispatch into a move(start, step, stride) wrapper that
+            // branches on Memory.RAM inside: the fold keeps whichever
+            // copy this build gets and deletes the other, where a
+            // parameterised wrapper survives folding as a real function
+            // — 20 bytes measured back onto the 4K PET image.
+            if (Memory.RAM < ANIM_MIN_RAM) {
+                if (input.left()) {
+                    moveLines(0, 1, 4);
+                } else if (input.right()) {
+                    moveLines(3, 255, 4);
+                } else if (input.up()) {
+                    moveLines(0, 4, 1);
+                } else if (input.down()) {
+                    moveLines(12, 252, 1);
+                }
+            } else {
+                if (input.left()) {
+                    animateMove(0, 1, 4);
+                } else if (input.right()) {
+                    animateMove(3, 255, 4);
+                } else if (input.up()) {
+                    animateMove(0, 4, 1);
+                } else if (input.down()) {
+                    animateMove(12, 252, 1);
+                }
             }
 
             if (moved) {
