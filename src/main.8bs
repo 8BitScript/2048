@@ -219,6 +219,19 @@ function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
             drawSlidTiles();
             for (let f: utinyint = 0; f < ANIM_STEP_FRAMES; f++) {
                 waitFrame();
+                // Every waitFrame() needs a poll() right behind it (see
+                // @8bitscript/pet/input.8bs and index.8bs's pia1PortB note):
+                // reading the keyboard matrix is what clears the PET's
+                // vertical-retrace flag, so skipping it here — as the first
+                // cut of this animation did — leaves that flag stuck set.
+                // The next waitFrame() then returns instantly instead of
+                // pacing, and keys pressed mid-slide are never sampled, so
+                // they either vanish or all land on the same edge check once
+                // polling resumes — the "input does nothing, then five moves
+                // fire at once" bug. Ignoring the result here (a move in
+                // progress cannot be interrupted) still keeps the matrix and
+                // the frame clock in sync for the next real move.
+                input.poll();
             }
         }
     }
