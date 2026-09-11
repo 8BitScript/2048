@@ -1,0 +1,142 @@
+// The web's own tile: the same 8×5 reverse-video square and 2×3-cell
+// block-digits as tile.pet.8bs, picked up automatically for web builds —
+// nothing in main.8bs or 8bs.config.ts names this file; see
+// docs/packages.md's "System-specific files".
+//
+// Why a web twin at all: the portable tile.8bs prints a one-cell ASCII
+// digit into a 5×3 reverse-video field, and that is what made the wasm
+// board look blocky next to the PET (measured 2026-09-11: the browser
+// was punching an 8px system-font "2" ~4.8px wide into an 8×8 cell, then
+// nearest-neighbour scaling it). The web host now draws the same 2×2
+// quadrant blocks the PET ROM does (codes 128-143, above ASCII so they
+// do not collide with 'a'/'b'/'l'), so this file stamps the PET digit
+// font through those codes, in TILE_COLOR, and the HUD stays text.print
+// so it keeps per-cell colour.
+import { text, TextColor } from "@8bitscript/text";
+
+const ROW: usmallint = text.COLUMNS; // 40
+
+const TILE_H: utinyint = 5;
+const BLANK: string = "        ";
+
+// Exponent to face value — tile.web.8bs's own copy for drawing. The rules'
+// table lives in main.8bs (score); the two never share a module.
+const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+
+const TILE_COLOR: array<utinyint, 12> = [
+    TextColor.WHITE,  // 0: empty
+    TextColor.WHITE,  // 2
+    TextColor.CYAN,   // 4
+    TextColor.GREEN,  // 8
+    TextColor.GREEN,  // 16
+    TextColor.YELLOW, // 32
+    TextColor.YELLOW, // 64
+    TextColor.PURPLE, // 128
+    TextColor.PURPLE, // 256
+    TextColor.RED,    // 512
+    TextColor.RED,    // 1024
+    TextColor.BLUE,   // 2048
+];
+
+// Decimal digits of 2^exponent, packed without the trailing zeros a
+// four-wide slot would carry, and a 13-entry offset table so count is
+// `TILE_DIGIT_AT[e+1] - TILE_DIGIT_AT[e]`. Pad is 4 − count (TILE_W is 8,
+// a digit is 2 cells, leftover is always even).
+const TILE_DIGIT_AT: array<utinyint, 13> = [0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26];
+const TILE_DIGIT: array<utinyint, 26> = [
+    2, 4, 8,
+    1, 6, 3, 2, 6, 4,
+    1, 2, 8, 2, 5, 6, 5, 1, 2,
+    1, 0, 2, 4, 2, 0, 4, 8,
+];
+
+// @8bitscript/pet/blocks DIGIT_TILES remapped onto web codes 128-143:
+// 128 + QUAD index, so the same 4×6 pictures draw without colliding with
+// ASCII. Index is digit×6. Reverse-video punch-out cuts the on-pixels
+// (the strokes) in the screen background.
+const DIGIT_TILES: array<utinyint, 60> = [
+    142, 138, 138, 138, 139, 138,
+    135, 128, 141, 128, 135, 130,
+    140, 138, 131, 138, 139, 130,
+    140, 138, 131, 138, 131, 138,
+    138, 138, 139, 138, 128, 138,
+    142, 136, 139, 130, 131, 138,
+    142, 136, 139, 130, 139, 138,
+    140, 138, 128, 138, 128, 138,
+    142, 138, 139, 138, 139, 138,
+    142, 138, 139, 138, 131, 138,
+];
+
+// Top-left cell of each board square. Compile-time data: (1 + row×6)×
+// 40 + 2 + col×9. Same layout as the 40-column PET.
+const ORIGIN: array<usmallint, 16> = [
+    42, 51, 60, 69,
+    282, 291, 300, 309,
+    522, 531, 540, 549,
+    762, 771, 780, 789,
+];
+
+const HEADER_AT: usmallint = 2;
+const STATUS_AT: usmallint = 962;
+
+export function computeLayout(): void {
+}
+
+export function drawHud(score: usmallint, over: bool, won: bool): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    text.print(HEADER_AT, `2048  SCORE ${score:5}`);
+    if (over) {
+        text.print(STATUS_AT, "GAME OVER - RESTART");
+    } else if (won) {
+        text.print(STATUS_AT, "YOU MADE 2048      ");
+    } else {
+        text.print(STATUS_AT, "ARROWS TO MOVE     ");
+    }
+    return;
+}
+
+function fillTile(origin: usmallint, exponent: utinyint): void {
+    text.setColor(TILE_COLOR[exponent]);
+    text.setReverse(true);
+    let rowCell: usmallint = origin;
+    let row: utinyint = 0;
+    while (row < TILE_H) {
+        text.print(rowCell, BLANK);
+        rowCell = rowCell + ROW;
+        row++;
+    }
+    return;
+}
+
+function drawDigit(cell: usmallint, value: utinyint): void {
+    let base: utinyint = value * 6;
+    let rowCell: usmallint = cell;
+    let row: utinyint = 0;
+    while (row < 3) {
+        text.putChar(rowCell, DIGIT_TILES[base]);
+        text.putChar(rowCell + 1, DIGIT_TILES[base + 1]);
+        base = base + 2;
+        rowCell = rowCell + ROW;
+        row++;
+    }
+    return;
+}
+
+export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    let origin: usmallint = ORIGIN[row * 4 + col];
+    fillTile(origin, exponent);
+    let base: utinyint = TILE_DIGIT_AT[exponent];
+    let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
+    if (count != 0) {
+        let at: usmallint = origin + ROW + (4 - count);
+        let i: utinyint = 0;
+        while (i < count) {
+            drawDigit(at, TILE_DIGIT[base + i]);
+            at = at + 2;
+            i++;
+        }
+    }
+    text.setReverse(false);
+    return;
+}
