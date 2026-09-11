@@ -1,17 +1,52 @@
 name: Release
 
+# Fires on the tag tag-release.yml pushes once the bot-maintained "Version
+# Packages" PR merges, or via manual dispatch (recovering a failed release:
+# `gh workflow run release.yml --ref v0.2.0`). create-release makes the
+# GitHub Release compile.yml's attach-release step then uploads into —
+# `gh release upload` never creates one — before the matching web deploy.
 on:
-  release:
-    types: [published]
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Extract this version's changelog entry
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v ver="## $version" '
+            $0 == ver { found=1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > /tmp/release-notes.md
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists"
+            exit 0
+          fi
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file /tmp/release-notes.md
+
   compile:
-    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@f2c05f69f81ff7d05d2bd6fd9f868d9bbdf9aa26 # v0.3.0
+    needs: create-release
+    # TODO: pin to the v0.4.0 tag's commit once 8BitScript/8bitscript#89
+    # merges and tags a release — this SHA is that PR's branch head, not a
+    # release, and is here only so the rest of this workflow is reviewable.
+    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@21b4ad1b356f3eb6354791a830d91af59cb291a6 # v0.4.0 (pending)
     with:
-      # 0.3.x builds for pet and web only; the other machines return in a
-      # later release (the compiler refuses them by name).
-      targets: pet,web
-      cli-version: 0.3.0
+      # No `targets`: compile.yml runs `8bs build --release`, which reads
+      # this project's own 8bitscript.config.ts — the PET 4K/32K matrix and
+      # the web build — so the release matrix lives in one place.
+      cli-version: 0.4.0
       attach-release: true
 
   web:

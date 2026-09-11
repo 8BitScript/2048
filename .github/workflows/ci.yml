@@ -7,9 +7,11 @@ on:
 
 jobs:
   compile:
-    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@f2c05f69f81ff7d05d2bd6fd9f868d9bbdf9aa26 # v0.3.0
+    # TODO: pin to the v0.4.0 tag's commit once 8BitScript/8bitscript#89
+    # merges and tags a release — see release.yml for the same TODO.
+    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@21b4ad1b356f3eb6354791a830d91af59cb291a6 # v0.4.0 (pending)
     with:
-      # 0.3.x builds for pet and web only; the other machines return in a
-      # later release (the compiler refuses them by name).
-      targets: pet,web
-      cli-version: 0.3.0
+      # No `targets`: builds whatever 8bitscript.config.ts declares for a
+      # release (both PET RAM tiers, plus web), so CI catches a variant
+      # that stops fitting before a release does.
+      cli-version: 0.4.0
