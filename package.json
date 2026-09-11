@@ -31,10 +31,13 @@
     "build:mega65": "8bs build --target mega65",
     "build:web": "8bs build --target web",
     "deploy:web": "8bs build --target web && wrangler deploy",
-    "check": "8bs check src/main.8bs"
+    "check": "8bs check src/main.8bs",
+    "changeset": "changeset",
+    "changeset:version": "changeset version && pnpm install --no-frozen-lockfile"
   },
   "devDependencies": {
     "@8bitscript/cli": "0.3.0",
+    "@changesets/cli": "^3.0.2",
     "wrangler": "4.127.1"
   },
   "dependencies": {

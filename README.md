@@ -22,7 +22,12 @@ ARROWS TO MOVE
 
 Play it in a browser at [2048.8bitscript.com](https://2048.8bitscript.com)
 (swipe on a phone, arrows on a keyboard). GitHub Releases attach the
-compiled `.prg` / `.nes` / `.xex` / `.wasm` for every machine.
+compiled PET `.prg` — a stock 4K 2001 and a roomier 32K build — and the
+web `.wasm`. VIC-20, C64, C128, Atari 8-bit, NES, Commander X16, and
+MEGA65 binaries return once 8BitScript's own backends for those machines
+do (`RELEASE_MACHINES` in [8bitscript](https://github.com/8BitScript/8bitscript)'s
+compiler); the source already targets all of them, so nothing about this
+game's own code needs to change when they land.
 
 ## Playing it
 
