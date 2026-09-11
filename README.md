@@ -46,7 +46,7 @@ Then, from this directory:
 | --- | --- |
 | `pnpm start` | VIC-20 (NTSC) |
 | `pnpm run start:c64` | C64 |
-| `pnpm run start:pet` | PET |
+| `pnpm run start:pet` | PET (a 32K 4032 by default; `--profile 2001 --hardware ram=4` for a stock 4K 2001 — the game is 2440 bytes of program, inside that machine's ~3K of usable RAM; `--profile 8032` for 80 columns) |
 | `pnpm run start:c128` | C128 |
 | `pnpm run start:atari8` | Atari 8-bit |
 | `pnpm run start:nes` | NES |
@@ -73,12 +73,25 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   for empty or *N* for the tile worth 2<sup>N</sup> (1 = 2, 2 = 4, … 11 =
   2048) — one byte instead of two, and "two equal tiles merge" becomes "two
   equal exponents merge into exponent + 1," one add instead of a double and
-  a compare. `POW2[]` is the only place 2<sup>N</sup> is ever written down.
-- **One board move is the same four-row (or column) slide, run twice or
-  transposed.** `moveLeft`/`Right`/`Up`/`Down` differ only in which four
-  board cells they copy into a shared scratch row (`line`) and in which
-  order; `processLine()` — compress, merge, compress again — is the entire
-  algorithm, and it is the one place a bug would live.
+  a compare. `POW2[]` in `main.8bs` is the rules' own 2<sup>N</sup> table
+  (score); `tile.8bs` has a second copy for drawing, and the PET twin never
+  links either drawing copy.
+- **One board move is the same four-row (or column) slide.** `moveLines`
+  walks a direction as start / step / stride — wrapping `utinyint` add
+  so right is step 255 (−1) and down is step 252 (−4) — into a shared
+  scratch row; compress, merge, compress again is the entire algorithm,
+  and it is the one place a bug would live.
+- **On machines with RAM to spare, the slide is animated.** Builds with
+  at least 4K for the program (`Memory.RAM` is a compile-time fact, so
+  the branch folds away everywhere else) play a move one board cell per
+  frame instead of all at once: every tile that can advance does — into
+  an empty neighbour, or merging onto an equal tile that hasn't merged
+  this move — the changed tiles repaint, and the next step follows a
+  frame later (`ANIM_STEP_FRAMES` in `main.8bs` is the knob). A
+  full-width slide lands in 3 steps, ~50–100ms at 60/50Hz, and settles
+  on exactly the board the instant mover computes — checked exhaustively
+  over all 20,736 line states. The 4K PET 2001, the unexpanded VIC-20,
+  and the NES keep their instant moves and their exact byte counts.
 - **Randomness is [`@8bitscript/random`](../8bitscript/packages/random)**, a
   small deterministic generator added to 8BitScript itself for this —
   nothing in the language had one for any of these nine targets before
@@ -91,22 +104,25 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   dependency at all.
 - **Colour is a table lookup, and it costs nothing on the three machines
   that can't use it.** `TILE_COLOR[exponent]` feeds `text.setColor()` before
-  every tile is drawn; on the PET, the Atari 8-bit, and the NES —
-  the three of nine 8BitScript targets with no per-cell colour — that
-  package's own `setColor`/`putColor` already exists as a deliberately
-  empty function, so this program never has to ask `video.colorPerCell`
-  itself. The other six (VIC-20, C64, C128, Commander X16, MEGA65, web) show
-  each tile value in a distinct colour, the closest a text-mode board gets
-  to upstream 2048's own tile colours.
+  every tile is drawn. On the PET, Atari 8-bit and NES that call is an
+  empty function, and the compiler deletes it — table and all — so those
+  three never link `setColor`. The other six (VIC-20, C64, C128,
+  Commander X16, MEGA65, web) show each tile value in a distinct colour,
+  the closest a text-mode board gets to upstream 2048's own tile colours.
+- **RAM is tiny everywhere.** `8bs build` reports 54 bytes of RAM on a
+  PET 2001 and 81 on the web — the board, a 16-byte copy of what is on
+  screen (so a tile that did not move is never erased and redrawn), the
+  scratch row, the animated builds' merge-lock mask, the score, and a
+  handful of flags. The PET program itself is
+  **2440 bytes** on a 2001/4K (down from 2983, and from 4005 before the
+  compiler's 0.2.3 leaner 6502 codegen): the PET HUD is baked screen codes
+  rather than `text.print` / `printNumber`, the four move helpers are one
+  start/step/stride walk, and helpers that would otherwise be inlined into
+  `main` four times stay as calls. That is what fits a stock 4K 2001.
 - **Nothing is wider than a VIC-20's 22 columns.** The HUD line is 17
   characters, the board's widest row 19, the dashed rule 20 — checked by
   actually running it there (`pnpm start`), the machine every layout in
   this project is checked against first.
-- **RAM is tiny everywhere.** `8bs build` reports well under a hundred
-  bytes of RAM for the whole game's state on every 6502 target (an
-  unexpanded VIC-20 has 3583 bytes total for the entire program) — the
-  board, the scratch row, the score, and a handful of flags, nothing else
-  retained between frames.
 
 ## What's next
 
