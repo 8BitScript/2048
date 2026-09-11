@@ -7,9 +7,7 @@ on:
 
 jobs:
   compile:
-    # TODO: pin to the v0.4.0 tag's commit once 8BitScript/8bitscript#89
-    # merges and tags a release — see release.yml for the same TODO.
-    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@21b4ad1b356f3eb6354791a830d91af59cb291a6 # v0.4.0 (pending)
+    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@4bc941efecf51339123b9d72a32a9e89f3d283f1 # v0.4.0
     with:
       # No `targets`: builds whatever 8bitscript.config.ts declares for a
       # release (both PET RAM tiers, plus web), so CI catches a variant
