@@ -6,10 +6,12 @@ on:
 
 jobs:
   compile:
-    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@283376acb3fa406e4f755dc86201be70baad223b # v0.1.0
+    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@effb7a671539c871c147413da295d39880737455 # v0.2.5
     with:
-      targets: vic20,c64,pet,c128,atari8,nes,cx16,mega65,web
-      cli-version: 0.1.0
+      # 0.2.x builds for pet and web only; the other machines return in a
+      # later release (the compiler refuses them by name).
+      targets: pet,web
+      cli-version: 0.2.5
       attach-release: true
 
   web:
