@@ -7,9 +7,9 @@ on:
 
 jobs:
   compile:
-    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@f2c05f69f81ff7d05d2bd6fd9f868d9bbdf9aa26 # v0.3.0
+    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@4bc941efecf51339123b9d72a32a9e89f3d283f1 # v0.4.0
     with:
-      # 0.3.x builds for pet and web only; the other machines return in a
-      # later release (the compiler refuses them by name).
-      targets: pet,web
-      cli-version: 0.3.0
+      # No `targets`: builds whatever 8bitscript.config.ts declares for a
+      # release (both PET RAM tiers, plus web), so CI catches a variant
+      # that stops fitting before a release does.
+      cli-version: 0.4.0

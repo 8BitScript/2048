@@ -12,7 +12,13 @@ export default {
     // columns (the layout tile.pet.8bs centres for), 32K, the biggest
     // on-board RAM a PET shipped with. `--profile 8032` still builds
     // the 80-column version.
-    pet: { hardware: { model: '4032', ram: '32' } },
+    //
+    // `release` is what `8bs build --release` (the GitHub Release
+    // workflow) builds for this target: '2001' for the stock-4K
+    // download, and {} for this target's own default above (the 32K
+    // 4032 build) — not the '4032' catalog preset, which also sets a
+    // speaker option this project doesn't.
+    pet: { hardware: { model: '4032', ram: '32' }, release: ['2001', {}] },
     c128: {},
     atari8: {},
     nes: {},

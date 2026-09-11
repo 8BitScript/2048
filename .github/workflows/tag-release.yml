@@ -1,0 +1,45 @@
+name: Tag Release
+
+# Fires when the bot-maintained "Version Packages" PR (opened by
+# changesets.yml on branch changeset-release/trunk) is merged. Reads the
+# version changesets just bumped package.json to and tags it, then
+# explicitly dispatches release.yml against that tag.
+#
+# The explicit dispatch matters: a tag pushed with the default
+# GITHUB_TOKEN does NOT fire release.yml's own `push: tags` trigger —
+# GitHub suppresses workflow runs triggered by another workflow's
+# GITHUB_TOKEN specifically to prevent infinite loops. workflow_dispatch
+# is exempt from that suppression, so this workflow calls it directly
+# instead of relying on the tag push alone. Mirrors
+# 8BitScript/8bitscript's own tag-release.yml.
+#
+# That merge is a human decision, always. Never merge the Version
+# Packages PR from automation — this workflow only reacts to a merge
+# that already happened; it doesn't perform or encourage one.
+on:
+  pull_request:
+    types: [closed]
+    branches: [trunk]
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  tag:
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'changeset-release/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: trunk
+      - id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+      - run: gh workflow run release.yml --ref "v${{ steps.version.outputs.version }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
