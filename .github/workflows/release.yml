@@ -4,7 +4,10 @@ name: Release
 # Packages" PR merges, or via manual dispatch (recovering a failed release:
 # `gh workflow run release.yml --ref v0.2.0`). create-release makes the
 # GitHub Release compile.yml's attach-release step then uploads into —
-# `gh release upload` never creates one — before the matching web deploy.
+# `gh release upload` never creates one. There is no web deploy job here:
+# Cloudflare Workers Builds watches this repo directly and deploys
+# 2048.8bitscript.com itself on every push to trunk (`pnpm run build`,
+# its own build, independent of this workflow) — see README.md.
 on:
   push:
     tags: ['v*']
@@ -45,19 +48,3 @@ jobs:
       # the web build — so the release matrix lives in one place.
       cli-version: 0.4.0
       attach-release: true
-
-  web:
-    needs: compile
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 26
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec 8bs build --target web
-      - run: pnpm exec wrangler deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
