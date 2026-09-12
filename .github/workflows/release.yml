@@ -41,7 +41,7 @@ jobs:
 
   compile:
     needs: create-release
-    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@4bc941efecf51339123b9d72a32a9e89f3d283f1 # v0.4.0
+    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@9a69c0e05ce3c6f545e5b22695b545d8888dab0b # v0.5.0
     with:
       # No `targets`: compile.yml runs `8bs build --release`, which reads
       # this project's own 8bitscript.config.ts — the PET 4K/32K matrix and
