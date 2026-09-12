@@ -16,6 +16,9 @@ dist/
 # OS cruft
 .DS_Store
 
+# Personal hardware — lives in ~/.config/8bitscript/, not the game
+8bitscript.controllers.json
+
 # Editor / agent local config (attribution, rules)
 .cursor/cli.json
 .cursor/rules/
