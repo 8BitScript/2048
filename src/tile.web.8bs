@@ -1,4 +1,4 @@
-// The web's default (Modern, 16:9 high-fi) tile: 8×6 reverse-video squares
+// The web's default (Modern, 16:9 high-fi) tile: 8×5 reverse-video squares
 // with 2×3-cell block-digits, a HUD down the side margins, and a centred
 // game-over panel. Picked up automatically for untagged web builds —
 // nothing in main.8bs names this file; see docs/packages.md's
@@ -35,7 +35,13 @@ const VERSION_LINE: string = "v0.1.3";
 const ROW: usmallint = text.COLUMNS; // 48
 
 const TILE_W: utinyint = 8;
-const TILE_H: utinyint = 6;
+// Five rows, not six. A digit is three rows tall, and three inside six leaves
+// three rows to share — one above and two below, so the number rides half a
+// row high of centre. Three inside FIVE is one and one: exact. The board is
+// then 23 of the 27 rows, and the four left over become a two-row margin above
+// and below it, which matches the clear column the HUD already keeps on each
+// side. Padding on every edge rather than four rows of nothing at the bottom.
+const TILE_H: utinyint = 5;
 const BLANK: string = "        "; // TILE_W spaces
 
 const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
@@ -63,27 +69,36 @@ const TILE_DIGIT: array<utinyint, 26> = [
     1, 0, 2, 4, 2, 0, 4, 8,
 ];
 
+// The block-digit font, shifted one half-cell right of where it started.
+//
+// Each digit is drawn as 3 half-cells of ink inside a box 4 half-cells wide —
+// odd inside even — so it can never sit dead centre in its own box. Drawn
+// hard against the left of that box (which is how it was), a run of digits
+// ends up half a cell left of the tile's centre, and on a 64-pixel tile that
+// is visible. Drawn against the RIGHT of it, the trailing gap moves to the
+// front and the run's ink centre lands exactly on the tile's centre — for
+// one, two, three and four digits alike, because every digit shifts by the
+// same amount. The glyphs are unchanged; only which half-cell they sit in is.
 const DIGIT_TILES: array<utinyint, 60> = [
-    142, 138, 138, 138, 139, 138,
-    135, 128, 141, 128, 135, 130,
-    140, 138, 131, 138, 139, 130,
-    140, 138, 131, 138, 131, 138,
-    138, 138, 139, 138, 128, 138,
-    142, 136, 139, 130, 131, 138,
-    142, 136, 139, 130, 139, 138,
-    140, 138, 128, 138, 128, 138,
-    142, 138, 139, 138, 139, 138,
-    142, 138, 139, 138, 131, 138,
+    133, 141, 133, 133, 133, 135,
+    129, 138, 132, 138, 129, 139,
+    132, 141, 129, 135, 133, 131,
+    132, 141, 129, 135, 129, 135,
+    133, 133, 133, 135, 128, 133,
+    133, 140, 133, 131, 129, 135,
+    133, 140, 133, 131, 133, 135,
+    132, 141, 128, 133, 128, 133,
+    133, 141, 133, 135, 133, 135,
+    133, 141, 133, 135, 129, 135,
 ];
-
-// 4×4 of 8×6 tiles with 1-cell gaps: 35×27 on 48×27, at left 6, top 0 — the
-// full height of the screen. Columns 0-5 and 41-47 are the margins the HUD
-// lives in, and each keeps a clear column against the board.
+// 4×4 of 8×5 tiles with 1-cell gaps: 35×23 on 48×27, at left 6, top 2 — two
+// rows of margin above and below. Columns 0-5 and 41-47 are the margins the
+// HUD lives in, and each keeps a clear column against the board.
 const ORIGIN: array<usmallint, 16> = [
-       6,   15,   24,   33,
-     342,  351,  360,  369,
-     678,  687,  696,  705,
-    1014, 1023, 1032, 1041,
+     102, 111, 120, 129,
+     390, 399, 408, 417,
+     678, 687, 696, 705,
+     966, 975, 984, 993,
 ];
 
 // One clear column on each side of everything: the left margin is columns
@@ -92,11 +107,11 @@ const ORIGIN: array<usmallint, 16> = [
 // the score sits in 42-46, the same way. The two margins differ by a column
 // because "2048" is four characters and "SCORE" is five — the padding around
 // them is what is even, which is what you actually see.
-const TITLE_NAME_AT: usmallint = 49;      // row 1, col 1
-const SCORE_LABEL_AT: usmallint = 90;     // row 1, col 42
-const SCORE_VALUE_AT: usmallint = 138;    // row 2, col 42
-const HINT_TOP_AT: usmallint = 1194;      // row 24, col 42 — two 5-column lines
-const HINT_BOTTOM_AT: usmallint = 1242;   // row 25, col 42
+const TITLE_NAME_AT: usmallint = 97;      // row 2, col 1 — level with the board's top
+const SCORE_LABEL_AT: usmallint = 138;    // row 2, col 42
+const SCORE_VALUE_AT: usmallint = 186;    // row 3, col 42
+const HINT_TOP_AT: usmallint = 1146;      // row 23, col 42 — two 5-column lines
+const HINT_BOTTOM_AT: usmallint = 1194;   // row 24, col 42
 const TITLE_AT: usmallint = 598;          // row 12, col 22 — "2048" on the title screen
 const PROMPT_AT: usmallint = 690;         // row 14, col 18
 const VERSION_AT: usmallint = 1286;       // row 26, col 38 — "v0.1.3"
