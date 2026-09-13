@@ -7,7 +7,7 @@ on:
 
 jobs:
   compile:
-    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@9a69c0e05ce3c6f545e5b22695b545d8888dab0b # v0.5.0
+    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@f5741ae372209cfeebb9826d286cd09756559c2d # v0.6.1
     with:
       # No `targets`: builds whatever 8bitscript.config.ts declares for a
       # release (both PET RAM tiers, plus web), so CI catches a variant
