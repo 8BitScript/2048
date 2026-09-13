@@ -7,7 +7,11 @@
 // main.8bs so those two can differ without duplicating the game's rules,
 // board state, or input handling.
 import { text, TextColor } from "@8bitscript/text";
-import { Video } from "@8bitscript/system";
+import { Input, System, Video } from "@8bitscript/system";
+
+// Keep in sync with package.json "version".
+const VERSION_LINE: string = "v0.1.3";
+const VERSION_LEN: utinyint = 6;
 
 // Exponent to face value — tile.8bs's own copy for drawing. The rules'
 // table lives in main.8bs (score); the two never share a module, and
@@ -159,6 +163,28 @@ function tileWidth(value: usmallint): utinyint {
 // cellWidth - width is odd, falls to the right — `>> 1` truncates, never
 // rounds up); the top and bottom rows are blank on purpose — they are the
 // rest of the square, not wasted space.
+
+// Front door before the first deal: title, the confirm key this machine
+// names, and the app version along the bottom row.
+export function drawTitleScreen(): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    let cols: usmallint = text.COLUMNS;
+    let titleRow: usmallint = (Video.ROWS >> 1) - 1;
+    let promptRow: usmallint = titleRow + 2;
+    let versionRow: usmallint = Video.ROWS - 1;
+    text.print(titleRow * ROW + ((cols - 4) >> 1), "2048");
+    if (!Input.KEYBOARD) {
+        text.print(promptRow * ROW + ((cols - 11) >> 1), "PRESS START");
+    } else if (#system() == System.WEB) {
+        text.print(promptRow * ROW + ((cols - 11) >> 1), "PRESS ENTER");
+    } else {
+        text.print(promptRow * ROW + ((cols - 12) >> 1), "PRESS RETURN");
+    }
+    text.print(versionRow * ROW + cols - VERSION_LEN, VERSION_LINE);
+    return;
+}
+
 export function drawHud(score: usmallint, over: bool, won: bool): void {
     text.setColor(TextColor.WHITE);
     text.print(headerRow * ROW + leftMargin, `2048  SCORE ${score:5}`);
