@@ -114,6 +114,9 @@ const HINT_TOP_AT: usmallint = 1146;      // row 23, col 42 — two 5-column lin
 const HINT_BOTTOM_AT: usmallint = 1194;   // row 24, col 42
 const TITLE_AT: usmallint = 598;          // row 12, col 22 — "2048" on the title screen
 const PROMPT_AT: usmallint = 690;         // row 14, col 18
+const TOUCH_PROMPT_AT: usmallint = 689;  // "TOUCH TO START" is two
+                                          // characters longer, so it
+                                          // centres two columns left
 const VERSION_AT: usmallint = 1286;       // row 26, col 38 — "v0.1.3"
 
 // ---- the game-over panel --------------------------------------------------
@@ -133,7 +136,7 @@ const PANEL_BODY_BLANK: string = "                          "; // PANEL_BODY_W s
 const PANEL_BODY_AT: usmallint = 587;     // row 12, col 11 — the white card inside it
 const PANEL_TITLE_AT: usmallint = 499;    // row 10, col 19 — "GAME OVER", in the band
 const PANEL_SCORE_AT: usmallint = 642;    // row 13, col 18 — "SCORE 12345"
-const PANEL_TAP_AT: usmallint = 736;      // row 15, col 16 — "TAP TO CONTINUE"
+const PANEL_TAP_AT: usmallint = 735;      // row 15, col 15 — "TOUCH TO CONTINUE"
 const PANEL_KEY_AT: usmallint = 738;      // row 15, col 18 — "PRESS ENTER"
 const HINT_BLANK: string = "     ";   // one margin line
 
@@ -155,7 +158,7 @@ export function drawTitleScreen(): void {
     text.setColor(TextColor.WHITE);
     text.print(TITLE_AT, "2048");
     if (input.touch()) {
-        text.print(PROMPT_AT, "TAP TO START");
+        text.print(TOUCH_PROMPT_AT, "TOUCH TO START");
     } else {
         text.print(PROMPT_AT, "PRESS ENTER");
     }
@@ -191,7 +194,7 @@ function drawPanel(score: usmallint): void {
     fillRows(PANEL_BODY_AT, PANEL_BODY_H, PANEL_BODY_BLANK);
     text.print(PANEL_SCORE_AT, `SCORE ${score:5}`);
     if (input.touch()) {
-        text.print(PANEL_TAP_AT, "TAP TO CONTINUE");
+        text.print(PANEL_TAP_AT, "TOUCH TO CONTINUE");
     } else {
         text.print(PANEL_KEY_AT, "PRESS ENTER");
     }
