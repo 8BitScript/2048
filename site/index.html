@@ -17,13 +17,31 @@
     -webkit-text-size-adjust: 100%;
   }
 
-  /* The screen owns the whole visible viewport. `position: fixed` is laid
-     out against the *layout* viewport, which under `viewport-fit=cover`
-     runs edge to edge — underneath Safari's address bar in landscape. The
-     visual viewport is the part actually on screen, so fit() below drives
-     these four numbers from it and the picture never sits under browser
-     chrome. inset: 0 is only the pre-script fallback. */
-  #game { position: fixed; inset: 0; }
+  /* The screen owns the whole visible viewport.
+     `height: 100dvh` is the dynamic viewport height — the height with the
+     browser's own retractable UI accounted for, which is exactly the question
+     "how much of the screen can I actually draw on" and the one thing here
+     that iOS answers correctly by itself. `height: 100%` is the fallback for
+     anything that does not know dvh.
+     The safe-area padding keeps the picture clear of the notch and the home
+     indicator; `viewport-fit=cover` in the viewport meta is what makes those
+     insets report anything at all.
+     Deliberately NOT positioned from visualViewport.offsetTop: iOS reports
+     that as 0 even when Safari's landscape bar is over the top of the layout
+     viewport, so driving `top` from it anchors the picture above the visible
+     area and the top of the board gets cut. */
+  #game {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 100%;
+    height: 100dvh;
+    box-sizing: border-box;
+    padding:
+      env(safe-area-inset-top) env(safe-area-inset-right)
+      env(safe-area-inset-bottom) env(safe-area-inset-left);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
 
   /* Settings live on the edge, not in a bar across the top. A phone in
      landscape has no vertical pixels to give away, and the top strip is
@@ -104,32 +122,6 @@ var handle = document.getElementById('handle');
 var systemSelect = document.getElementById('system');
 var modelSelect = document.getElementById('model');
 
-// ---- the visible box ------------------------------------------------------
-// visualViewport is the region actually on screen right now: window.innerHeight
-// counts space a collapsed toolbar has given back (or has not yet given back)
-// depending on iOS version, and under viewport-fit=cover the layout viewport
-// runs underneath the address bar besides. Sizing #game from the visual
-// viewport is what keeps the picture — and the settings handle — clear of
-// Safari's chrome in landscape. The loader measures the same thing for the
-// canvas, so the two agree.
-function fit() {
-  var vv = window.visualViewport;
-  if (!vv) return;
-  game.style.top = vv.offsetTop + 'px';
-  game.style.left = vv.offsetLeft + 'px';
-  game.style.right = 'auto';
-  game.style.bottom = 'auto';
-  game.style.width = vv.width + 'px';
-  game.style.height = vv.height + 'px';
-}
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', fit);
-  window.visualViewport.addEventListener('scroll', fit);
-}
-window.addEventListener('resize', fit);
-window.addEventListener('orientationchange', fit);
-fit();
-
 // ---- the settings tray ----------------------------------------------------
 function setOpen(open) {
   panel.classList.toggle('open', open);
@@ -162,10 +154,16 @@ function load() {
   current = EightBitScript.mount('#game', {
     src: src,
     frameRate: 60,
-    // The page is the whole screen, so the loader sizes from visualViewport
-    // and takes the arrow keys from the window rather than waiting to be
-    // focused — there is nothing else on this page to focus.
-    fullPage: true,
+    // Measured from the element, not from the viewport: #game is already
+    // exactly the drawable area (100dvh inside the safe-area insets), and an
+    // element that says what it is beats a second guess at the same number.
+    // The loader watches it with a ResizeObserver, so turning the phone
+    // resizes the picture without anything here listening for it.
+    //
+    // `keyboard: 'window'` because the full-page default no longer applies:
+    // the arrow keys belong to the game, and there is nothing else on this
+    // page to focus.
+    keyboard: 'window',
     fullscreen: true,
   });
 }
