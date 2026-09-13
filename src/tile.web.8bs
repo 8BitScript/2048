@@ -13,6 +13,11 @@
 // font through those codes, in TILE_COLOR, and the HUD stays text.print
 // so it keeps per-cell colour.
 import { text, TextColor } from "@8bitscript/text";
+import { Input, System, Video } from "@8bitscript/system";
+
+// Keep in sync with package.json "version".
+const VERSION_LINE: string = "v0.1.3";
+const VERSION_LEN: utinyint = 6;
 
 const ROW: usmallint = text.COLUMNS; // 40
 
@@ -80,6 +85,25 @@ const HEADER_AT: usmallint = 2;
 const STATUS_AT: usmallint = 962;
 
 export function computeLayout(): void {
+}
+
+export function drawTitleScreen(): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    let cols: usmallint = text.COLUMNS;
+    let titleRow: usmallint = (Video.ROWS >> 1) - 1;
+    let promptRow: usmallint = titleRow + 2;
+    let versionRow: usmallint = Video.ROWS - 1;
+    text.print(titleRow * ROW + ((cols - 4) >> 1), "2048");
+    if (!Input.KEYBOARD) {
+        text.print(promptRow * ROW + ((cols - 11) >> 1), "PRESS START");
+    } else if (#system() == System.WEB) {
+        text.print(promptRow * ROW + ((cols - 11) >> 1), "PRESS ENTER");
+    } else {
+        text.print(promptRow * ROW + ((cols - 12) >> 1), "PRESS RETURN");
+    }
+    text.print(versionRow * ROW + cols - VERSION_LEN, VERSION_LINE);
+    return;
 }
 
 export function drawHud(score: usmallint, over: bool, won: bool): void {

@@ -14,7 +14,7 @@ import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
 import { random } from "@8bitscript/random";
 import { Memory } from "@8bitscript/system";
-import { computeLayout, drawHud, drawTile } from "./tile.8bs";
+import { computeLayout, drawHud, drawTile, drawTitleScreen } from "./tile.8bs";
 
 const SIZE: utinyint = 4; // 4x4 — 2048's own board, on every target
 const MAX_EXPONENT: utinyint = 11; // 2^11 = 2048, the tile that wins
@@ -61,6 +61,7 @@ let score: usmallint = 0;
 let moved: bool = false; // did the move just played actually change the board?
 let over: bool = false; // no move left that would change the board
 let won: bool = false; // a 2048 has appeared; play continues past it, as upstream does
+let started: bool = false; // false until the title screen's confirm starts a game
 
 // ---- moving a line -----------------------------------------------------
 //
@@ -331,13 +332,22 @@ export function main(): void {
     screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
     computeLayout();
     input.begin();
-    resetGame();
-    drawBoard();
+    drawTitleScreen();
 
     while (true) {
         waitFrame();
         input.poll();
         random.next(); // keep the generator moving between moves — see spawnTile()
+
+        if (!started) {
+            if (input.confirm()) {
+                started = true;
+                screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
+                resetGame();
+                drawBoard();
+            }
+            continue;
+        }
 
         if (over) {
             if (input.confirm()) {

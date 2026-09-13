@@ -30,7 +30,7 @@
 // at their ASCII values, and the VIA PCR ($E84C) is one store. A loop
 // over baked codes is smaller than linking the converter, and it is
 // what lets a stock 4K 2001's ~3K of usable RAM hold the game.
-import { Video } from "@8bitscript/system";
+import { Input, System, Video } from "@8bitscript/system";
 
 const ROW: usmallint = Video.COLUMNS; // 40, or 80 on an 8032 build
 
@@ -91,6 +91,25 @@ const HUD_OVER: utinyint = 50;
 const HUD_HEADER_LEN: utinyint = 12;
 const HUD_STATUS_LEN: utinyint = 19;
 
+// Title screen — keep TITLE_AT_VERSION in sync with package.json "version".
+const TITLE_DATA: array<utinyint, 44> = [
+    50, 48, 52, 56,
+    16, 18, 5, 19, 19, 32, 18, 5, 20, 21, 18, 14,
+    16, 18, 5, 19, 19, 32, 5, 14, 20, 5, 18,
+    16, 18, 5, 19, 19, 32, 19, 20, 1, 18, 20,
+    118, 48, 46, 49, 46, 51,
+];
+const TITLE_AT_2048: utinyint = 0;
+const TITLE_AT_PRESS_RETURN: utinyint = 4;
+const TITLE_AT_PRESS_ENTER: utinyint = 16;
+const TITLE_AT_PRESS_START: utinyint = 27;
+const TITLE_AT_VERSION: utinyint = 38;
+const TITLE_2048_LEN: utinyint = 4;
+const TITLE_PRESS_RETURN_LEN: utinyint = 12;
+const TITLE_PRESS_ENTER_LEN: utinyint = 11;
+const TITLE_PRESS_START_LEN: utinyint = 11;
+const TITLE_VERSION_LEN: utinyint = 6;
+
 const SCORE_PLACES: array<usmallint, 5> = [10000, 1000, 100, 10, 1];
 
 // Top-left cell of each board square. Compile-time data: (1 + row×6)×
@@ -124,6 +143,15 @@ function writeCells(cell: usmallint, base: utinyint, count: utinyint): void {
     return;
 }
 
+function writeTitleCells(cell: usmallint, base: utinyint, count: utinyint): void {
+    let i: utinyint = 0;
+    while (i < count) {
+        memory.write(SCREEN + cell + i, TITLE_DATA[base + i]);
+        i++;
+    }
+    return;
+}
+
 function printScore5(cell: usmallint, value: usmallint): void {
     let i: utinyint = 0;
     while (i < 5) {
@@ -135,6 +163,45 @@ function printScore5(cell: usmallint, value: usmallint): void {
         memory.write(SCREEN + cell + i, digit);
         i++;
     }
+    return;
+}
+
+export function drawTitleScreen(): void {
+    memory.write(VIA_PCR, GRAPHICS_SET);
+    let cols: usmallint = Video.COLUMNS;
+    let rowWidth: usmallint = ROW;
+    let titleRow: utinyint = (Video.ROWS >> 1) - 1;
+    let promptRow: utinyint = titleRow + 2;
+    let versionRow: utinyint = Video.ROWS - 1;
+    writeTitleCells(
+        titleRow * rowWidth + ((cols - TITLE_2048_LEN) >> 1),
+        TITLE_AT_2048,
+        TITLE_2048_LEN,
+    );
+    if (!Input.KEYBOARD) {
+        writeTitleCells(
+            promptRow * rowWidth + ((cols - TITLE_PRESS_START_LEN) >> 1),
+            TITLE_AT_PRESS_START,
+            TITLE_PRESS_START_LEN,
+        );
+    } else if (#system() == System.WEB) {
+        writeTitleCells(
+            promptRow * rowWidth + ((cols - TITLE_PRESS_ENTER_LEN) >> 1),
+            TITLE_AT_PRESS_ENTER,
+            TITLE_PRESS_ENTER_LEN,
+        );
+    } else {
+        writeTitleCells(
+            promptRow * rowWidth + ((cols - TITLE_PRESS_RETURN_LEN) >> 1),
+            TITLE_AT_PRESS_RETURN,
+            TITLE_PRESS_RETURN_LEN,
+        );
+    }
+    writeTitleCells(
+        versionRow * rowWidth + cols - TITLE_VERSION_LEN,
+        TITLE_AT_VERSION,
+        TITLE_VERSION_LEN,
+    );
     return;
 }
 
