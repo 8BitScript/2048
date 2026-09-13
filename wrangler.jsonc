@@ -4,7 +4,7 @@
   // program.wasm, _headers). The _headers file sets COOP/COEP so
   // SharedArrayBuffer / waitFrame() work in the browser.
   "$schema": "https://unpkg.com/wrangler/config-schema.json",
-  "name": "eightbitscript-2048",
+  "name": "2048",
   "compatibility_date": "2026-09-07",
   "assets": {
     "directory": "./dist/web",
