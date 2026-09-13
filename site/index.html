@@ -2,70 +2,255 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Deliberately NOT viewport-fit=cover, and deliberately NOT
+     status-bar-style=black-translucent. Both exist to let a page draw
+     UNDERNEATH the system UI, and both were doing exactly that: they extend
+     the layout viewport above the visible area, so a `position: fixed`
+     element at top: 0 starts behind Safari's landscape bar and the top of the
+     picture is cut off. A letterboxed game gains nothing from drawing under
+     the chrome — it just loses rows. Without `cover`, the layout viewport is
+     the safe area and top: 0 is the top of what you can actually see. -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#000000">
 <title>2048 — 8BitScript</title>
 <style>
-  html, body { margin: 0; height: 100%; background: #000; color: #d7dae0;
-    font: 14px/1.4 ui-sans-serif, system-ui, sans-serif; }
-  #bar {
-    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
-    padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top));
-    background: #14161a; border-bottom: 1px solid #262b33;
+  :root { color-scheme: dark; }
+
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    /* Not #000. The picture's own background IS black, so a black page makes
+       the edge of the 16:9 screen invisible — you cannot tell where the
+       machine stops and the page begins. A slightly lifted neutral behind it,
+       with the program's own border colour framing the picture, is what makes
+       the screen read as a screen. */
+    background: #15181e; color: #d7dae0;
+    font: 14px/1.4 ui-sans-serif, system-ui, sans-serif;
+    -webkit-text-size-adjust: 100%;
   }
-  #bar strong { letter-spacing: 0.04em; }
-  label { display: flex; gap: 6px; align-items: center; color: #9aa1ab; }
+
+  /* The screen owns the whole visible viewport.
+
+     Deliberately NOT `position: fixed`. A fixed element is laid out against
+     the initial containing block, and on a phone that block does not reliably
+     start where the visible area starts — which is how the top of the picture
+     kept ending up behind the browser's chrome. Ordinary in-flow content has
+     no such problem: the browser puts it inside the content area, because
+     that is what the content area is for.
+
+     The height is set from JavaScript (see sizeScreen) to the SMALLEST of
+     every measure the browser offers, because the failure mode throughout has
+     been a container that believed it was taller than the screen. `100svh` is
+     the CSS fallback: the small viewport height, i.e. the height with the
+     browser's retractable UI fully out, which is the conservative one. */
+  #game {
+    width: 100%;
+    height: 100%;
+    height: 100svh;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Settings live on the edge, not in a bar across the top. A phone in
+     landscape has no vertical pixels to give away, and the top strip is
+     exactly where the browser puts its own chrome — so the thing that used to
+     be a 49px bar is now a handle that expands and gets out of the way again.
+     Fixed to the page rather than to #game: the loader's screen paints over
+     everything inside #game, so a handle in there is invisible. */
+  #panel {
+    position: fixed; z-index: 10;
+    top: max(10px, env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  #handle {
+    flex: none; width: 38px; height: 38px; padding: 0;
+    display: grid; place-items: center;
+    color: #c3c9d4; background: rgba(18, 21, 27, 0.82);
+    border: 1px solid #39414d; border-radius: 10px;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    cursor: pointer; touch-action: manipulation;
+  }
+  #handle:hover { color: #d7dae0; border-color: #39414d; }
+  #handle:focus-visible { outline: 2px solid #5b8cff; outline-offset: 2px; }
+  #panel.open #handle { color: #d7dae0; border-color: #39414d; background: rgba(12, 14, 18, 0.9); }
+
+  #tray {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 12px 14px;
+    background: rgba(12, 14, 18, 0.92); border: 1px solid #262b33;
+    border-radius: 12px;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    transition: opacity .16s ease, transform .16s ease, visibility .16s;
+  }
+  #panel:not(.open) #tray {
+    opacity: 0; visibility: hidden;
+    transform: translateX(-8px) scale(0.97);
+  }
+  @media (prefers-reduced-motion: reduce) { #tray { transition: none; } }
+
+  #tray strong { letter-spacing: 0.06em; color: #d7dae0; }
+  /* Hidden with the tray. Here so a sizing problem on a device I cannot open
+     a console on can be read off the screen instead of guessed at. */
+  #diag {
+    font: 10px/1.5 ui-monospace, Menlo, monospace;
+    color: #6f7782; white-space: pre; border-top: 1px solid #262b33; padding-top: 8px;
+  }
+  label { display: flex; gap: 8px; align-items: center; justify-content: space-between; color: #9aa1ab; }
   select {
     background: #0b0d10; color: #d7dae0; border: 1px solid #262b33;
-    border-radius: 6px; padding: 4px 8px; font: inherit;
-  }
-  #game {
-    height: calc(100% - 49px);
-    min-height: 200px;
+    border-radius: 6px; padding: 5px 8px; font: inherit;
   }
 </style>
 <script src="8bitscript.js"></script>
 </head>
 <body>
-<div id="bar">
-  <strong>2048</strong>
-  <label>System
-    <select id="system">
-      <option value="hifi">Web 16:9</option>
-      <option value="commodore">Commodore</option>
-    </select>
-  </label>
-  <label id="model-wrap" hidden>Model
-    <select id="model">
-      <option value="c64">C64</option>
-      <option value="pet-2001">PET 2001</option>
-      <option value="vic20">VIC-20</option>
-    </select>
-  </label>
-</div>
 <div id="game"></div>
+
+<!-- The 8BitScript web player's own controls, deliberately OUTSIDE #game.
+     The loader appends its screen into #game and that screen paints its own
+     black background over everything already in there, so a control nested
+     inside it is a control you cannot see. Out here it sits over the
+     letterbox beside the picture, which is exactly the space a 16:9 screen
+     leaves on a phone held sideways. -->
+<div id="panel">
+  <button id="handle" type="button" aria-expanded="false" aria-controls="tray" aria-label="Player settings">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/>
+      <path fill="currentColor" d="M19.4 13a7.8 7.8 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-1.7-1l-.4-2.5h-3.9l-.4 2.5c-.6.2-1.2.6-1.7 1l-2.4-1-2 3.4L6.6 11a7.8 7.8 0 0 0 0 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.8 1.7 1l.4 2.5h3.9l.4-2.5c.6-.2 1.2-.6 1.7-1l2.4 1 2-3.4-2.1-1.6Z" opacity=".55"/>
+    </svg>
+  </button>
+  <div id="tray" role="group" aria-label="Player settings">
+    <strong>8BitScript</strong>
+    <label for="system">System
+      <select id="system">
+        <option value="hifi">Modern</option>
+        <option value="commodore">Commodore</option>
+      </select>
+    </label>
+    <label id="model-wrap" for="model" hidden>Model
+      <select id="model">
+        <option value="c64">C64</option>
+        <option value="pet-2001">PET 2001</option>
+        <option value="vic20">VIC-20</option>
+      </select>
+    </label>
+    <small id="diag" aria-live="polite"></small>
+  </div>
+</div>
+
 <script>
+var game = document.getElementById('game');
+var panel = document.getElementById('panel');
+var handle = document.getElementById('handle');
+var systemSelect = document.getElementById('system');
+var modelSelect = document.getElementById('model');
+
+// ---- how big the screen is allowed to be ----------------------------------
+// Every version of this that clipped did so because the container believed it
+// was taller than the screen. So believe the smallest number available rather
+// than any single one of them: whichever measure is wrong, it is wrong by
+// being too big, and the minimum is never the wrong one.
+function smallest(values) {
+  var best = 0;
+  for (var i = 0; i < values.length; i += 1) {
+    var v = values[i];
+    if (v > 0 && (best === 0 || v < best)) best = v;
+  }
+  return best;
+}
+function sizeScreen() {
+  var vv = window.visualViewport;
+  var docEl = document.documentElement;
+  var h = smallest([window.innerHeight, docEl.clientHeight, vv ? vv.height : 0]);
+  var w = smallest([window.innerWidth, docEl.clientWidth, vv ? vv.width : 0]);
+  if (h > 0) game.style.height = Math.floor(h) + 'px';
+  if (w > 0) game.style.width = Math.floor(w) + 'px';
+  report();
+}
+
+// What the page believes, in the tray, so a sizing problem on a device with
+// no console can be read off the screen instead of guessed at.
+var diag = document.getElementById('diag');
+function report() {
+  var vv = window.visualViewport;
+  var rect = game.getBoundingClientRect();
+  var canvas = game.querySelector('canvas');
+  diag.textContent =
+    'inner  ' + window.innerWidth + 'x' + window.innerHeight + '\n' +
+    'client ' + document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight + '\n' +
+    (vv ? 'visual ' + Math.round(vv.width) + 'x' + Math.round(vv.height) +
+          ' @' + Math.round(vv.offsetLeft) + ',' + Math.round(vv.offsetTop) + '\n' : 'visual  n/a\n') +
+    'box    ' + Math.round(rect.width) + 'x' + Math.round(rect.height) +
+          ' @' + Math.round(rect.left) + ',' + Math.round(rect.top) + '\n' +
+    'canvas ' + (canvas ? Math.round(canvas.getBoundingClientRect().width) + 'x' +
+          Math.round(canvas.getBoundingClientRect().height) +
+          ' @' + Math.round(canvas.getBoundingClientRect().top) : 'none');
+}
+window.addEventListener('resize', sizeScreen);
+window.addEventListener('orientationchange', sizeScreen);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', sizeScreen);
+  window.visualViewport.addEventListener('scroll', sizeScreen);
+}
+
+// ---- the settings tray ----------------------------------------------------
+function setOpen(open) {
+  panel.classList.toggle('open', open);
+  handle.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+handle.addEventListener('click', function (e) {
+  e.stopPropagation();
+  setOpen(!panel.classList.contains('open'));
+});
+// A tap anywhere on the picture is a game move; it also puts the tray away.
+game.addEventListener('pointerdown', function (e) {
+  if (!panel.contains(e.target)) setOpen(false);
+}, true);
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') setOpen(false);
+});
+
+// ---- the program ----------------------------------------------------------
 var current = null;
 function wasmSrc() {
-  var system = document.getElementById('system').value;
-  if (system === 'hifi') return 'program.wasm';
-  return 'program-' + document.getElementById('model').value + '.wasm';
+  if (systemSelect.value === 'hifi') return 'program.wasm';
+  return 'program-' + modelSelect.value + '.wasm';
 }
 function load() {
-  var commodore = document.getElementById('system').value === 'commodore';
+  var commodore = systemSelect.value === 'commodore';
+  // Model is a Commodore idea: the modern host has no models to pick between.
   document.getElementById('model-wrap').hidden = !commodore;
   var src = wasmSrc();
   if (current) current.destroy();
   current = EightBitScript.mount('#game', {
     src: src,
     frameRate: 60,
+    // Measured from the element, not from the viewport: #game is already
+    // exactly the drawable area (100svh inside the safe-area insets), and an
+    // element that says what it is beats a second guess at the same number.
+    // The loader watches it with a ResizeObserver, so turning the phone
+    // resizes the picture without anything here listening for it.
+    //
+    // `keyboard: 'window'` because the full-page default no longer applies:
+    // the arrow keys belong to the game, and there is nothing else on this
+    // page to focus.
+    keyboard: 'window',
     fullscreen: true,
+    // An explicit border rather than the loader's automatic one. The border
+    // is not just a frame here: 2048 turns it red on game over, and the
+    // automatic rule drops it to nothing on a small screen, which would
+    // delete that signal on exactly the devices this page is for. Six picture
+    // pixels is a thin edge at any size and always visible against the page.
+    border: 6,
   });
 }
-document.getElementById('system').addEventListener('change', load);
-document.getElementById('model').addEventListener('change', load);
+systemSelect.addEventListener('change', load);
+modelSelect.addEventListener('change', load);
+sizeScreen();
 load();
+report();
 </script>
 </body>
 </html>
