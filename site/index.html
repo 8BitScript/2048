@@ -5,66 +5,172 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
 <title>2048 — 8BitScript</title>
 <style>
-  html, body { margin: 0; height: 100%; background: #000; color: #d7dae0;
-    font: 14px/1.4 ui-sans-serif, system-ui, sans-serif; }
-  #bar {
-    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
-    padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top));
-    background: #14161a; border-bottom: 1px solid #262b33;
+  :root { color-scheme: dark; }
+
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: #000; color: #d7dae0;
+    font: 14px/1.4 ui-sans-serif, system-ui, sans-serif;
+    -webkit-text-size-adjust: 100%;
   }
-  #bar strong { letter-spacing: 0.04em; }
-  label { display: flex; gap: 6px; align-items: center; color: #9aa1ab; }
+
+  /* The screen owns the whole visible viewport. `position: fixed` is laid
+     out against the *layout* viewport, which under `viewport-fit=cover`
+     runs edge to edge — underneath Safari's address bar in landscape. The
+     visual viewport is the part actually on screen, so fit() below drives
+     these four numbers from it and the picture never sits under browser
+     chrome. inset: 0 is only the pre-script fallback. */
+  #game { position: fixed; inset: 0; }
+
+  /* Settings live on the edge, not in a bar across the top. A phone in
+     landscape has no vertical pixels to give away, and the top strip is
+     exactly where iOS puts its own chrome — so the thing that used to be a
+     49px bar is now a handle that expands over the picture and gets out of
+     the way again. Absolute, not fixed: #game is the visible box, so these
+     inset from the part of the screen you can actually see. */
+  #panel {
+    position: absolute; z-index: 2;
+    top: max(10px, env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  #handle {
+    flex: none; width: 38px; height: 38px; padding: 0;
+    display: grid; place-items: center;
+    font: 17px/1 ui-sans-serif, system-ui, sans-serif;
+    color: #9aa1ab; background: rgba(12, 14, 18, 0.66);
+    border: 1px solid #262b33; border-radius: 10px;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    cursor: pointer; touch-action: manipulation;
+  }
+  #handle:hover { color: #d7dae0; border-color: #39414d; }
+  #handle:focus-visible { outline: 2px solid #5b8cff; outline-offset: 2px; }
+  #panel.open #handle { color: #d7dae0; border-color: #39414d; background: rgba(12, 14, 18, 0.9); }
+
+  #tray {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 12px 14px;
+    background: rgba(12, 14, 18, 0.92); border: 1px solid #262b33;
+    border-radius: 12px;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    transition: opacity .16s ease, transform .16s ease, visibility .16s;
+  }
+  #panel:not(.open) #tray {
+    opacity: 0; visibility: hidden;
+    transform: translateX(-8px) scale(0.97);
+  }
+  @media (prefers-reduced-motion: reduce) { #tray { transition: none; } }
+
+  #tray strong { letter-spacing: 0.06em; color: #d7dae0; }
+  label { display: flex; gap: 8px; align-items: center; justify-content: space-between; color: #9aa1ab; }
   select {
     background: #0b0d10; color: #d7dae0; border: 1px solid #262b33;
-    border-radius: 6px; padding: 4px 8px; font: inherit;
-  }
-  #game {
-    height: calc(100% - 49px);
-    min-height: 200px;
+    border-radius: 6px; padding: 5px 8px; font: inherit;
   }
 </style>
 <script src="8bitscript.js"></script>
 </head>
 <body>
-<div id="bar">
-  <strong>2048</strong>
-  <label>System
-    <select id="system">
-      <option value="hifi">Web 16:9</option>
-      <option value="commodore">Commodore</option>
-    </select>
-  </label>
-  <label id="model-wrap" hidden>Model
-    <select id="model">
-      <option value="c64">C64</option>
-      <option value="pet-2001">PET 2001</option>
-      <option value="vic20">VIC-20</option>
-    </select>
-  </label>
+<div id="game">
+  <div id="panel">
+    <button id="handle" type="button" aria-expanded="false" aria-controls="tray" aria-label="Settings">
+      <span aria-hidden="true">&#9881;</span>
+    </button>
+    <div id="tray" role="group" aria-label="Settings">
+      <strong>2048</strong>
+      <label for="system">System
+        <select id="system">
+          <option value="hifi">Modern</option>
+          <option value="commodore">Commodore</option>
+        </select>
+      </label>
+      <label id="model-wrap" for="model" hidden>Model
+        <select id="model">
+          <option value="c64">C64</option>
+          <option value="pet-2001">PET 2001</option>
+          <option value="vic20">VIC-20</option>
+        </select>
+      </label>
+    </div>
+  </div>
 </div>
-<div id="game"></div>
 <script>
+var game = document.getElementById('game');
+var panel = document.getElementById('panel');
+var handle = document.getElementById('handle');
+var systemSelect = document.getElementById('system');
+var modelSelect = document.getElementById('model');
+
+// ---- the visible box ------------------------------------------------------
+// visualViewport is the region actually on screen right now: window.innerHeight
+// counts space a collapsed toolbar has given back (or has not yet given back)
+// depending on iOS version, and under viewport-fit=cover the layout viewport
+// runs underneath the address bar besides. Sizing #game from the visual
+// viewport is what keeps the picture — and the settings handle — clear of
+// Safari's chrome in landscape. The loader measures the same thing for the
+// canvas, so the two agree.
+function fit() {
+  var vv = window.visualViewport;
+  if (!vv) return;
+  game.style.top = vv.offsetTop + 'px';
+  game.style.left = vv.offsetLeft + 'px';
+  game.style.right = 'auto';
+  game.style.bottom = 'auto';
+  game.style.width = vv.width + 'px';
+  game.style.height = vv.height + 'px';
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', fit);
+  window.visualViewport.addEventListener('scroll', fit);
+}
+window.addEventListener('resize', fit);
+window.addEventListener('orientationchange', fit);
+fit();
+
+// ---- the settings tray ----------------------------------------------------
+function setOpen(open) {
+  panel.classList.toggle('open', open);
+  handle.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+handle.addEventListener('click', function (e) {
+  e.stopPropagation();
+  setOpen(!panel.classList.contains('open'));
+});
+// A tap anywhere on the picture is a game move; it also puts the tray away.
+game.addEventListener('pointerdown', function (e) {
+  if (!panel.contains(e.target)) setOpen(false);
+}, true);
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') setOpen(false);
+});
+
+// ---- the program ----------------------------------------------------------
 var current = null;
 function wasmSrc() {
-  var system = document.getElementById('system').value;
-  if (system === 'hifi') return 'program.wasm';
-  return 'program-' + document.getElementById('model').value + '.wasm';
+  if (systemSelect.value === 'hifi') return 'program.wasm';
+  return 'program-' + modelSelect.value + '.wasm';
 }
 function load() {
-  var commodore = document.getElementById('system').value === 'commodore';
+  var commodore = systemSelect.value === 'commodore';
+  // Model is a Commodore idea: the modern host has no models to pick between.
   document.getElementById('model-wrap').hidden = !commodore;
   var src = wasmSrc();
   if (current) current.destroy();
   current = EightBitScript.mount('#game', {
     src: src,
     frameRate: 60,
+    // The page is the whole screen, so the loader sizes from visualViewport
+    // and takes the arrow keys from the window rather than waiting to be
+    // focused — there is nothing else on this page to focus.
+    fullPage: true,
     fullscreen: true,
   });
 }
-document.getElementById('system').addEventListener('change', load);
-document.getElementById('model').addEventListener('change', load);
+systemSelect.addEventListener('change', load);
+modelSelect.addEventListener('change', load);
 load();
 </script>
 </body>

@@ -1,8 +1,20 @@
-// The web's default (16:9 high-fi) tile: 8×5 reverse-video squares with
-// 2×3-cell block-digits, a side score column, and a HUD that drops the
-// tutorial line on a touch host. Picked up automatically for untagged web
-// builds — nothing in main.8bs names this file; see docs/packages.md's
-// "System-specific files". Machine skins are tile.web.<tag>.8bs.
+// The web's default (Modern, 16:9 high-fi) tile: 10×5 reverse-video squares
+// with 2×3-cell block-digits, a HUD on the top and bottom rows, and a
+// centred game-over panel. Picked up automatically for untagged web builds —
+// nothing in main.8bs names this file; see docs/packages.md's
+// "System-specific files". Machine skins are tile.web.<tag>.8bs, and those
+// stay faithful to their machine: only this file is free to be laid out for
+// a browser.
+//
+// ---- why the HUD moved off the sides -------------------------------------
+//
+// The board is the thing worth looking at, and on 48×27 the tiles are capped
+// at 5 rows tall: four of them plus three 1-row gaps is 23 of the 27 rows,
+// and the HUD needs the rest. Height being fixed, the only way to make a
+// tile bigger is to make it wider — so the title and score moved from side
+// columns (which cost 11 of 48 columns) onto the spare top and bottom rows,
+// and the tiles went from 8 cells wide to 10. Same height, 25% more tile.
+import { screen, BorderColor } from "@8bitscript/screen";
 import { text, TextColor } from "@8bitscript/text";
 import { input } from "@8bitscript/input";
 
@@ -11,8 +23,9 @@ const VERSION_LINE: string = "v0.1.3";
 
 const ROW: usmallint = text.COLUMNS; // 48
 
+const TILE_W: utinyint = 10;
 const TILE_H: utinyint = 5;
-const BLANK: string = "        ";
+const BLANK: string = "          "; // TILE_W spaces
 
 const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 
@@ -52,22 +65,48 @@ const DIGIT_TILES: array<utinyint, 60> = [
     142, 138, 139, 138, 131, 138,
 ];
 
-// 4×4 of 8×5 tiles with 1-cell gaps: 35×23, centred on 48×27
-// (left 6, top 2). Title sits in columns 1–4; score in 42–47.
+// 4×4 of 10×5 tiles with 1-cell gaps: 43×23 on 48×27, at left 2, top 2.
+// Row 0 is the HUD, rows 25-26 the hint and the version.
 const ORIGIN: array<usmallint, 16> = [
-    102, 111, 120, 129,
-    390, 399, 408, 417,
-    678, 687, 696, 705,
-    966, 975, 984, 993,
+     98, 109, 120, 131,
+    386, 397, 408, 419,
+    674, 685, 696, 707,
+    962, 973, 984, 995,
 ];
 
-const TITLE_NAME_AT: usmallint = 97;      // row 2, col 1 — left of the board
-const SCORE_LABEL_AT: usmallint = 138;    // row 2, col 42
-const SCORE_VALUE_AT: usmallint = 186;    // row 3, col 42
-const STATUS_AT: usmallint = 1206;        // row 25, col 6
-const TITLE_AT: usmallint = 598;          // row 12, col 22 — "2048"
+const TITLE_NAME_AT: usmallint = 2;       // row 0, col 2 — over the board's left edge
+const SCORE_AT: usmallint = 34;           // row 0, col 34 — "SCORE 12345" ends at col 44
+const STATUS_AT: usmallint = 1202;        // row 25, col 2
+const TITLE_AT: usmallint = 598;          // row 12, col 22 — "2048" on the title screen
 const PROMPT_AT: usmallint = 690;         // row 14, col 18
-const VERSION_AT: usmallint = 1290;       // row 26, col 42 — "v0.1.3"
+const VERSION_AT: usmallint = 1286;       // row 26, col 38 — "v0.1.3"
+
+// ---- the game-over panel --------------------------------------------------
+//
+// A 28×9 panel centred on the board (cols 10-37, rows 9-17) rather than a
+// line of text at the bottom: game over is the one moment the game interrupts
+// the player, and it should read as something that happened, not as a HUD
+// field that changed. The screen border goes red underneath it, which is why
+// the host now always draws a border, however thin.
+const PANEL_W: utinyint = 28;
+const PANEL_H: utinyint = 9;
+const PANEL_BLANK: string = "                            "; // PANEL_W spaces
+const PANEL_AT: usmallint = 442;          // row 9, col 10 — the red frame
+const PANEL_BODY_W: utinyint = 26;
+const PANEL_BODY_H: utinyint = 5;
+const PANEL_BODY_BLANK: string = "                          "; // PANEL_BODY_W spaces
+const PANEL_BODY_AT: usmallint = 587;     // row 12, col 11 — the white card inside it
+const PANEL_TITLE_AT: usmallint = 499;    // row 10, col 19 — "GAME OVER", in the band
+const PANEL_SCORE_AT: usmallint = 642;    // row 13, col 18 — "SCORE 12345"
+const PANEL_TAP_AT: usmallint = 736;      // row 15, col 16 — "TAP TO CONTINUE"
+const PANEL_KEY_AT: usmallint = 738;      // row 15, col 18 — "PRESS ENTER"
+const STATUS_BLANK: string = "                   ";
+
+// The panel is drawn once when the game ends and erased once when the next
+// game starts, rather than restamped on every HUD paint: main.8bs's
+// resetGame() forces all sixteen tiles to redraw, so erasing the panel here
+// and letting the tiles paint back over it is all the restore that is needed.
+let panelShown: bool = false;
 
 export function computeLayout(): void {
 }
@@ -85,18 +124,76 @@ export function drawTitleScreen(): void {
     return;
 }
 
+function fillRows(origin: usmallint, rows: utinyint, blank: string): void {
+    let rowCell: usmallint = origin;
+    let row: utinyint = 0;
+    while (row < rows) {
+        text.print(rowCell, blank);
+        rowCell = rowCell + ROW;
+        row++;
+    }
+    return;
+}
+
+function drawPanel(score: usmallint): void {
+    // A red frame with a white card inside it. The card cannot simply be
+    // white on its own: an empty board cell is also a white block, so a white
+    // panel laid over the board has no edge you can see. The red surround is
+    // what makes it read as something in front of the board rather than part
+    // of it — and it is the same red the screen border turns.
+    //
+    // A reverse cell fills with the foreground and punches the glyph out in
+    // the screen background, so every line of text on the panel is black.
+    text.setReverse(true);
+    text.setColor(TextColor.RED);
+    fillRows(PANEL_AT, PANEL_H, PANEL_BLANK);
+    text.print(PANEL_TITLE_AT, "GAME OVER");
+    text.setColor(TextColor.WHITE);
+    fillRows(PANEL_BODY_AT, PANEL_BODY_H, PANEL_BODY_BLANK);
+    text.print(PANEL_SCORE_AT, `SCORE ${score:5}`);
+    if (input.touch()) {
+        text.print(PANEL_TAP_AT, "TAP TO CONTINUE");
+    } else {
+        text.print(PANEL_KEY_AT, "PRESS ENTER");
+    }
+    text.setReverse(false);
+    return;
+}
+
+function erasePanel(): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    fillRows(PANEL_AT, PANEL_H, PANEL_BLANK);
+    return;
+}
+
 export function drawHud(score: usmallint, over: bool, won: bool): void {
     text.setReverse(false);
     text.setColor(TextColor.WHITE);
     text.print(TITLE_NAME_AT, "2048");
-    text.print(SCORE_LABEL_AT, "SCORE");
-    text.print(SCORE_VALUE_AT, `${score:5}`);
-    if (over) {
-        text.print(STATUS_AT, "GAME OVER - RESTART");
-    } else if (won) {
+    text.print(SCORE_AT, `SCORE ${score:5}`);
+    // Always write the status line, never just leave it: the branch that
+    // prints nothing is what used to strand "YOU MADE 2048" on screen across
+    // a restart, and would now strand "ARROWS TO MOVE" under the panel.
+    if (won) {
         text.print(STATUS_AT, "YOU MADE 2048      ");
-    } else if (!input.touch()) {
+    } else if (!over && !input.touch()) {
         text.print(STATUS_AT, "ARROWS TO MOVE     ");
+    } else {
+        text.print(STATUS_AT, STATUS_BLANK);
+    }
+    if (over) {
+        if (!panelShown) {
+            // The border is the one part of the screen that is still visible
+            // past the panel, and a red edge is the whole screen saying so.
+            screen.setBorder(BorderColor.RED);
+            drawPanel(score);
+            panelShown = true;
+        }
+    } else if (panelShown) {
+        screen.setBorder(BorderColor.BLUE);
+        erasePanel();
+        panelShown = false;
     }
     return;
 }
@@ -104,13 +201,7 @@ export function drawHud(score: usmallint, over: bool, won: bool): void {
 function fillTile(origin: usmallint, exponent: utinyint): void {
     text.setColor(TILE_COLOR[exponent]);
     text.setReverse(true);
-    let rowCell: usmallint = origin;
-    let row: utinyint = 0;
-    while (row < TILE_H) {
-        text.print(rowCell, BLANK);
-        rowCell = rowCell + ROW;
-        row++;
-    }
+    fillRows(origin, TILE_H, BLANK);
     return;
 }
 
@@ -134,7 +225,9 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
     let base: utinyint = TILE_DIGIT_AT[exponent];
     let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
     if (count != 0) {
-        let at: usmallint = origin + ROW + (4 - count);
+        // Digits are 2 cells wide and 3 rows tall: centre them across
+        // TILE_W and down TILE_H.
+        let at: usmallint = origin + ROW + ((TILE_W >> 1) - count);
         let i: utinyint = 0;
         while (i < count) {
             drawDigit(at, TILE_DIGIT[base + i]);
