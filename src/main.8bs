@@ -332,6 +332,16 @@ export function main(): void {
     screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
     computeLayout();
     input.begin();
+    // One frame before the title is drawn, because on the web the host has
+    // not finished introducing itself yet. The page writes its status byte —
+    // the bit that says "this is a touchscreen" — when the worker hands it
+    // the program's memory, which is the same moment the program starts
+    // running. Drawing the title first is a race the program loses about as
+    // often as it wins, and losing it puts PRESS ENTER on a phone.
+    // waitFrame() is the program's own way of letting the host get a word in,
+    // and every other target treats it as one idle frame at start-up.
+    waitFrame();
+    input.poll();
     drawTitleScreen();
 
     while (true) {

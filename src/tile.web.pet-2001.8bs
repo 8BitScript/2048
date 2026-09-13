@@ -46,6 +46,9 @@ const SCORE_HEADER_LEN: utinyint = 11;
 const STATUS_AT: usmallint = 962;
 const TITLE_AT: usmallint = 458;
 const PROMPT_AT: usmallint = 534;
+const TOUCH_PROMPT_AT: usmallint = 533;  // "TOUCH TO START" is two
+                                          // characters longer, so it
+                                          // centres two columns left
 const VERSION_AT: usmallint = 994;
 
 export function computeLayout(): void {
@@ -56,7 +59,7 @@ export function drawTitleScreen(): void {
     text.setColor(TextColor.WHITE);
     text.print(TITLE_AT, "2048");
     if (input.touch()) {
-        text.print(PROMPT_AT, "TAP TO START");
+        text.print(TOUCH_PROMPT_AT, "TOUCH TO START");
     } else {
         text.print(PROMPT_AT, "PRESS RETURN");
     }
