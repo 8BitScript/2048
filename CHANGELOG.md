@@ -1,5 +1,24 @@
 # 2048
 
+## 0.1.4
+
+### Patch Changes
+
+- a0b4c03: C64 tiles are 6×4 cells (a 27×19 board) instead of 5×3.
+  
+  `computeLayout` and `drawTile` take a per-build tile height, so the VIC-20 and everyone else keep their existing sizes. Four 6×4 tiles plus gaps still leave the header, status row, and margins on a 40×25 C64 screen.
+- a0b4c03: The HUD puts **2048** on the left and **SCORE** with the padded value on the right.
+- a0b4c03: Build against 8BitScript 0.6.2.
+  
+  Dependencies move 0.6.1 -> 0.6.2, and the reusable compile workflow is repinned from v0.6.1's commit to v0.6.2's.
+  
+  0.6.2 is the web-skins release: the default wasm grid is 48×27 (16:9), and `--hardware machine=<c64|pet-2001|vic20>` compiles a skin. This game's `targets.web.release` now builds all four, and `site/index.html` is a picker that loads the matching `program-*.wasm`.
+  
+  The 4K 2001 is **2581 bytes** (2420 at 0.6.1, before the title screen and HUD work on this same release) — still inside a stock 4K 2001's ~3071 usable, 490 bytes of headroom under `$0FFF`. Measured with the published 0.6.2 packages, not the workspace.
+- a0b4c03: The web site picks a look: 16:9, or a PET 2001 / C64 / VIC-20 skin.
+  
+  Each skin is its own wasm (`program.wasm` plus `program-c64.wasm`, `program-pet-2001.wasm`, `program-vic20.wasm`), compiled against 8BitScript 0.6.2's `machine=` hardware. `site/index.html` swaps which file `EightBitScript.mount` loads. Tile geometry lives in `tile.web.<tag>.8bs` beside `tile.web.8bs`, the same system-specific-file rule the PET twin already used.
+
 ## 0.1.3
 
 ### Patch Changes
