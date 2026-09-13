@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>2048 — 8BitScript</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #d7dae0;
+    font: 14px/1.4 ui-sans-serif, system-ui, sans-serif; }
+  #bar {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top));
+    background: #14161a; border-bottom: 1px solid #262b33;
+  }
+  #bar strong { letter-spacing: 0.04em; }
+  label { display: flex; gap: 6px; align-items: center; color: #9aa1ab; }
+  select {
+    background: #0b0d10; color: #d7dae0; border: 1px solid #262b33;
+    border-radius: 6px; padding: 4px 8px; font: inherit;
+  }
+  #game {
+    height: calc(100% - 49px);
+    min-height: 200px;
+  }
+</style>
+<script src="8bitscript.js"></script>
+</head>
+<body>
+<div id="bar">
+  <strong>2048</strong>
+  <label>System
+    <select id="system">
+      <option value="hifi">Web 16:9</option>
+      <option value="commodore">Commodore</option>
+    </select>
+  </label>
+  <label id="model-wrap" hidden>Model
+    <select id="model">
+      <option value="c64">C64</option>
+      <option value="pet-2001">PET 2001</option>
+      <option value="vic20">VIC-20</option>
+    </select>
+  </label>
+</div>
+<div id="game"></div>
+<script>
+var current = null;
+function wasmSrc() {
+  var system = document.getElementById('system').value;
+  if (system === 'hifi') return 'program.wasm';
+  return 'program-' + document.getElementById('model').value + '.wasm';
+}
+function load() {
+  var commodore = document.getElementById('system').value === 'commodore';
+  document.getElementById('model-wrap').hidden = !commodore;
+  var src = wasmSrc();
+  if (current) current.destroy();
+  current = EightBitScript.mount('#game', {
+    src: src,
+    frameRate: 60,
+    fullscreen: true,
+  });
+}
+document.getElementById('system').addEventListener('change', load);
+document.getElementById('model').addEventListener('change', load);
+load();
+</script>
+</body>
+</html>

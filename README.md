@@ -21,7 +21,9 @@ ARROWS TO MOVE
 ```
 
 Play it in a browser at [2048.8bitscript.com](https://2048.8bitscript.com)
-(swipe on a phone, arrows on a keyboard). GitHub Releases attach the
+(swipe on a phone, arrows on a keyboard). The site's picker loads a
+separate wasm per look — the default 16:9 host, or a PET 2001 / C64 /
+VIC-20 skin. GitHub Releases attach the
 compiled PET `.prg` — a stock 4K 2001 and a roomier 32K build — and the
 web `.wasm`. VIC-20, C64, C128, Atari 8-bit, NES, Commander X16, and
 MEGA65 binaries return once 8BitScript's own backends for those machines
@@ -67,8 +69,12 @@ that's what Cloudflare Workers Builds runs to deploy
 needs `LLVM_MOS_HOME`, which that build image doesn't have.
 
 `pnpm run start:web` is playable in the browser: arrows or swipe slide
-tiles, Enter or a tap starts a new game once it is over. `pnpm run deploy:web`
-builds `dist/web/` and deploys it to [2048.8bitscript.com](https://2048.8bitscript.com)
+tiles, Enter or a tap starts a new game once it is over. A touch host
+hides the arrows tutorial so the board keeps that row. `pnpm run build:web`
+emits `program.wasm` plus `program-c64.wasm`, `program-pet-2001.wasm` and
+`program-vic20.wasm` into `dist/web/`, then copies `site/index.html` (the
+machine picker) over the generated shell. `pnpm run deploy:web`
+builds that directory and deploys it to [2048.8bitscript.com](https://2048.8bitscript.com)
 once the `8bitscript.com` zone is in Cloudflare and `CLOUDFLARE_API_TOKEN` is
 set. Every other target reads a real keyboard, joystick, or pad the same way.
 

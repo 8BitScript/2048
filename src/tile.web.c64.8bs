@@ -1,0 +1,108 @@
+// Web C64 skin: 40×25, 6×4 reverse-video tiles — the same board
+// tile.8bs draws on a real C64. Picked up when the web build's hardware
+// tag is `c64`. Draws through @8bitscript/text; does not import tile.8bs
+// or write $0400.
+import { text, TextColor } from "@8bitscript/text";
+import { input } from "@8bitscript/input";
+
+const VERSION_LINE: string = "v0.1.3";
+
+const ROW: usmallint = text.COLUMNS; // 40
+const TILE_W: utinyint = 6;
+const TILE_H: utinyint = 4;
+const BLANK: string = "      ";
+
+const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+
+const TILE_COLOR: array<utinyint, 12> = [
+    TextColor.WHITE,
+    TextColor.WHITE,
+    TextColor.CYAN,
+    TextColor.GREEN,
+    TextColor.GREEN,
+    TextColor.YELLOW,
+    TextColor.YELLOW,
+    TextColor.PURPLE,
+    TextColor.PURPLE,
+    TextColor.RED,
+    TextColor.RED,
+    TextColor.BLUE,
+];
+
+// boardTop 3, left 6, 6×4 tiles, 1-cell gaps (stride 7×5)
+const ORIGIN: array<usmallint, 16> = [
+    126, 133, 140, 147,
+    326, 333, 340, 347,
+    526, 533, 540, 547,
+    726, 733, 740, 747,
+];
+
+const HEADER_AT: usmallint = 46;
+const SCORE_HEADER_LEN: utinyint = 11;
+const STATUS_AT: usmallint = 926;
+const TITLE_AT: usmallint = 458;
+const PROMPT_AT: usmallint = 534;
+const VERSION_AT: usmallint = 994;
+
+export function computeLayout(): void {
+}
+
+export function drawTitleScreen(): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    text.print(TITLE_AT, "2048");
+    if (input.touch()) {
+        text.print(PROMPT_AT, "TAP TO START");
+    } else {
+        text.print(PROMPT_AT, "PRESS ENTER");
+    }
+    text.print(VERSION_AT, VERSION_LINE);
+    return;
+}
+
+export function drawHud(score: usmallint, over: bool, won: bool): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    text.print(HEADER_AT, "2048");
+    text.print(text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
+    if (over) {
+        text.print(STATUS_AT, "GAME OVER - RESTART");
+    } else if (won) {
+        text.print(STATUS_AT, "YOU MADE 2048      ");
+    } else if (!input.touch()) {
+        text.print(STATUS_AT, "ARROWS TO MOVE     ");
+    }
+    return;
+}
+
+function tileWidth(value: usmallint): utinyint {
+    if (value >= 1000) {
+        return 4;
+    }
+    if (value >= 100) {
+        return 3;
+    }
+    if (value >= 10) {
+        return 2;
+    }
+    return 1;
+}
+
+export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    let origin: usmallint = ORIGIN[row * 4 + col];
+    let value: usmallint = POW2[exponent];
+    text.setColor(TILE_COLOR[exponent]);
+    text.setReverse(true);
+    let line: utinyint = 0;
+    while (line < TILE_H) {
+        text.print(origin + line * ROW, BLANK);
+        line++;
+    }
+    if (value != 0) {
+        let width: utinyint = tileWidth(value);
+        let offset: utinyint = (TILE_W - width) >> 1;
+        text.printNumber(origin + (TILE_H >> 1) * ROW + offset, value, width);
+    }
+    text.setReverse(false);
+    return;
+}
