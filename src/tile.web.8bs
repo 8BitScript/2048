@@ -83,6 +83,7 @@ const ORIGIN: array<usmallint, 16> = [
 
 const HEADER_AT: usmallint = 2;
 const STATUS_AT: usmallint = 962;
+const SCORE_HEADER_LEN: utinyint = 11; // "SCORE " plus a five-digit score field
 
 export function computeLayout(): void {
 }
@@ -109,7 +110,8 @@ export function drawTitleScreen(): void {
 export function drawHud(score: usmallint, over: bool, won: bool): void {
     text.setReverse(false);
     text.setColor(TextColor.WHITE);
-    text.print(HEADER_AT, `2048  SCORE ${score:5}`);
+    text.print(HEADER_AT, "2048");
+    text.print(text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
     if (over) {
         text.print(STATUS_AT, "GAME OVER - RESTART");
     } else if (won) {
