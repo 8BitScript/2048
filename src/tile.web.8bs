@@ -69,29 +69,29 @@ const TILE_DIGIT: array<utinyint, 26> = [
     1, 0, 2, 4, 2, 0, 4, 8,
 ];
 
-// The block-digit font, shifted one half-cell right of where it started.
+// The block-digit font.
 //
-// Each digit is drawn as 3 half-cells of ink inside a box 4 half-cells wide —
-// odd inside even — so it can never sit dead centre in its own box. Drawn
-// hard against the left of that box (which is how it was), a run of digits
-// ends up half a cell left of the tile's centre, and on a 64-pixel tile that
-// is visible. Drawn against the RIGHT of it, the trailing gap moves to the
-// front and the run's ink centre lands exactly on the tile's centre — for
-// one, two, three and four digits alike, because every digit shifts by the
-// same amount. The glyphs are unchanged; only which half-cell they sit in is.
+// Each digit is 3 half-cells of ink on a 4 half-cell pitch, so a run of them
+// is always an ODD number of half-cells inside an EVEN tile. Centring it
+// wants a half-cell offset and the character grid only places whole cells, so
+// the ink can land 2px either side of the tile's centre and nowhere between.
+// The gap rides behind the digits, which puts the ink on the left of those
+// two — the side with the smaller leftover margin. Moving the gap in front of
+// them (add 1 to the left column of every pair) puts it on the right instead.
+// True centre needs a digit whose ink is an EVEN number of half-cells wide:
+// a redesigned font, not a repositioning.
 const DIGIT_TILES: array<utinyint, 60> = [
-    133, 141, 133, 133, 133, 135,
-    129, 138, 132, 138, 129, 139,
-    132, 141, 129, 135, 133, 131,
-    132, 141, 129, 135, 129, 135,
-    133, 133, 133, 135, 128, 133,
-    133, 140, 133, 131, 129, 135,
-    133, 140, 133, 131, 133, 135,
-    132, 141, 128, 133, 128, 133,
-    133, 141, 133, 135, 133, 135,
-    133, 141, 133, 135, 129, 135,
-];
-// 4×4 of 8×5 tiles with 1-cell gaps: 35×23 on 48×27, at left 6, top 2 — two
+    142, 138, 138, 138, 139, 138,
+    135, 128, 141, 128, 135, 130,
+    140, 138, 131, 138, 139, 130,
+    140, 138, 131, 138, 131, 138,
+    138, 138, 139, 138, 128, 138,
+    142, 136, 139, 130, 131, 138,
+    142, 136, 139, 130, 139, 138,
+    140, 138, 128, 138, 128, 138,
+    142, 138, 139, 138, 139, 138,
+    142, 138, 139, 138, 131, 138,
+];// 4×4 of 8×5 tiles with 1-cell gaps: 35×23 on 48×27, at left 6, top 2 — two
 // rows of margin above and below. Columns 0-5 and 41-47 are the margins the
 // HUD lives in, and each keeps a clear column against the board.
 const ORIGIN: array<usmallint, 16> = [
