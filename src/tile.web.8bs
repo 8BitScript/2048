@@ -1,4 +1,4 @@
-// The web's default (Modern, 16:9 high-fi) tile: 9×6 reverse-video squares
+// The web's default (Modern, 16:9 high-fi) tile: 8×6 reverse-video squares
 // with 2×3-cell block-digits, a HUD down the side margins, and a centred
 // game-over panel. Picked up automatically for untagged web builds —
 // nothing in main.8bs names this file; see docs/packages.md's
@@ -17,11 +17,14 @@
 // title screen.
 //
 // Putting the HUD in the side margins instead spends columns, which there are
-// enough of, and gives every row to the board: 4×6 + 3 is 27 exactly. The
-// tile goes from 10×5 to 9×6 — 72×48 pixels instead of 80×40, 8% more area
-// and much nearer square, which is what a 2048 tile should look like. The
-// margins left over are 4 columns for the title and 5 for the score, which
-// is what each needs to the character.
+// enough of, and gives every row to the board: 4×6 + 3 is 27 exactly.
+//
+// The tile is 8 wide, not 9, for two reasons. A digit is two cells wide, so a
+// run of them is always an even number of cells: on an odd tile it can only
+// ever sit half a cell off centre, and on an even one it is exact for one,
+// two, three and four digits alike. And 8 leaves 13 columns of margin instead
+// of 9, which is what buys the HUD a clear column between it and the board
+// rather than butting straight against it.
 import { screen, BorderColor } from "@8bitscript/screen";
 import { text, TextColor } from "@8bitscript/text";
 import { input } from "@8bitscript/input";
@@ -31,9 +34,9 @@ const VERSION_LINE: string = "v0.1.3";
 
 const ROW: usmallint = text.COLUMNS; // 48
 
-const TILE_W: utinyint = 9;
+const TILE_W: utinyint = 8;
 const TILE_H: utinyint = 6;
-const BLANK: string = "         "; // TILE_W spaces
+const BLANK: string = "        "; // TILE_W spaces
 
 const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 
@@ -73,21 +76,27 @@ const DIGIT_TILES: array<utinyint, 60> = [
     142, 138, 139, 138, 131, 138,
 ];
 
-// 4×4 of 9×6 tiles with 1-cell gaps: 39×27 on 48×27, at left 4, top 0 — the
-// full height of the screen. Columns 0-3 and 43-47 are the margins the HUD
-// lives in.
+// 4×4 of 8×6 tiles with 1-cell gaps: 35×27 on 48×27, at left 6, top 0 — the
+// full height of the screen. Columns 0-5 and 41-47 are the margins the HUD
+// lives in, and each keeps a clear column against the board.
 const ORIGIN: array<usmallint, 16> = [
-       4,   14,   24,   34,
-     340,  350,  360,  370,
-     676,  686,  696,  706,
-    1012, 1022, 1032, 1042,
+       6,   15,   24,   33,
+     342,  351,  360,  369,
+     678,  687,  696,  705,
+    1014, 1023, 1032, 1041,
 ];
 
-const TITLE_NAME_AT: usmallint = 48;      // row 1, col 0 — "2048" fills the left margin
-const SCORE_LABEL_AT: usmallint = 91;     // row 1, col 43 — "SCORE" fills the right one
-const SCORE_VALUE_AT: usmallint = 139;    // row 2, col 43
-const HINT_TOP_AT: usmallint = 1195;      // row 24, col 43 — two 5-column lines
-const HINT_BOTTOM_AT: usmallint = 1243;   // row 25, col 43
+// One clear column on each side of everything: the left margin is columns
+// 0-5 and the title sits in 1-4, so there is a blank column against the
+// screen edge and another against the board. The right margin is 41-47 and
+// the score sits in 42-46, the same way. The two margins differ by a column
+// because "2048" is four characters and "SCORE" is five — the padding around
+// them is what is even, which is what you actually see.
+const TITLE_NAME_AT: usmallint = 49;      // row 1, col 1
+const SCORE_LABEL_AT: usmallint = 90;     // row 1, col 42
+const SCORE_VALUE_AT: usmallint = 138;    // row 2, col 42
+const HINT_TOP_AT: usmallint = 1194;      // row 24, col 42 — two 5-column lines
+const HINT_BOTTOM_AT: usmallint = 1242;   // row 25, col 42
 const TITLE_AT: usmallint = 598;          // row 12, col 22 — "2048" on the title screen
 const PROMPT_AT: usmallint = 690;         // row 14, col 18
 const VERSION_AT: usmallint = 1286;       // row 26, col 38 — "v0.1.3"
@@ -244,8 +253,11 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
     let base: utinyint = TILE_DIGIT_AT[exponent];
     let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
     if (count != 0) {
-        // Digits are 2 cells wide and 3 rows tall: centre them across
-        // TILE_W and down TILE_H.
+        // Digits are 2 cells wide and 3 rows tall. Across TILE_W that is
+        // exact for every digit count, because both are even. Down TILE_H it
+        // cannot be: three rows in six leaves three to share, so the run sits
+        // one row from the top and two from the bottom — half a row high of
+        // true centre, and the nearest a 3-row glyph gets in a 6-row tile.
         let at: usmallint = origin + ROW + ((TILE_W >> 1) - count);
         let i: utinyint = 0;
         while (i < count) {
