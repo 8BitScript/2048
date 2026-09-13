@@ -87,12 +87,16 @@ const ROW: usmallint = text.COLUMNS; // this machine's row width, so cell = y * 
 // digit count from one to four. See that file.
 const FULL_TILE_W: utinyint = 5;
 const NARROW_TILE_W: utinyint = 4; // the VIC-20's own width — see above
-const TILE_H: utinyint = 3;
+const DEFAULT_TILE_H: utinyint = 3;
+// C64 text mode is 40×25 with the stock border; four 6×4 tiles plus gaps
+// is 27×19, which still leaves a header row, status row, and margins
+// (measured in cells, 2026-09-12, screenshot before this change).
+const C64_TILE_W: utinyint = 6;
+const C64_TILE_H: utinyint = 4;
 const COL_GAP: utinyint = 1; // between tile columns — always on, see above
 const ROW_GAP: utinyint = 1; // between tile rows — never contended for room
 const FULL_BOARD_WIDTH: usmallint = 23;   // 4 tiles * 5 + 3 gaps * 1
 const NARROW_BOARD_WIDTH: usmallint = 19; // 4 tiles * 4 + 3 gaps * 1
-const BOARD_HEIGHT: usmallint = 15;       // 4 tiles * 3 + 3 gaps * 1
 
 // Where the board lands, and how wide one tile is — both worked out once
 // in computeLayout() below rather than hand-picked per machine:
@@ -102,30 +106,41 @@ const BOARD_HEIGHT: usmallint = 15;       // 4 tiles * 3 + 3 gaps * 1
 // const. It is still one-time arithmetic, run once before the game loop
 // starts, not repeated per frame or per tile.
 let cellWidth: usmallint = FULL_TILE_W;
-let blank: string<5> = "     "; // matches cellWidth — see computeLayout()
+let tileH: utinyint = DEFAULT_TILE_H;
+let blank: string<6> = "     "; // width ≤ 6 — matches cellWidth; see computeLayout()
 export let leftMargin: usmallint = 0;
 export let headerRow: usmallint = 0;
 let boardTop: usmallint = 0;
+let boardHeight: usmallint = 15; // 4 * tileH + 3 * ROW_GAP after computeLayout()
 export let statusRow: usmallint = 0;
 
 export function computeLayout(): void {
     let boardWidth: usmallint = FULL_BOARD_WIDTH;
-    if (text.COLUMNS < FULL_BOARD_WIDTH) {
+    cellWidth = FULL_TILE_W;
+    tileH = DEFAULT_TILE_H;
+    blank = "     ";
+    if (#system() == System.C64) {
+        cellWidth = C64_TILE_W;
+        tileH = C64_TILE_H;
+        blank = "      ";
+        boardWidth = 27;
+    } else if (text.COLUMNS < FULL_BOARD_WIDTH) {
         cellWidth = NARROW_TILE_W;
         blank = "    ";
         boardWidth = NARROW_BOARD_WIDTH;
     }
+    boardHeight = 4 * tileH + 3 * ROW_GAP;
     leftMargin = (text.COLUMNS - boardWidth) >> 1;
-    let totalHeight: usmallint = BOARD_HEIGHT + 4; // header + gap + board + gap + status
+    let totalHeight: usmallint = boardHeight + 4; // header + gap + board + gap + status
     headerRow = (Video.ROWS - totalHeight) >> 1;
     boardTop = headerRow + 2; // header row, then one blank row, then the board
-    statusRow = boardTop + BOARD_HEIGHT + 1; // one blank row after the board
+    statusRow = boardTop + boardHeight + 1; // one blank row after the board
     return;
 }
 
 // The screen cell a tile's top-left corner starts at.
 function tileCell(row: utinyint, col: utinyint): usmallint {
-    let y: usmallint = boardTop + row * (TILE_H + ROW_GAP);
+    let y: usmallint = boardTop + row * (tileH + ROW_GAP);
     let x: usmallint = leftMargin + col * (cellWidth + COL_GAP);
     return y * ROW + x;
 }
@@ -207,15 +222,17 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
     let value: usmallint = POW2[exponent];
     text.setColor(TILE_COLOR[exponent]);
     text.setReverse(true);
-    text.print(origin, blank);
-    let mid: usmallint = origin + ROW;
-    text.print(mid, blank);
+    let line: utinyint = 0;
+    while (line < tileH) {
+        text.print(origin + line * ROW, blank);
+        line++;
+    }
     if (value != 0) {
+        let numRow: usmallint = origin + (tileH >> 1) * ROW;
         let width: utinyint = tileWidth(value);
         let offset: utinyint = (cellWidth - width) >> 1;
-        text.printNumber(mid + offset, value, width);
+        text.printNumber(numRow + offset, value, width);
     }
-    text.print(mid + ROW, blank);
     text.setReverse(false); // so the next print — this frame's or the next — is not inverted
     return;
 }
