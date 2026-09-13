@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Deliberately NOT viewport-fit=cover, and deliberately NOT
+     status-bar-style=black-translucent. Both exist to let a page draw
+     UNDERNEATH the system UI, and both were doing exactly that: they extend
+     the layout viewport above the visible area, so a `position: fixed`
+     element at top: 0 starts behind Safari's landscape bar and the top of the
+     picture is cut off. A letterboxed game gains nothing from drawing under
+     the chrome — it just loses rows. Without `cover`, the layout viewport is
+     the safe area and top: 0 is the top of what you can actually see. -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#000000">
 <title>2048 — 8BitScript</title>
 <style>
@@ -18,14 +26,16 @@
   }
 
   /* The screen owns the whole visible viewport.
-     `height: 100dvh` is the dynamic viewport height — the height with the
-     browser's own retractable UI accounted for, which is exactly the question
-     "how much of the screen can I actually draw on" and the one thing here
-     that iOS answers correctly by itself. `height: 100%` is the fallback for
-     anything that does not know dvh.
-     The safe-area padding keeps the picture clear of the notch and the home
-     indicator; `viewport-fit=cover` in the viewport meta is what makes those
-     insets report anything at all.
+     `height: 100svh` is the SMALL viewport height — the height with the
+     browser's retractable UI fully EXPANDED, i.e. the least screen this page
+     will ever have. `dvh` tracks the bar sliding in and out, which means a
+     picture sized to it overflows for as long as the bar is coming back;
+     `svh` never overflows, and the cost is a little unused height while the
+     bar is hidden. For a game that is the right side to err on.
+     `height: 100%` is the fallback for anything that does not know svh.
+     The safe-area padding is belt and braces: without viewport-fit=cover the
+     insets report zero, and if anything ever puts that back the padding is
+     already there.
      Deliberately NOT positioned from visualViewport.offsetTop: iOS reports
      that as 0 even when Safari's landscape bar is over the top of the layout
      viewport, so driving `top` from it anchors the picture above the visible
@@ -34,7 +44,7 @@
     position: fixed;
     top: 0; left: 0; right: 0;
     height: 100%;
-    height: 100dvh;
+    height: 100svh;
     box-sizing: border-box;
     padding:
       env(safe-area-inset-top) env(safe-area-inset-right)
@@ -83,6 +93,12 @@
   @media (prefers-reduced-motion: reduce) { #tray { transition: none; } }
 
   #tray strong { letter-spacing: 0.06em; color: #d7dae0; }
+  /* Hidden with the tray. Here so a sizing problem on a device I cannot open
+     a console on can be read off the screen instead of guessed at. */
+  #diag {
+    font: 10px/1.5 ui-monospace, Menlo, monospace;
+    color: #6f7782; white-space: pre; border-top: 1px solid #262b33; padding-top: 8px;
+  }
   label { display: flex; gap: 8px; align-items: center; justify-content: space-between; color: #9aa1ab; }
   select {
     background: #0b0d10; color: #d7dae0; border: 1px solid #262b33;
@@ -112,6 +128,7 @@
           <option value="vic20">VIC-20</option>
         </select>
       </label>
+      <small id="diag" aria-live="polite"></small>
     </div>
   </div>
 </div>
@@ -121,6 +138,25 @@ var panel = document.getElementById('panel');
 var handle = document.getElementById('handle');
 var systemSelect = document.getElementById('system');
 var modelSelect = document.getElementById('model');
+
+// ---- what the page thinks its size is -------------------------------------
+// Read this off the settings tray when the picture does not fit: whichever of
+// these disagrees with the screen is the one lying.
+var diag = document.getElementById('diag');
+function report() {
+  var vv = window.visualViewport;
+  var rect = game.getBoundingClientRect();
+  diag.textContent =
+    'inner  ' + window.innerWidth + 'x' + window.innerHeight + '\n' +
+    'client ' + document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight + '\n' +
+    (vv ? 'visual ' + Math.round(vv.width) + 'x' + Math.round(vv.height) +
+          ' @' + Math.round(vv.offsetLeft) + ',' + Math.round(vv.offsetTop) + '\n' : 'visual  n/a\n') +
+    'box    ' + Math.round(rect.width) + 'x' + Math.round(rect.height) +
+          ' @' + Math.round(rect.left) + ',' + Math.round(rect.top);
+}
+window.addEventListener('resize', report);
+window.addEventListener('orientationchange', report);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', report);
 
 // ---- the settings tray ----------------------------------------------------
 function setOpen(open) {
@@ -155,7 +191,7 @@ function load() {
     src: src,
     frameRate: 60,
     // Measured from the element, not from the viewport: #game is already
-    // exactly the drawable area (100dvh inside the safe-area insets), and an
+    // exactly the drawable area (100svh inside the safe-area insets), and an
     // element that says what it is beats a second guess at the same number.
     // The loader watches it with a ResizeObserver, so turning the phone
     // resizes the picture without anything here listening for it.
@@ -170,6 +206,7 @@ function load() {
 systemSelect.addEventListener('change', load);
 modelSelect.addEventListener('change', load);
 load();
+report();
 </script>
 </body>
 </html>
