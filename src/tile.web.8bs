@@ -1,19 +1,27 @@
-// The web's default (Modern, 16:9 high-fi) tile: 10×5 reverse-video squares
-// with 2×3-cell block-digits, a HUD on the top and bottom rows, and a
-// centred game-over panel. Picked up automatically for untagged web builds —
+// The web's default (Modern, 16:9 high-fi) tile: 9×6 reverse-video squares
+// with 2×3-cell block-digits, a HUD down the side margins, and a centred
+// game-over panel. Picked up automatically for untagged web builds —
 // nothing in main.8bs names this file; see docs/packages.md's
 // "System-specific files". Machine skins are tile.web.<tag>.8bs, and those
 // stay faithful to their machine: only this file is free to be laid out for
 // a browser.
 //
-// ---- why the HUD moved off the sides -------------------------------------
+// ---- why the HUD is in the margins ---------------------------------------
 //
-// The board is the thing worth looking at, and on 48×27 the tiles are capped
-// at 5 rows tall: four of them plus three 1-row gaps is 23 of the 27 rows,
-// and the HUD needs the rest. Height being fixed, the only way to make a
-// tile bigger is to make it wider — so the title and score moved from side
-// columns (which cost 11 of 48 columns) onto the spare top and bottom rows,
-// and the tiles went from 8 cells wide to 10. Same height, 25% more tile.
+// Rows are the scarce thing on this screen and columns are not: 48×27, and a
+// board of four tiles plus three 1-row gaps is 4×TILE_H + 3 of those 27 rows.
+// A HUD row across the top caps TILE_H at 5 — 23 rows of board, and four rows
+// left over doing nothing. On a phone in landscape that showed up as exactly
+// what it was: a strip of empty screen under the board, because the status
+// line is suppressed on a touch host and the version only appears on the
+// title screen.
+//
+// Putting the HUD in the side margins instead spends columns, which there are
+// enough of, and gives every row to the board: 4×6 + 3 is 27 exactly. The
+// tile goes from 10×5 to 9×6 — 72×48 pixels instead of 80×40, 8% more area
+// and much nearer square, which is what a 2048 tile should look like. The
+// margins left over are 4 columns for the title and 5 for the score, which
+// is what each needs to the character.
 import { screen, BorderColor } from "@8bitscript/screen";
 import { text, TextColor } from "@8bitscript/text";
 import { input } from "@8bitscript/input";
@@ -23,9 +31,9 @@ const VERSION_LINE: string = "v0.1.3";
 
 const ROW: usmallint = text.COLUMNS; // 48
 
-const TILE_W: utinyint = 10;
-const TILE_H: utinyint = 5;
-const BLANK: string = "          "; // TILE_W spaces
+const TILE_W: utinyint = 9;
+const TILE_H: utinyint = 6;
+const BLANK: string = "         "; // TILE_W spaces
 
 const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 
@@ -65,18 +73,21 @@ const DIGIT_TILES: array<utinyint, 60> = [
     142, 138, 139, 138, 131, 138,
 ];
 
-// 4×4 of 10×5 tiles with 1-cell gaps: 43×23 on 48×27, at left 2, top 2.
-// Row 0 is the HUD, rows 25-26 the hint and the version.
+// 4×4 of 9×6 tiles with 1-cell gaps: 39×27 on 48×27, at left 4, top 0 — the
+// full height of the screen. Columns 0-3 and 43-47 are the margins the HUD
+// lives in.
 const ORIGIN: array<usmallint, 16> = [
-     98, 109, 120, 131,
-    386, 397, 408, 419,
-    674, 685, 696, 707,
-    962, 973, 984, 995,
+       4,   14,   24,   34,
+     340,  350,  360,  370,
+     676,  686,  696,  706,
+    1012, 1022, 1032, 1042,
 ];
 
-const TITLE_NAME_AT: usmallint = 2;       // row 0, col 2 — over the board's left edge
-const SCORE_AT: usmallint = 34;           // row 0, col 34 — "SCORE 12345" ends at col 44
-const STATUS_AT: usmallint = 1202;        // row 25, col 2
+const TITLE_NAME_AT: usmallint = 48;      // row 1, col 0 — "2048" fills the left margin
+const SCORE_LABEL_AT: usmallint = 91;     // row 1, col 43 — "SCORE" fills the right one
+const SCORE_VALUE_AT: usmallint = 139;    // row 2, col 43
+const HINT_TOP_AT: usmallint = 1195;      // row 24, col 43 — two 5-column lines
+const HINT_BOTTOM_AT: usmallint = 1243;   // row 25, col 43
 const TITLE_AT: usmallint = 598;          // row 12, col 22 — "2048" on the title screen
 const PROMPT_AT: usmallint = 690;         // row 14, col 18
 const VERSION_AT: usmallint = 1286;       // row 26, col 38 — "v0.1.3"
@@ -100,13 +111,17 @@ const PANEL_TITLE_AT: usmallint = 499;    // row 10, col 19 — "GAME OVER", in 
 const PANEL_SCORE_AT: usmallint = 642;    // row 13, col 18 — "SCORE 12345"
 const PANEL_TAP_AT: usmallint = 736;      // row 15, col 16 — "TAP TO CONTINUE"
 const PANEL_KEY_AT: usmallint = 738;      // row 15, col 18 — "PRESS ENTER"
-const STATUS_BLANK: string = "                   ";
+const HINT_BLANK: string = "     ";   // one margin line
 
 // The panel is drawn once when the game ends and erased once when the next
 // game starts, rather than restamped on every HUD paint: main.8bs's
 // resetGame() forces all sixteen tiles to redraw, so erasing the panel here
 // and letting the tiles paint back over it is all the restore that is needed.
 let panelShown: bool = false;
+
+// The border main.8bs blanks to at start-up. Named here rather than written
+// twice, so restoring it after a game over cannot drift from setting it.
+const PLAYING_BORDER: utinyint = BorderColor.BLUE;
 
 export function computeLayout(): void {
 }
@@ -171,27 +186,31 @@ export function drawHud(score: usmallint, over: bool, won: bool): void {
     text.setReverse(false);
     text.setColor(TextColor.WHITE);
     text.print(TITLE_NAME_AT, "2048");
-    text.print(SCORE_AT, `SCORE ${score:5}`);
-    // Always write the status line, never just leave it: the branch that
-    // prints nothing is what used to strand "YOU MADE 2048" on screen across
-    // a restart, and would now strand "ARROWS TO MOVE" under the panel.
+    text.print(SCORE_LABEL_AT, "SCORE");
+    text.print(SCORE_VALUE_AT, `${score:5}`);
+    // Always write both hint lines, never just leave them: the branch that
+    // printed nothing is what used to strand "YOU MADE 2048" on screen across
+    // a restart, and would now strand the arrow-key hint under the panel.
     if (won) {
-        text.print(STATUS_AT, "YOU MADE 2048      ");
+        text.print(HINT_TOP_AT, "YOU  ");
+        text.print(HINT_BOTTOM_AT, "WIN! ");
     } else if (!over && !input.touch()) {
-        text.print(STATUS_AT, "ARROWS TO MOVE     ");
+        text.print(HINT_TOP_AT, "ARROW");
+        text.print(HINT_BOTTOM_AT, "KEYS ");
     } else {
-        text.print(STATUS_AT, STATUS_BLANK);
+        text.print(HINT_TOP_AT, HINT_BLANK);
+        text.print(HINT_BOTTOM_AT, HINT_BLANK);
     }
     if (over) {
         if (!panelShown) {
-            // The border is the one part of the screen that is still visible
-            // past the panel, and a red edge is the whole screen saying so.
+            // The border is the one part of the screen still visible past the
+            // panel, and a red edge is the whole screen saying so.
             screen.setBorder(BorderColor.RED);
             drawPanel(score);
             panelShown = true;
         }
     } else if (panelShown) {
-        screen.setBorder(BorderColor.BLUE);
+        screen.setBorder(PLAYING_BORDER);
         erasePanel();
         panelShown = false;
     }
