@@ -48,3 +48,25 @@ jobs:
       # the web build — so the release matrix lives in one place.
       cli-version: 0.4.0
       attach-release: true
+
+  # The release is out — the GitHub Release exists and compile.yml has
+  # attached every artifact 8bitscript.config.ts declares. Only now does
+  # `release` move, and only to the commit this tag names.
+  #
+  # The branch answers what a tag cannot: what is actually downloadable
+  # right now. A tag is written the moment the Version Packages PR merges,
+  # before anything has been built or uploaded, so a run that fails halfway
+  # leaves a tag standing over a release that does not exist. `needs` both
+  # jobs above, so a failure in either leaves `release` where it was.
+  #
+  # Pushed without --force: git refuses anything that is not a
+  # fast-forward, which is the check wanted rather than an obstacle. And
+  # because this pushes with GITHUB_TOKEN, it fires no further workflows —
+  # so nothing can be hung off `push: branches: [release]` and expected to
+  # run.
+  advance-release-branch:
+    needs: [create-release, compile]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: git push origin "$GITHUB_SHA:refs/heads/release"
