@@ -103,16 +103,27 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   on exactly the board the instant mover computes — checked exhaustively
   over all 20,736 line states. The 4K PET 2001, the unexpanded VIC-20,
   and the NES keep their instant moves and their exact byte counts.
-- **Randomness is [`@8bitscript/random`](../8bitscript/packages/random)**, a
-  small deterministic generator added to 8BitScript itself for this —
-  nothing in the language had one for any of these nine targets before
-  now, only Atari 8-bit's own hardware-entropy register
-  (`@8bitscript/atari8/random`, a different thing on purpose: see its
-  header). `random.next()` runs once every frame regardless of input, so
-  the sequence a game actually sees depends on how long the player took
-  between moves, not just how many moves they made — deterministic and
-  replayable in principle, unpredictable in practice, with no hardware
-  dependency at all.
+- **Randomness is the machine's own, on the two machines that have one.**
+  Two of the nine can hand a program entropy straight out of silicon: the
+  C64's SID voice-3 noise oscillator (`@8bitscript/c64/random`) and the
+  Atari 8-bit's POKEY counter (`@8bitscript/atari8/random`). Both are
+  *smaller* than computing the numbers — reading a register costs less than
+  a 16-bit multiply-and-add plus the two bytes of state it steps — which is
+  the whole reason those two builds use them. Against 0.6.2: 3844 bytes of
+  program where the software generator needs 3884 on the C64, and 3758
+  against 3828 on the Atari, which needs no set-up write at all and so saves
+  70 bytes where the C64 saves 40. The other seven use
+  [`@8bitscript/random`](../8bitscript/packages/random), a small
+  deterministic generator added to 8BitScript itself for this, stepped once
+  every frame regardless of input so the sequence a game sees depends on how
+  long the player took between moves and not just how many they made.
+  `rng.8bs` is the one place that picks, with `rng.c64.8bs` and
+  `rng.atari8.8bs` as its per-machine twins; the seven software builds are
+  byte-for-byte what they were before the split, the 4K PET included. The
+  price on the two hardware builds is replay — every spawn reads a register,
+  so those games cannot be replayed from a start state or reproduced from a
+  screenshot, which is exactly why both packages sit behind their own
+  explicitly optional import (see either one's header).
 - **Colour is a table lookup, and it costs nothing on the three machines
   that can't use it.** `TILE_COLOR[exponent]` feeds `text.setColor()` before
   every tile is drawn. On the PET, Atari 8-bit and NES that call is an

@@ -12,7 +12,7 @@
 // of a double and a compare.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
-import { random } from "@8bitscript/random";
+import { rng } from "./rng.8bs";
 import { Memory } from "@8bitscript/system";
 import { computeLayout, drawHud, drawTile, drawTitleScreen } from "./tile.8bs";
 
@@ -242,11 +242,13 @@ function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
 // ---- spawning, and knowing when to stop ---------------------------------
 
 // One new tile in a random empty cell: a 2 nine times in ten, a 4 the
-// tenth. random.range() is 8BitScript's own deterministic generator
-// (@8bitscript/random) — explicitly seeded, never hardware entropy — ticked
-// once a frame in main()'s loop below, so the sequence depends on how long
-// the player actually took between moves rather than repeating the same
-// game every run.
+// tenth. Where those numbers come from depends on the machine, and rng.8bs
+// is the one place that decides: seven targets get 8BitScript's own
+// deterministic generator, stepped once a frame in main()'s loop below so
+// the sequence follows how long the player actually took between moves
+// rather than repeating the same game every run; the C64 and the Atari
+// 8-bit read their own hardware entropy instead, which on those two is both
+// smaller than computing it and genuinely unpredictable.
 function spawnTile(): void {
     let empties: utinyint = 0;
     for (let i: utinyint = 0; i < 16; i++) {
@@ -257,9 +259,9 @@ function spawnTile(): void {
     if (empties == 0) {
         return;
     }
-    let target: utinyint = random.range(empties);
+    let target: utinyint = rng.range(empties);
     let exponent: utinyint = 1;
-    if (random.range(10) == 0) {
+    if (rng.range(10) == 0) {
         exponent = 2;
     }
     let seenEmpty: utinyint = 0;
@@ -329,6 +331,11 @@ function resetGame(): void {
 }
 
 export function main(): void {
+    // First, before anything else touches the hardware: on the C64 this
+    // claims SID voice 3 and writes $D418 whole, and it has no way to know
+    // if something else got there first. Empty on the seven targets with no
+    // entropy source, and on the Atari, whose counter is already running.
+    rng.begin();
     screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
     computeLayout();
     input.begin();
@@ -347,7 +354,7 @@ export function main(): void {
     while (true) {
         waitFrame();
         input.poll();
-        random.next(); // keep the generator moving between moves — see spawnTile()
+        rng.tick(); // keep the generator moving between moves — see spawnTile()
 
         if (!started) {
             if (input.confirm()) {

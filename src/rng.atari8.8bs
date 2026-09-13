@@ -1,0 +1,31 @@
+// The Atari 8-bit's twin of rng.8bs: POKEY's RANDOM register ($D20A) in
+// place of a software generator. Picked up automatically for Atari builds —
+// nothing in main.8bs names this file.
+//
+// The best of the three, because POKEY's counter needs no setting up at
+// all: there is not even a begin() to pay for. Against 0.6.2: 3758 bytes of
+// program where the portable generator needs 3828, and 85 bytes of RAM
+// against 87. The C64's twin saves 40 bytes; this one saves 70, and the
+// difference between them is exactly the four register writes SID needs to
+// start making noise in the first place.
+//
+// Same price as the C64's: every spawn reads a register, so an Atari game
+// cannot be replayed from its start state. See @8bitscript/atari8/random's
+// header for the rest, including its warning that AUDCTL's POLY_9BIT bit
+// shortens the counter to 511 states — 2048 never writes AUDCTL, so the
+// counter stays the full 17 bits wide here.
+import { random } from "@8bitscript/atari8/random";
+
+export namespace rng {
+    // POKEY's counter is already running and belongs to nobody. Empty, and
+    // inlines away to nothing.
+    function begin(): void {
+    }
+
+    function tick(): void {
+    }
+
+    function range(bound: utinyint): utinyint {
+        return random.byte() % bound;
+    }
+}
