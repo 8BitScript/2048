@@ -185,9 +185,13 @@ export function drawTitleScreen(): void {
     return;
 }
 
+const SCORE_HEADER_LEN: utinyint = 11; // "SCORE " plus a five-digit score field
+
 export function drawHud(score: usmallint, over: bool, won: bool): void {
+    let headerAt: usmallint = headerRow * ROW;
     text.setColor(TextColor.WHITE);
-    text.print(headerRow * ROW + leftMargin, `2048  SCORE ${score:5}`);
+    text.print(headerAt + leftMargin, "2048");
+    text.print(headerAt + text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
     if (over) {
         text.print(statusRow * ROW + leftMargin, "GAME OVER - RESTART");
     } else if (won) {

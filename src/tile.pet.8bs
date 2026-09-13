@@ -84,12 +84,15 @@ const HUD: array<utinyint, 69> = [
     25, 15, 21, 32, 13, 1, 4, 5, 32, 50, 48, 52, 56, 32, 32, 32, 32, 32, 32,
     7, 1, 13, 5, 32, 15, 22, 5, 18, 32, 45, 32, 18, 5, 19, 20, 1, 18, 20,
 ];
-const HUD_HEADER: utinyint = 0;
 const HUD_ARROWS: utinyint = 12;
 const HUD_WON: utinyint = 31;
 const HUD_OVER: utinyint = 50;
-const HUD_HEADER_LEN: utinyint = 12;
+const HUD_TITLE_AT: utinyint = 0;
+const HUD_TITLE_LEN: utinyint = 4;
+const HUD_SCORE_LABEL_AT: utinyint = 6;
+const HUD_SCORE_LABEL_LEN: utinyint = 6;
 const HUD_STATUS_LEN: utinyint = 19;
+const SCORE_DIGITS_LEN: utinyint = 5;
 
 // Title screen — keep TITLE_AT_VERSION in sync with package.json "version".
 const TITLE_DATA: array<utinyint, 44> = [
@@ -213,8 +216,14 @@ export function drawHud(score: usmallint, over: bool, won: bool): void {
         headerAt = 22;
         statusAt = 1942;
     }
-    writeCells(headerAt, HUD_HEADER, HUD_HEADER_LEN);
-    printScore5(headerAt + HUD_HEADER_LEN, score);
+    let headerRowAt: usmallint = headerAt - (headerAt % ROW);
+    writeCells(headerAt, HUD_TITLE_AT, HUD_TITLE_LEN);
+    writeCells(
+        headerRowAt + ROW - SCORE_DIGITS_LEN - HUD_SCORE_LABEL_LEN,
+        HUD_SCORE_LABEL_AT,
+        HUD_SCORE_LABEL_LEN,
+    );
+    printScore5(headerRowAt + ROW - SCORE_DIGITS_LEN, score);
     let msg: utinyint = HUD_ARROWS;
     if (won) {
         msg = HUD_WON;
