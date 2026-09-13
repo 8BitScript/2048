@@ -31,29 +31,23 @@
   }
 
   /* The screen owns the whole visible viewport.
-     `height: 100svh` is the SMALL viewport height — the height with the
-     browser's retractable UI fully EXPANDED, i.e. the least screen this page
-     will ever have. `dvh` tracks the bar sliding in and out, which means a
-     picture sized to it overflows for as long as the bar is coming back;
-     `svh` never overflows, and the cost is a little unused height while the
-     bar is hidden. For a game that is the right side to err on.
-     `height: 100%` is the fallback for anything that does not know svh.
-     The safe-area padding is belt and braces: without viewport-fit=cover the
-     insets report zero, and if anything ever puts that back the padding is
-     already there.
-     Deliberately NOT positioned from visualViewport.offsetTop: iOS reports
-     that as 0 even when Safari's landscape bar is over the top of the layout
-     viewport, so driving `top` from it anchors the picture above the visible
-     area and the top of the board gets cut. */
+
+     Deliberately NOT `position: fixed`. A fixed element is laid out against
+     the initial containing block, and on a phone that block does not reliably
+     start where the visible area starts — which is how the top of the picture
+     kept ending up behind the browser's chrome. Ordinary in-flow content has
+     no such problem: the browser puts it inside the content area, because
+     that is what the content area is for.
+
+     The height is set from JavaScript (see sizeScreen) to the SMALLEST of
+     every measure the browser offers, because the failure mode throughout has
+     been a container that believed it was taller than the screen. `100svh` is
+     the CSS fallback: the small viewport height, i.e. the height with the
+     browser's retractable UI fully out, which is the conservative one. */
   #game {
-    position: fixed;
-    top: 0; left: 0; right: 0;
+    width: 100%;
     height: 100%;
     height: 100svh;
-    box-sizing: border-box;
-    padding:
-      env(safe-area-inset-top) env(safe-area-inset-right)
-      env(safe-area-inset-bottom) env(safe-area-inset-left);
     display: flex; align-items: center; justify-content: center;
     overflow: hidden;
   }
@@ -153,24 +147,53 @@ var handle = document.getElementById('handle');
 var systemSelect = document.getElementById('system');
 var modelSelect = document.getElementById('model');
 
-// ---- what the page thinks its size is -------------------------------------
-// Read this off the settings tray when the picture does not fit: whichever of
-// these disagrees with the screen is the one lying.
+// ---- how big the screen is allowed to be ----------------------------------
+// Every version of this that clipped did so because the container believed it
+// was taller than the screen. So believe the smallest number available rather
+// than any single one of them: whichever measure is wrong, it is wrong by
+// being too big, and the minimum is never the wrong one.
+function smallest(values) {
+  var best = 0;
+  for (var i = 0; i < values.length; i += 1) {
+    var v = values[i];
+    if (v > 0 && (best === 0 || v < best)) best = v;
+  }
+  return best;
+}
+function sizeScreen() {
+  var vv = window.visualViewport;
+  var docEl = document.documentElement;
+  var h = smallest([window.innerHeight, docEl.clientHeight, vv ? vv.height : 0]);
+  var w = smallest([window.innerWidth, docEl.clientWidth, vv ? vv.width : 0]);
+  if (h > 0) game.style.height = Math.floor(h) + 'px';
+  if (w > 0) game.style.width = Math.floor(w) + 'px';
+  report();
+}
+
+// What the page believes, in the tray, so a sizing problem on a device with
+// no console can be read off the screen instead of guessed at.
 var diag = document.getElementById('diag');
 function report() {
   var vv = window.visualViewport;
   var rect = game.getBoundingClientRect();
+  var canvas = game.querySelector('canvas');
   diag.textContent =
     'inner  ' + window.innerWidth + 'x' + window.innerHeight + '\n' +
     'client ' + document.documentElement.clientWidth + 'x' + document.documentElement.clientHeight + '\n' +
     (vv ? 'visual ' + Math.round(vv.width) + 'x' + Math.round(vv.height) +
           ' @' + Math.round(vv.offsetLeft) + ',' + Math.round(vv.offsetTop) + '\n' : 'visual  n/a\n') +
     'box    ' + Math.round(rect.width) + 'x' + Math.round(rect.height) +
-          ' @' + Math.round(rect.left) + ',' + Math.round(rect.top);
+          ' @' + Math.round(rect.left) + ',' + Math.round(rect.top) + '\n' +
+    'canvas ' + (canvas ? Math.round(canvas.getBoundingClientRect().width) + 'x' +
+          Math.round(canvas.getBoundingClientRect().height) +
+          ' @' + Math.round(canvas.getBoundingClientRect().top) : 'none');
 }
-window.addEventListener('resize', report);
-window.addEventListener('orientationchange', report);
-if (window.visualViewport) window.visualViewport.addEventListener('resize', report);
+window.addEventListener('resize', sizeScreen);
+window.addEventListener('orientationchange', sizeScreen);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', sizeScreen);
+  window.visualViewport.addEventListener('scroll', sizeScreen);
+}
 
 // ---- the settings tray ----------------------------------------------------
 function setOpen(open) {
@@ -225,6 +248,7 @@ function load() {
 }
 systemSelect.addEventListener('change', load);
 modelSelect.addEventListener('change', load);
+sizeScreen();
 load();
 report();
 </script>
