@@ -179,24 +179,35 @@ function tileWidth(value: usmallint): utinyint {
 // rounds up); the top and bottom rows are blank on purpose — they are the
 // rest of the square, not wasted space.
 
-// Front door before the first deal: title, the confirm key this machine
-// names, and the app version along the bottom row.
+// Front door before the first deal. Prompt text is picked from Input.*
+// facts, so unused strings never reach the image (optimizeReachable folds
+// the other arms and the 6502 backend only emits referenced literals).
+//
+// A stick or pad cannot be probed the way a 1351 can (`mouse.present()`):
+// an idle CIA/PIA port reads the same with nothing plugged in as with a
+// stick at rest. So a keyboard machine that *has* joystick or pad ports
+// always names both confirm inputs; FIRE or START alone is only for a
+// build with no keyboard (the NES).
 export function drawTitleScreen(): void {
     text.setReverse(false);
     text.setColor(TextColor.WHITE);
-    let cols: usmallint = text.COLUMNS;
-    let titleRow: usmallint = (Video.ROWS >> 1) - 1;
-    let promptRow: usmallint = titleRow + 2;
-    let versionRow: usmallint = Video.ROWS - 1;
-    text.print(titleRow * ROW + ((cols - 4) >> 1), "2048");
-    if (!Input.KEYBOARD) {
-        text.print(promptRow * ROW + ((cols - 11) >> 1), "PRESS START");
-    } else if (#system() == System.WEB) {
-        text.print(promptRow * ROW + ((cols - 11) >> 1), "PRESS ENTER");
+    text.print(((Video.ROWS >> 1) - 1) * ROW + ((text.COLUMNS - 4) >> 1), "2048");
+    if (Input.PADS > 0) {
+        if (Input.KEYBOARD) {
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 21) >> 1), "PRESS RETURN OR START");
+        } else {
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 11) >> 1), "PRESS START");
+        }
+    } else if (Input.JOYSTICKS > 0) {
+        if (Input.KEYBOARD) {
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 20) >> 1), "PRESS RETURN OR FIRE");
+        } else {
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 10) >> 1), "PRESS FIRE");
+        }
     } else {
-        text.print(promptRow * ROW + ((cols - 12) >> 1), "PRESS RETURN");
+        text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 12) >> 1), "PRESS RETURN");
     }
-    text.print(versionRow * ROW + cols - VERSION_LEN, VERSION_LINE);
+    text.print((Video.ROWS - 1) * ROW + text.COLUMNS - VERSION_LEN, VERSION_LINE);
     return;
 }
 

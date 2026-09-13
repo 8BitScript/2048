@@ -1,35 +1,17 @@
-// The web's default (16:9 high-fi) tile: 8×5 reverse-video squares with
-// 2×3-cell block-digits, a side score column, and a HUD that drops the
-// tutorial line on a touch host. Picked up automatically for untagged web
-// builds — nothing in main.8bs names this file; see docs/packages.md's
-// "System-specific files". Machine skins are tile.web.<tag>.8bs.
+// Web PET 2001 skin: 40×25 block-digit tiles, green host, no per-cell
+// color. HUD matches the 4K PET (PRESS RETURN, 2048 left / SCORE right).
+// Picked up when the web build's hardware tag is `pet-2001`. Draws through
+// @8bitscript/text; does not import tile.pet.8bs or write $8000.
 import { text, TextColor } from "@8bitscript/text";
 import { input } from "@8bitscript/input";
 
-// Keep in sync with package.json "version".
 const VERSION_LINE: string = "v0.1.3";
 
-const ROW: usmallint = text.COLUMNS; // 48
-
+const ROW: usmallint = text.COLUMNS; // 40
 const TILE_H: utinyint = 5;
 const BLANK: string = "        ";
 
 const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-
-const TILE_COLOR: array<utinyint, 12> = [
-    TextColor.WHITE,
-    TextColor.WHITE,
-    TextColor.CYAN,
-    TextColor.GREEN,
-    TextColor.GREEN,
-    TextColor.YELLOW,
-    TextColor.YELLOW,
-    TextColor.PURPLE,
-    TextColor.PURPLE,
-    TextColor.RED,
-    TextColor.RED,
-    TextColor.BLUE,
-];
 
 const TILE_DIGIT_AT: array<utinyint, 13> = [0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26];
 const TILE_DIGIT: array<utinyint, 26> = [
@@ -52,22 +34,19 @@ const DIGIT_TILES: array<utinyint, 60> = [
     142, 138, 139, 138, 131, 138,
 ];
 
-// 4×4 of 8×5 tiles with 1-cell gaps: 35×23, centred on 48×27
-// (left 6, top 2). Title sits in columns 1–4; score in 42–47.
 const ORIGIN: array<usmallint, 16> = [
-    102, 111, 120, 129,
-    390, 399, 408, 417,
-    678, 687, 696, 705,
-    966, 975, 984, 993,
+    42, 51, 60, 69,
+    282, 291, 300, 309,
+    522, 531, 540, 549,
+    762, 771, 780, 789,
 ];
 
-const TITLE_NAME_AT: usmallint = 97;      // row 2, col 1 — left of the board
-const SCORE_LABEL_AT: usmallint = 138;    // row 2, col 42
-const SCORE_VALUE_AT: usmallint = 186;    // row 3, col 42
-const STATUS_AT: usmallint = 1206;        // row 25, col 6
-const TITLE_AT: usmallint = 598;          // row 12, col 22 — "2048"
-const PROMPT_AT: usmallint = 690;         // row 14, col 18
-const VERSION_AT: usmallint = 1290;       // row 26, col 42 — "v0.1.3"
+const HEADER_AT: usmallint = 2;
+const SCORE_HEADER_LEN: utinyint = 11;
+const STATUS_AT: usmallint = 962;
+const TITLE_AT: usmallint = 458;
+const PROMPT_AT: usmallint = 534;
+const VERSION_AT: usmallint = 994;
 
 export function computeLayout(): void {
 }
@@ -79,7 +58,7 @@ export function drawTitleScreen(): void {
     if (input.touch()) {
         text.print(PROMPT_AT, "TAP TO START");
     } else {
-        text.print(PROMPT_AT, "PRESS ENTER");
+        text.print(PROMPT_AT, "PRESS RETURN");
     }
     text.print(VERSION_AT, VERSION_LINE);
     return;
@@ -88,9 +67,8 @@ export function drawTitleScreen(): void {
 export function drawHud(score: usmallint, over: bool, won: bool): void {
     text.setReverse(false);
     text.setColor(TextColor.WHITE);
-    text.print(TITLE_NAME_AT, "2048");
-    text.print(SCORE_LABEL_AT, "SCORE");
-    text.print(SCORE_VALUE_AT, `${score:5}`);
+    text.print(HEADER_AT, "2048");
+    text.print(text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
     if (over) {
         text.print(STATUS_AT, "GAME OVER - RESTART");
     } else if (won) {
@@ -101,8 +79,8 @@ export function drawHud(score: usmallint, over: bool, won: bool): void {
     return;
 }
 
-function fillTile(origin: usmallint, exponent: utinyint): void {
-    text.setColor(TILE_COLOR[exponent]);
+function fillTile(origin: usmallint): void {
+    text.setColor(TextColor.WHITE);
     text.setReverse(true);
     let rowCell: usmallint = origin;
     let row: utinyint = 0;
@@ -130,7 +108,7 @@ function drawDigit(cell: usmallint, value: utinyint): void {
 
 export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
     let origin: usmallint = ORIGIN[row * 4 + col];
-    fillTile(origin, exponent);
+    fillTile(origin);
     let base: utinyint = TILE_DIGIT_AT[exponent];
     let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
     if (count != 0) {

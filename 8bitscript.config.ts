@@ -4,7 +4,8 @@ export default {
   targets: {
     vic20: {},
     c64: {},
-    // The game is 2420 bytes of program on a 2001/4K (2624 before the
+    // The game is 2581 bytes of program on a 2001/4K (2420 at 0.6.1 before
+    // the title screen, right-aligned HUD, and 0.6.2; 2624 before the
     // 0.6.1 linker stopped writing input.poll() out once per call site;
     // 2440 when this build was first fitted, drifting to 2624 across 0.6.0
     // as begin() began priming the edge detector and the PET's text
@@ -28,6 +29,13 @@ export default {
     nes: {},
     cx16: {},
     mega65: {},
-    web: {},
+    web: {
+      release: [
+        {},
+        { hardware: { machine: 'c64' } },
+        { hardware: { machine: 'pet-2001' } },
+        { hardware: { machine: 'vic20' } },
+      ],
+    },
   },
 };

@@ -1,0 +1,107 @@
+// Web VIC-20 skin: 22×23, 4-wide tiles with a one-cell gap — the same
+// board tile.8bs draws on a real VIC-20. Picked up when the web build's
+// hardware tag is `vic20`.
+import { text, TextColor } from "@8bitscript/text";
+import { input } from "@8bitscript/input";
+
+const VERSION_LINE: string = "v0.1.3";
+
+const ROW: usmallint = text.COLUMNS; // 22
+const TILE_W: utinyint = 4;
+const TILE_H: utinyint = 3;
+const BLANK: string = "    ";
+
+const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+
+const TILE_COLOR: array<utinyint, 12> = [
+    TextColor.WHITE,
+    TextColor.WHITE,
+    TextColor.CYAN,
+    TextColor.GREEN,
+    TextColor.GREEN,
+    TextColor.YELLOW,
+    TextColor.YELLOW,
+    TextColor.PURPLE,
+    TextColor.PURPLE,
+    TextColor.RED,
+    TextColor.RED,
+    TextColor.BLUE,
+];
+
+// boardTop 4, left 1, 4×3 tiles, 1-cell gaps (stride 5×4)
+const ORIGIN: array<usmallint, 16> = [
+    89, 94, 99, 104,
+    177, 182, 187, 192,
+    265, 270, 275, 280,
+    353, 358, 363, 368,
+];
+
+const HEADER_AT: usmallint = 45;
+const SCORE_HEADER_LEN: utinyint = 11;
+const STATUS_AT: usmallint = 441;
+const TITLE_AT: usmallint = 229;
+const PROMPT_AT: usmallint = 269;
+const VERSION_AT: usmallint = 500;
+
+export function computeLayout(): void {
+}
+
+export function drawTitleScreen(): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    text.print(TITLE_AT, "2048");
+    if (input.touch()) {
+        text.print(PROMPT_AT, "TAP TO START");
+    } else {
+        text.print(PROMPT_AT, "PRESS ENTER");
+    }
+    text.print(VERSION_AT, VERSION_LINE);
+    return;
+}
+
+export function drawHud(score: usmallint, over: bool, won: bool): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    text.print(HEADER_AT, "2048");
+    text.print(text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
+    if (over) {
+        text.print(STATUS_AT, "GAME OVER - RESTART");
+    } else if (won) {
+        text.print(STATUS_AT, "YOU MADE 2048      ");
+    } else if (!input.touch()) {
+        text.print(STATUS_AT, "ARROWS TO MOVE     ");
+    }
+    return;
+}
+
+function tileWidth(value: usmallint): utinyint {
+    if (value >= 1000) {
+        return 4;
+    }
+    if (value >= 100) {
+        return 3;
+    }
+    if (value >= 10) {
+        return 2;
+    }
+    return 1;
+}
+
+export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    let origin: usmallint = ORIGIN[row * 4 + col];
+    let value: usmallint = POW2[exponent];
+    text.setColor(TILE_COLOR[exponent]);
+    text.setReverse(true);
+    let line: utinyint = 0;
+    while (line < TILE_H) {
+        text.print(origin + line * ROW, BLANK);
+        line++;
+    }
+    if (value != 0) {
+        let width: utinyint = tileWidth(value);
+        let offset: utinyint = (TILE_W - width) >> 1;
+        text.printNumber(origin + (TILE_H >> 1) * ROW + offset, value, width);
+    }
+    text.setReverse(false);
+    return;
+}
