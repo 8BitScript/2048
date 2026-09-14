@@ -20,6 +20,19 @@ C128, Atari 8-bit, NES, Commander X16, MEGA65, *and* the web, the way
 ARROWS TO MOVE
 ```
 
+## Credits
+
+2048 is **[Gabriele Cirulli](https://github.com/gabrielecirulli)**'s game, and
+the original lives at
+[github.com/gabrielecirulli/2048](https://github.com/gabrielecirulli/2048)
+(MIT). This repository is an independent port written from scratch in
+8BitScript — the rules are Cirulli's, none of the code is. It is not
+affiliated with or endorsed by the original author.
+
+The port is copyright (c) 2026 8BitScript contributors, MIT-licensed; see
+[LICENSE](LICENSE). The title screen carries that line; the attribution above
+is deliberately here rather than on a 22-column screen.
+
 Play it in a browser at [2048.8bitscript.com](https://2048.8bitscript.com)
 (swipe on a phone, arrows on a keyboard). The site's picker loads a
 separate wasm per look — the default 16:9 host, or a PET 2001 / C64 /
