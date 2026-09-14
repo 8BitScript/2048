@@ -3,8 +3,8 @@
 // PET (tile.pet.8bs) and the web (tile.web.8bs), which read their own
 // twins instead (see docs/packages.md's "System-specific files": the
 // machine's name beside the plain filename is its own version, picked up
-// with nothing in main.8bs or 8bs.config.ts naming it). Split out of
-// main.8bs so those two can differ without duplicating the game's rules,
+// with nothing in 2048.8bs or 8bs.config.ts naming it). Split out of
+// 2048.8bs so those two can differ without duplicating the game's rules,
 // board state, or input handling.
 import { text, TextColor } from "@8bitscript/text";
 import { Input, System, Video } from "@8bitscript/system";
@@ -14,7 +14,7 @@ const VERSION_LINE: string = "v0.2.0";
 const VERSION_LEN: utinyint = 6;
 
 // Exponent to face value — tile.8bs's own copy for drawing. The rules'
-// table lives in main.8bs (score); the two never share a module, and
+// table lives in 2048.8bs (score); the two never share a module, and
 // the PET twin needs neither.
 const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 
@@ -339,7 +339,7 @@ export function drawHud(score: usmallint, over: bool, won: bool): void {
     } else {
         text.print(statusAt, "              ");
     }
-    // Nothing erases these two lines: main.8bs blanks the screen when the
+    // Nothing erases these two lines: 2048.8bs blanks the screen when the
     // next game starts, which is the only way out of a finished game.
     if (over) {
         text.print(overTitleAt, "GAME OVER");
