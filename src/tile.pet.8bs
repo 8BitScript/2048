@@ -75,33 +75,71 @@ const DIGIT_TILES: array<utinyint, 60> = [
     108, 225, 124, 225, 226, 225,
 ];
 
-// Graphics-set screen codes for the HUD and the title screen. Header is
-// 12, each status line is 19 (the longest message, padded so a shorter
-// one never leaves a leftover glyph), then PRESS RETURN and v0.1.3 —
-// keep those last six bytes in sync with package.json "version". A=1 … Z=26,
-// digits and space unchanged. The PET has a keyboard and no joystick
-// ports, so this table never carries FIRE/START/ENTER variants.
-const HUD: array<utinyint, 87> = [
-    50, 48, 52, 56, 32, 32, 19, 3, 15, 18, 5, 32,
-    1, 18, 18, 15, 23, 19, 32, 20, 15, 32, 13, 15, 22, 5, 32, 32, 32, 32, 32,
-    25, 15, 21, 32, 13, 1, 4, 5, 32, 50, 48, 52, 56, 32, 32, 32, 32, 32, 32,
-    7, 1, 13, 5, 32, 15, 22, 5, 18, 32, 45, 32, 18, 5, 19, 20, 1, 18, 20,
-    16, 18, 5, 19, 19, 32, 18, 5, 20, 21, 18, 14,
-    118, 48, 46, 49, 46, 51,
+// Graphics-set screen codes for the HUD, the game-over message and the
+// title screen. Header is 12, each status line is 19 (the longest of them,
+// padded so a shorter one never leaves a leftover glyph), then GAME OVER
+// (9), the retry prompt (25) — whose own first twelve codes are the title
+// screen's PRESS RETURN, rather than a second copy of them — the port's
+// copyright line, and the version; keep those last six bytes in sync with
+// package.json "version". A status line is 14 rather than 19 now that
+// GAME OVER - RESTART no longer lives among them. Writing screen codes
+// direct is also why "(C)" needs no special handling here: 40 and 41 are
+// "(" and ")" in the graphics set like any other code.
+// A=1 … Z=26, digits and space unchanged. ASCII 'v' (118) is a graphics
+// block in this set (codes 96-127); the version prefix is V, same as the
+// rest of the HUD. The PET has a keyboard and no joystick ports, so this
+// table never carries FIRE/START/ENTER variants.
+const HUD: array<utinyint, 99> = [
+    50, 48, 52, 56, 32, 32, 19, 3, 15, 18, 5, 32,  // "2048  SCORE " (12)
+    1, 18, 18, 15, 23, 19, 32, 20, 15, 32, 13, 15, 22, 5,  // "ARROWS TO MOVE" (14)
+    25, 15, 21, 32, 13, 1, 4, 5, 32, 50, 48, 52, 56, 32,  // "YOU MADE 2048 " (14)
+    7, 1, 13, 5, 32, 15, 22, 5, 18,  // "GAME OVER" (9)
+    16, 18, 5, 19, 19, 32, 18, 5, 20, 21, 18, 14, 32, 20, 15, 32, 20, 18, 25, 32, 1, 7, 1, 9, 14,  // "PRESS RETURN TO TRY AGAIN" (25)
+    40, 3, 41, 32, 50, 48, 50, 54, 32, 56, 2, 9, 20, 19, 3, 18, 9, 16, 20,  // "(C) 2026 8BITSCRIPT" (19)
+    22, 48, 46, 49, 46, 52,  // "V0.1.4" (6) — V is screen code 22, not ASCII 118
 ];
 const HUD_ARROWS: utinyint = 12;
-const HUD_WON: utinyint = 31;
-const HUD_OVER: utinyint = 50;
+const HUD_WON: utinyint = 26;
+const HUD_OVER_TITLE: utinyint = 40;
+const HUD_OVER_TITLE_LEN: utinyint = 9;
+const HUD_OVER_PROMPT: utinyint = 49;
+const HUD_OVER_PROMPT_LEN: utinyint = 25;
+const HUD_COPYRIGHT: utinyint = 74;
+const HUD_COPYRIGHT_LEN: utinyint = 19;
 const HUD_TITLE_AT: utinyint = 0;
 const HUD_TITLE_LEN: utinyint = 4;
 const HUD_SCORE_LABEL_AT: utinyint = 6;
 const HUD_SCORE_LABEL_LEN: utinyint = 6;
-const HUD_STATUS_LEN: utinyint = 19;
+const HUD_STATUS_LEN: utinyint = 14;
 const SCORE_DIGITS_LEN: utinyint = 5;
-const TITLE_PRESS_RETURN: utinyint = 69;
+const TITLE_PRESS_RETURN: utinyint = 49; // the prompt's own first twelve codes
 const TITLE_PRESS_RETURN_LEN: utinyint = 12;
-const TITLE_VERSION: utinyint = 81;
+const TITLE_VERSION: utinyint = 93;
 const TITLE_VERSION_LEN: utinyint = 6;
+
+// ---- where the game-over message goes -------------------------------------
+//
+// "GAME OVER" in the blank row between the first and second rows of tiles
+// (row 6), the retry prompt in the row between the third and fourth (row
+// 18), instead of one line under the board. Both rows are already empty —
+// drawTile() never touches a gap row — so the message costs the board
+// nothing and leaves the position the player just lost on in full view.
+// Each line is centred on the screen: (columns - length) / 2. Cells are
+// written out per width the same way the header and status rows are, so
+// the unused arm folds away on a 40- or 80-column build.
+//
+// Nothing erases them: main.8bs blanks the screen when the next game
+// starts, which is the only way out of a finished game.
+// The port's own copyright line, on the second-to-last row so the version
+// keeps the last one. The original game's author and repo are credited in
+// README.md rather than on screen.
+const COPYRIGHT_AT_40: usmallint = 930;  // row 23, col 10
+const COPYRIGHT_AT_80: usmallint = 1870; // row 23, col 30
+
+const OVER_TITLE_AT_40: usmallint = 255;   // row 6, col 15
+const OVER_PROMPT_AT_40: usmallint = 727;  // row 18, col 7
+const OVER_TITLE_AT_80: usmallint = 515;   // row 6, col 35
+const OVER_PROMPT_AT_80: usmallint = 1467; // row 18, col 27
 
 const SCORE_PLACES: array<usmallint, 5> = [10000, 1000, 100, 10, 1];
 
@@ -136,6 +174,19 @@ function writeCells(cell: usmallint, base: utinyint, count: utinyint): void {
     return;
 }
 
+// The one run of spaces this file needs — the status line, when the board
+// has taken over announcing the end of the game — as a loop rather than 19
+// bytes of 32s in HUD: space is a screen code like any other, so nothing
+// has to be looked up to write it.
+function blankCells(cell: usmallint, count: utinyint): void {
+    let i: utinyint = 0;
+    while (i < count) {
+        memory.write(SCREEN + cell + i, 32);
+        i++;
+    }
+    return;
+}
+
 function printScore5(cell: usmallint, value: usmallint): void {
     let i: utinyint = 0;
     while (i < 5) {
@@ -158,13 +209,16 @@ export function drawTitleScreen(): void {
     let titleAt: usmallint = 458;
     let promptAt: usmallint = 534;
     let versionAt: usmallint = 994;
+    let portAt: usmallint = COPYRIGHT_AT_40;
     if (Video.COLUMNS != 40) {
         titleAt = 918;
         promptAt = 1074;
         versionAt = 1994;
+        portAt = COPYRIGHT_AT_80;
     }
     writeCells(titleAt, HUD_TITLE_AT, HUD_TITLE_LEN);
     writeCells(promptAt, TITLE_PRESS_RETURN, TITLE_PRESS_RETURN_LEN);
+    writeCells(portAt, HUD_COPYRIGHT, HUD_COPYRIGHT_LEN);
     writeCells(versionAt, TITLE_VERSION, TITLE_VERSION_LEN);
     return;
 }
@@ -173,9 +227,13 @@ export function drawHud(score: usmallint, over: bool, won: bool): void {
     memory.write(VIA_PCR, GRAPHICS_SET);
     let headerAt: usmallint = 2;
     let statusAt: usmallint = 962;
+    let overTitleAt: usmallint = OVER_TITLE_AT_40;
+    let overPromptAt: usmallint = OVER_PROMPT_AT_40;
     if (Video.COLUMNS != 40) {
         headerAt = 22;
         statusAt = 1942;
+        overTitleAt = OVER_TITLE_AT_80;
+        overPromptAt = OVER_PROMPT_AT_80;
     }
     writeCells(headerAt, HUD_TITLE_AT, HUD_TITLE_LEN);
     writeCells(
@@ -184,14 +242,22 @@ export function drawHud(score: usmallint, over: bool, won: bool): void {
         HUD_SCORE_LABEL_LEN,
     );
     printScore5(ROW - SCORE_DIGITS_LEN, score);
-    let msg: utinyint = HUD_ARROWS;
+    // The status line no longer announces the end of the game — the board
+    // does — so it goes blank rather than keeping ARROWS TO MOVE up under a
+    // board that cannot move.
     if (won) {
-        msg = HUD_WON;
+        writeCells(statusAt, HUD_WON, HUD_STATUS_LEN);
+    } else if (!over) {
+        writeCells(statusAt, HUD_ARROWS, HUD_STATUS_LEN);
+    } else {
+        blankCells(statusAt, HUD_STATUS_LEN);
     }
+    // Nothing erases these two lines: main.8bs blanks the screen when the
+    // next game starts, which is the only way out of a finished game.
     if (over) {
-        msg = HUD_OVER;
+        writeCells(overTitleAt, HUD_OVER_TITLE, HUD_OVER_TITLE_LEN);
+        writeCells(overPromptAt, HUD_OVER_PROMPT, HUD_OVER_PROMPT_LEN);
     }
-    writeCells(statusAt, msg, HUD_STATUS_LEN);
     return;
 }
 
