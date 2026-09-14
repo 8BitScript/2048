@@ -7,7 +7,7 @@
 // sequence a player actually sees follows how long they took between moves
 // rather than only how many moves they made. `rng.c64.8bs` and
 // `rng.atari8.8bs` are this file's twins for the two targets that can read
-// entropy out of the hardware instead. Nothing in main.8bs names them — the
+// entropy out of the hardware instead. Nothing in 2048.8bs names them — the
 // compiler picks a twin up for those builds on its own, the same mechanism
 // tile.pet.8bs's header describes.
 //

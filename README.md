@@ -5,7 +5,7 @@
 
 [2048](https://github.com/gabrielecirulli/2048) (MIT, Gabriele Cirulli), written
 from scratch in [8BitScript](https://github.com/8BitScript/8bitscript) — one
-source file, [`src/main.8bs`](src/main.8bs), running on the VIC-20, C64, PET,
+source file, [`src/2048.8bs`](src/2048.8bs), running on the VIC-20, C64, PET,
 C128, Atari 8-bit, NES, Commander X16, MEGA65, *and* the web, the way
 8BitScript's own `examples/borders` and `examples/menubar` do.
 
@@ -97,7 +97,7 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   for empty or *N* for the tile worth 2<sup>N</sup> (1 = 2, 2 = 4, … 11 =
   2048) — one byte instead of two, and "two equal tiles merge" becomes "two
   equal exponents merge into exponent + 1," one add instead of a double and
-  a compare. `POW2[]` in `main.8bs` is the rules' own 2<sup>N</sup> table
+  a compare. `POW2[]` in `2048.8bs` is the rules' own 2<sup>N</sup> table
   (score); `tile.8bs` has a second copy for drawing, and the PET twin never
   links either drawing copy.
 - **One board move is the same four-row (or column) slide.** `moveLines`
@@ -111,7 +111,7 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   frame instead of all at once: every tile that can advance does — into
   an empty neighbour, or merging onto an equal tile that hasn't merged
   this move — the changed tiles repaint, and the next step follows a
-  frame later (`ANIM_STEP_FRAMES` in `main.8bs` is the knob). A
+  frame later (`ANIM_STEP_FRAMES` in `2048.8bs` is the knob). A
   full-width slide lands in 3 steps, ~50–100ms at 60/50Hz, and settles
   on exactly the board the instant mover computes — checked exhaustively
   over all 20,736 line states. The 4K PET 2001, the unexpanded VIC-20,

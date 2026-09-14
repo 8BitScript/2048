@@ -1,5 +1,5 @@
 export default {
-  // One main.8bs for every target — see README.md.
+  // One 2048.8bs for every target — see README.md.
   entry: 'src/2048.8bs',
   targets: {
     vic20: {},
