@@ -162,3 +162,13 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
     text.setReverse(false);
     return;
 }
+
+// The title wobble is tile.8bs's — the portable skin, read by the one
+// 6502 machine with a per-scanline hook (the C64). The web answers
+// #fact(video.raster) true too, but this skin draws its own title and
+// does not take the effect up yet; an empty function here means the
+// compiler deletes the call, and the game's raster.disable() at start is
+// a no-op against a list that was never built.
+export function wobbleTitle(): void {
+    return;
+}

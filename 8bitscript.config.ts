@@ -4,7 +4,12 @@ export default {
   targets: {
     vic20: {},
     c64: {},
-    // The game is 2581 bytes of program on a 2001/4K (2420 at 0.6.1 before
+    // The game is 2763 bytes of program on a 2001/4K, measured 2026-09-14
+    // against the 0.10.0 toolchain — byte-identical before and after the
+    // title screen's raster wobble, which folds away entirely here and on
+    // the unexpanded VIC-20 (3490 bytes, also identical): #fact(video.raster)
+    // is false on both, and the PET reads tile.pet.8bs anyway.
+    // (2581 at 0.9.0; 2420 at 0.6.1 before
     // the title screen, right-aligned HUD, and 0.6.2; 2624 before the
     // 0.6.1 linker stopped writing input.poll() out once per call site;
     // 2440 when this build was first fitted, drifting to 2624 across 0.6.0
