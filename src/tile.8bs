@@ -7,6 +7,8 @@
 // 2048.8bs so those two can differ without duplicating the game's rules,
 // board state, or input handling.
 import { text, TextColor } from "@8bitscript/text";
+import { raster, Slot } from "@8bitscript/raster";
+import { BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { Input, System, Video } from "@8bitscript/system";
 
 // Keep in sync with package.json "version".
@@ -273,6 +275,64 @@ const CREDIT_PORT_WORD_LEN: utinyint = 25; // "COPYRIGHT 2026 8BITSCRIPT"
 const PAREN_OPEN: utinyint = 40;
 const PAREN_CLOSE: utinyint = 41;
 
+// ---- the title wobble -----------------------------------------------------
+//
+// On a machine with a per-scanline hook — #fact(video.raster), true only
+// for the C64 among the targets that read this file — the title screen
+// gets the raster showpiece the fancy example established
+// (packages/examples/fancy in the 8bitscript repository): background and
+// border switch colour a text row above "2048" and back a row below it,
+// and the title row itself rides a sine-driven SCROLL_X wobble, one entry
+// per TWO scanlines. That pitch is fancy's measured C64 constraint (a
+// per-line cascade collapses the effect — see that example's header), not
+// a choice made here. Everywhere the fact answers false, every branch on
+// HAS_RASTER folds away and this whole section costs the image nothing —
+// the 4K PET and the unexpanded VIC-20 are byte-identical with and
+// without it (and the PET reads tile.pet.8bs anyway).
+const HAS_RASTER: bool = #fact(video.raster);
+
+// XSCROLL 0-7 over 32 steps — fancy's own table, verified on screen by
+// packages/c64/test/wobble-probe.8bs, so the wave is a known-good shape.
+const SINE: array<utinyint, 32> = [
+    4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 7, 6, 6, 5, 5, 4,
+    3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3,
+];
+
+// The wobble covers the title's one text row: eight scanlines, four
+// SCROLL_X entries at the two-line pitch. The colour band opens one text
+// row above it and closes one below, fancy's shape scaled to one row.
+const WOBBLE_ENTRIES: utinyint = 4;
+const BAND_BACKGROUND: utinyint = 2; // red behind the title
+const BAND_BORDER: utinyint = 7;     // yellow beside it — also the stride probe's known value
+
+// The wobble's walk through the sine table, and the two numbers the
+// per-frame rewrite needs: bytes per entry in setValue's unit (probed the
+// way fancy probes it — offset 3 names entry 1 where entries are three
+// bytes and is refused untouched where they are four), and the byte
+// offset of the first SCROLL_X entry (index 2 — the two opening colour
+// splits come first). Only ever touched inside `if (HAS_RASTER)`.
+let wobblePhase: utinyint = 0;
+let wobbleStride: utinyint = 0;
+let wobbleFirst: utinyint = 0;
+
+// One step of the wobble, called once per title-screen frame from
+// 2048.8bs's loop: rewrite only the four SCROLL_X value bytes, right
+// after waitFrame(), before the raster reaches the band. On a machine
+// with no raster this folds to an empty function and the compiler
+// deletes the call — the same way text.setColor costs the PET nothing.
+// The twins (tile.pet.8bs, tile.web.*.8bs) export their own empty copy:
+// the PET has no raster, and the web skins draw their own title and do
+// not take the effect up yet.
+export function wobbleTitle(): void {
+    if (HAS_RASTER) {
+        wobblePhase = (wobblePhase + 1) & 31;
+        for (let i: utinyint = 0; i < WOBBLE_ENTRIES; i++) {
+            raster.setValue(wobbleFirst + i * wobbleStride, SINE[(i + wobblePhase) & 31]);
+        }
+    }
+    return;
+}
+
 // Front door before the first deal. Prompt text is picked from Input.*
 // facts, so unused strings never reach the image (optimizeReachable folds
 // the other arms and the 6502 backend only emits referenced literals).
@@ -309,6 +369,36 @@ export function drawTitleScreen(): void {
         text.putChar((Video.ROWS - 2) * ROW + ((text.COLUMNS - CREDIT_PORT_LEN) >> 1) + 2, PAREN_CLOSE);
     }
     text.print((Video.ROWS - 1) * ROW + text.COLUMNS - VERSION_LEN, VERSION_LINE);
+    if (HAS_RASTER) {
+        // The list, built once, in ascending line order: the title's text
+        // row starts at picture line row * 8, the band opens a row above
+        // and closes a row below, and the wobble straightens out on the
+        // band's last line. 2048.8bs's loop animates it (wobbleTitle) and
+        // tears it down (raster.disable) the moment the game starts.
+        let bandTop: utinyint = ((Video.ROWS >> 1) - 1) * 8;
+        raster.clear();
+        raster.at(bandTop - 8, Slot.BACKGROUND, BAND_BACKGROUND);
+        raster.at(bandTop - 8, Slot.BORDER, BAND_BORDER);
+        for (let i: utinyint = 0; i < WOBBLE_ENTRIES; i++) {
+            raster.at(bandTop + i * 2, Slot.SCROLL_X, SINE[i]);
+        }
+        raster.at(bandTop + 8, Slot.SCROLL_X, 0);
+        raster.at(bandTop + 16, Slot.BACKGROUND, BackgroundColor.BLACK);
+        raster.at(bandTop + 16, Slot.BORDER, BorderColor.BLUE);
+
+        // The stride probe, exactly as fancy runs it: offset 3 is entry 1
+        // (the BAND_BORDER split) where entries are three bytes, and
+        // misaligned — refused untouched — where they are four. The value
+        // written is the value entry 1 already holds, so the list is the
+        // same afterwards either way; only the returned bool differs.
+        wobbleStride = 4;
+        if (raster.setValue(3, BAND_BORDER)) {
+            wobbleStride = 3;
+        }
+        wobbleFirst = wobbleStride * 2;
+
+        raster.enable();
+    }
     return;
 }
 

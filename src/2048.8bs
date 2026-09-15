@@ -12,9 +12,16 @@
 // of a double and a compare.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
+import { raster } from "@8bitscript/raster";
 import { rng } from "./rng.8bs";
 import { Memory } from "@8bitscript/system";
-import { computeLayout, drawHud, drawTile, drawTitleScreen } from "./tile.8bs";
+import { computeLayout, drawHud, drawTile, drawTitleScreen, wobbleTitle } from "./tile.8bs";
+
+// Whether this machine can change the picture part-way down a frame — the
+// guard on the title screen's raster effect. A compile-time fact: the
+// branch below folds, so a machine that answers false carries neither the
+// disable() call nor a reference to the raster list.
+const HAS_RASTER: bool = #fact(video.raster);
 
 const SIZE: utinyint = 4; // 4x4 — 2048's own board, on every target
 const MAX_EXPONENT: utinyint = 11; // 2^11 = 2048, the tile that wins
@@ -357,8 +364,19 @@ export function main(): void {
         rng.tick(); // keep the generator moving between moves — see spawnTile()
 
         if (!started) {
+            // One step of the title's raster wobble — an empty call,
+            // deleted by the compiler, everywhere tile.8bs (or a twin)
+            // makes it an empty function.
+            wobbleTitle();
             if (input.confirm()) {
                 started = true;
+                if (HAS_RASTER) {
+                    // The splits are the title screen's; nothing of them
+                    // survives into the board. Before the blank and the
+                    // first draw, so no frame shows the game through the
+                    // title's colour band.
+                    raster.disable();
+                }
                 screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
                 resetGame();
                 drawBoard();

@@ -310,3 +310,12 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
     }
     return;
 }
+
+// The title wobble is tile.8bs's — the portable skin, read by the one
+// machine with a per-scanline hook (the C64). No PET answers
+// #fact(video.raster), so this skin's copy is deliberately empty and the
+// compiler deletes the call, the same way an empty text.setColor costs
+// the PET nothing.
+export function wobbleTitle(): void {
+    return;
+}

@@ -4,6 +4,8 @@
 // or write $0400.
 import { text, TextColor } from "@8bitscript/text";
 import { input } from "@8bitscript/input";
+import { raster, Slot } from "@8bitscript/raster";
+import { BorderColor, BackgroundColor } from "@8bitscript/screen";
 
 const VERSION_LINE: string = "v0.2.0";
 
@@ -94,6 +96,20 @@ export function drawTitleScreen(): void {
     text.putChar(CREDIT_PORT_AT, PAREN_OPEN);
     text.putChar(CREDIT_PORT_AT + 2, PAREN_CLOSE);
     text.print(VERSION_AT, VERSION_LINE);
+    // The list, built once, in ascending line order — tile.8bs's shape at
+    // this skin's numbers: the band opens a text row above the title,
+    // the wobble rides the title's own eight scanlines, straightens out
+    // on the band's last line, and the band closes a row below.
+    raster.clear();
+    raster.at(BAND_TOP - 8, Slot.BACKGROUND, BAND_BACKGROUND);
+    raster.at(BAND_TOP - 8, Slot.BORDER, BAND_BORDER);
+    for (let i: utinyint = 0; i < WOBBLE_ENTRIES; i++) {
+        raster.at(BAND_TOP + i * 2, Slot.SCROLL_X, SINE[i]);
+    }
+    raster.at(BAND_TOP + 8, Slot.SCROLL_X, 0);
+    raster.at(BAND_TOP + 16, Slot.BACKGROUND, BackgroundColor.BLACK);
+    raster.at(BAND_TOP + 16, Slot.BORDER, BorderColor.BLUE);
+    raster.enable();
     return;
 }
 
@@ -154,5 +170,51 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
         text.printNumber(origin + (TILE_H >> 1) * ROW + offset, value, width);
     }
     text.setReverse(false);
+    return;
+}
+
+// ---- the title wobble -----------------------------------------------------
+//
+// The same treatment tile.8bs gives the real C64, at this skin's own
+// numbers: the web answers #fact(video.raster) true, so the title screen
+// gets the raster showpiece too — background and border switch colour a
+// text row above "2048" and back a row below it, and the title row itself
+// rides a sine-driven SCROLL_X wobble, one entry per two scanlines
+// (fancy's measured pitch, kept so the two skins show the same picture).
+// drawTitleScreen() builds the list; 2048.8bs's loop animates it
+// (wobbleTitle) and tears it down (raster.disable) the moment the game
+// starts, the same as on the real machine.
+//
+// XSCROLL 0-7 over 32 steps — fancy's own table, the one tile.8bs carries.
+const SINE: array<utinyint, 32> = [
+    4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 7, 6, 6, 5, 5, 4,
+    3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3,
+];
+
+// The wobble covers the title's one text row: eight scanlines, four
+// SCROLL_X entries at the two-line pitch. The colour band opens one text
+// row above it and closes one below.
+const WOBBLE_ENTRIES: utinyint = 4;
+const BAND_BACKGROUND: utinyint = 2; // red behind the title
+const BAND_BORDER: utinyint = 7;     // yellow beside it
+const BAND_TOP: usmallint = 88;      // TITLE_AT's row (11) * 8 — "2048"'s first scanline
+
+// Where the four SCROLL_X value bytes live in the list. No stride probe
+// here, unlike tile.8bs: this skin only ever reads the web rasterline,
+// whose entries are documented as three bytes with `entry` the byte
+// offset (index * 3). The first SCROLL_X entry is index 2 — the two
+// opening colour splits come first.
+const WOBBLE_STRIDE: utinyint = 3;
+const WOBBLE_FIRST: utinyint = 6;
+let wobblePhase: utinyint = 0;
+
+// One step of the wobble, called once per title-screen frame from
+// 2048.8bs's loop: rewrite only the four SCROLL_X value bytes, right
+// after waitFrame(), before the next paint reads the list.
+export function wobbleTitle(): void {
+    wobblePhase = (wobblePhase + 1) & 31;
+    for (let i: utinyint = 0; i < WOBBLE_ENTRIES; i++) {
+        raster.setValue(WOBBLE_FIRST + i * WOBBLE_STRIDE, SINE[(i + wobblePhase) & 31]);
+    }
     return;
 }
