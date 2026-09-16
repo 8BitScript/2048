@@ -6,11 +6,12 @@
 //
 // It is the first .8bx in a real program, and the measure of it is that
 // it costs nothing: a component is a function, an element is a call, and
-// every one of the thirteen release builds is byte-identical to the
-// version that wrote these calls out by hand in 2048.8bs (2026-09-16,
-// against the 0.11.0 toolchain; the animated builds are a few bytes
-// smaller, because <Tiles /> is one function where the hand-written
-// program kept a second copy of the loop).
+// every build is the same functions at the same sizes as the version that
+// wrote these calls out by hand in 2048.8bs — 2763 bytes on the 4K PET
+// 2001 and 3490 on the unexpanded VIC-20, as before, laid out in module
+// order (2026-09-16, against the 0.11.0 toolchain). The builds that
+// animate are 60 bytes smaller, because <Tiles /> is one function where
+// the hand-written program kept a second copy of the loop.
 import { board, shown, score, over, won, started } from "./game.8bs";
 import { drawHud, drawTile, drawTitleScreen } from "./tile.8bs";
 
