@@ -5,9 +5,14 @@
 
 [2048](https://github.com/gabrielecirulli/2048) (MIT, Gabriele Cirulli), written
 from scratch in [8BitScript](https://github.com/8BitScript/8bitscript) — one
-source file, [`src/2048.8bs`](src/2048.8bs), running on the VIC-20, C64, PET,
-C128, Atari 8-bit, NES, Commander X16, MEGA65, *and* the web, the way
-8BitScript's own `examples/borders` and `examples/menubar` do.
+program, running on the VIC-20, C64, PET, C128, Atari 8-bit, NES, Commander
+X16, MEGA65, *and* the web, the way 8BitScript's own `examples/borders` and
+`examples/menubar` do. [`src/2048.8bs`](src/2048.8bs) is the program (the
+loop that reads the player), [`src/game.8bs`](src/game.8bs) the rules and
+the board, [`src/Screen.8bx`](src/Screen.8bx) what goes on the screen —
+the first [8BX](https://github.com/8BitScript/8bitscript/blob/trunk/docs/project/8bx.md)
+file in a real program — and `src/tile.8bs` (with a twin per machine that
+needs one) how each of those is painted.
 
 ```
 2048  SCORE 00042
@@ -97,7 +102,7 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   for empty or *N* for the tile worth 2<sup>N</sup> (1 = 2, 2 = 4, … 11 =
   2048) — one byte instead of two, and "two equal tiles merge" becomes "two
   equal exponents merge into exponent + 1," one add instead of a double and
-  a compare. `POW2[]` in `2048.8bs` is the rules' own 2<sup>N</sup> table
+  a compare. `POW2[]` in `game.8bs` is the rules' own 2<sup>N</sup> table
   (score); `tile.8bs` has a second copy for drawing, and the PET twin never
   links either drawing copy.
 - **One board move is the same four-row (or column) slide.** `moveLines`
@@ -137,6 +142,20 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   so those games cannot be replayed from a start state or reproduced from a
   screenshot, which is exactly why both packages sit behind their own
   explicitly optional import (see either one's header).
+- **What is on the screen is composition, and it costs nothing.**
+  `Screen.8bx` is the arrangement — a `<Title />`, or a `<Board />` that is
+  the HUD over sixteen `<Tiles />` — written as 8BX elements over the
+  drawing calls `tile.8bs` and its twins provide, with none of the screen
+  addresses those files are made of. A component is a function and an
+  element is a call, so this is the same program it was when `2048.8bs`
+  wrote those calls out by hand: the same functions at the same sizes on
+  every target, 2763 bytes on the 4K PET 2001 and 3490 on the unexpanded
+  VIC-20 exactly as before (2026-09-16, against the 0.11.0 toolchain), and
+  60 bytes *less* on every build that animates, because the between-steps
+  repaint and the settled board now share one `<Tiles />` where the
+  hand-written version kept a second copy of the loop. It also drew two
+  improvements out of the compiler's inliner along the way (8bitscript
+  #175) — a dogfood ladder is for that.
 - **Colour is a table lookup, and it costs nothing on the three machines
   that can't use it.** `TILE_COLOR[exponent]` feeds `text.setColor()` before
   every tile is drawn. On the PET, Atari 8-bit and NES that call is an

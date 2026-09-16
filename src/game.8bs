@@ -1,0 +1,244 @@
+// The rules of 2048, and the board they act on. Nothing here draws:
+// Screen.8bx reads this state to put it on the screen, and 2048.8bs — the
+// program — drives both. Rules follow https://github.com/gabrielecirulli/2048
+// (MIT): a 4x4 grid, arrows slide every tile as far as it goes, two equal
+// tiles that collide combine into one worth their sum, and a new 2
+// (usually) or 4 (one time in ten) appears after every move that actually
+// changed the board.
+//
+// The board holds exponents, not face values: 0 is empty, and N is the tile
+// worth 2^N (1 = 2, 2 = 4, ... 11 = 2048). A `utinyint` holds that in one
+// byte where the real value would need two, and "two equal tiles merge"
+// becomes "two equal exponents merge into exponent + 1" — one add instead
+// of a double and a compare.
+import { rng } from "./rng.8bs";
+
+const SIZE: utinyint = 4; // 4x4 — 2048's own board, on every target
+const MAX_EXPONENT: utinyint = 11; // 2^11 = 2048, the tile that wins
+
+// Exponent to face value — the only place 2^N is written down in the
+// rules (tile.8bs has its own copy for drawing; the PET twin never
+// needs it, and linking it there would spend 24 bytes of the 4K
+// image on a table mergeLine() already has).
+const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+
+// The board, and the one scratch row/column a move is worked out in. Both
+// are RAM, not data: a move rewrites them, so neither can be a `const`.
+// `shown` is what is actually on screen, so a stationary tile is never
+// erased and redrawn — fill-then-stamp on a tile that did not move is
+// the blink. It is the screen's record, but it lives here beside the
+// board it mirrors: Screen.8bx's <Tiles /> keeps it, and resetGame()
+// below and the program's resize recovery both clear it.
+export let board: array<utinyint, 16>;
+export let shown: array<utinyint, 16>;
+let line: array<utinyint, 4>;
+
+// Animated builds only (both fold away below 2048.8bs's ANIM_MIN_RAM):
+// merged[i] rides along with the tile in cell i for the length of one
+// move, so a tile that has already combined once cannot combine again
+// while it is still sliding — the rule mergeLine() gets for free from its
+// single left-to-right pass. stepped is "did the last step move
+// anything": false ends the move.
+export let merged: array<utinyint, 16>;
+export let stepped: bool = false;
+
+export let score: usmallint = 0;
+export let moved: bool = false; // did the move just played actually change the board?
+export let over: bool = false; // no move left that would change the board
+export let won: bool = false; // a 2048 has appeared; play continues past it, as upstream does
+export let started: bool = false; // false until the title screen's confirm starts a game
+
+// ---- moving a line -----------------------------------------------------
+//
+// Every direction is the same three-step slide over a 4-cell line — compress
+// (push non-zero values together, preserving order), merge (equal
+// neighbours combine once, left to right), compress again (a merge leaves a
+// zero where the second tile was). The four directions only differ in the
+// start cell, the step along the line, and the stride to the next line —
+// `moveLines` walks them with wrapping utinyint add (255 is −1, 252 is −4).
+//
+// Helpers that would otherwise be inlined (a no-parameter void with no
+// `return`) end with `return` so the compiler keeps them as real calls:
+// four directions × compress/merge used to paste the same body into main
+// four times, and that was most of the 7K image.
+
+function compressLine(): void {
+    let write: utinyint = 0;
+    for (let read: utinyint = 0; read < SIZE; read++) {
+        if (line[read] != 0) {
+            if (write != read) {
+                line[write] = line[read];
+                line[read] = 0;
+                moved = true;
+            }
+            write++;
+        }
+    }
+    return;
+}
+
+function mergeLine(): void {
+    for (let i: utinyint = 0; i < SIZE - 1; i++) {
+        if (line[i] != 0 && line[i] == line[i + 1]) {
+            line[i] = line[i] + 1; // one higher exponent: double the value
+            line[i + 1] = 0;
+            score = score + POW2[line[i]];
+            if (line[i] == MAX_EXPONENT) {
+                won = true;
+            }
+            moved = true;
+        }
+    }
+    return;
+}
+
+function slide(a: utinyint, b: utinyint, c: utinyint, d: utinyint): void {
+    line[0] = board[a];
+    line[1] = board[b];
+    line[2] = board[c];
+    line[3] = board[d];
+    compressLine();
+    mergeLine();
+    compressLine();
+    board[a] = line[0];
+    board[b] = line[1];
+    board[c] = line[2];
+    board[d] = line[3];
+    return;
+}
+
+export function moveLines(start: utinyint, step: utinyint, stride: utinyint): void {
+    for (let n: utinyint = 0; n < SIZE; n++) {
+        let a: utinyint = start;
+        let b: utinyint = a + step;
+        let c: utinyint = b + step;
+        let d: utinyint = c + step;
+        slide(a, b, c, d);
+        start = start + stride;
+    }
+    return;
+}
+
+// ---- one step of an animated move ----------------------------------------
+//
+// The same move as compress/merge/compress, taken one cell at a time so
+// there is something to watch: each step, every tile that can advance one
+// cell toward the wall does — into an empty neighbour, or onto an equal
+// tile neither half of which has merged this move. 2048.8bs's animateMove()
+// repaints between steps and lingers; when a step moves nothing the move
+// is finished, and the board it settles on is exactly the board
+// moveLines() would have written at once: iterating "shift or merge one
+// cell" with the merged[] lock reaches the same fixed point (the lock is
+// what stops 2 2 2 2 collapsing past 4 4, and a fresh 4 swallowing the 4
+// sliding up behind it).
+
+function stepPair(a: utinyint, b: utinyint): void {
+    // b is the cell one step behind a. One step of one tile: advance
+    // b's tile into a, or merge it onto a's.
+    if (board[b] == 0) {
+        return;
+    }
+    if (board[a] == 0) {
+        board[a] = board[b];
+        merged[a] = merged[b];
+        board[b] = 0;
+        merged[b] = 0;
+        stepped = true;
+        return;
+    }
+    if (board[a] == board[b] && merged[a] == 0 && merged[b] == 0) {
+        board[a] = board[a] + 1; // one higher exponent: double the value
+        merged[a] = 1;
+        board[b] = 0;
+        score = score + POW2[board[a]];
+        if (board[a] == MAX_EXPONENT) {
+            won = true;
+        }
+        stepped = true;
+    }
+    return;
+}
+
+// Front pair first, so a whole line in motion advances together in one
+// step — d follows c into the cell c just left — rather than one tile
+// per step.
+export function stepLines(start: utinyint, step: utinyint, stride: utinyint): void {
+    for (let n: utinyint = 0; n < SIZE; n++) {
+        let a: utinyint = start;
+        let b: utinyint = a + step;
+        let c: utinyint = b + step;
+        let d: utinyint = c + step;
+        stepPair(a, b);
+        stepPair(b, c);
+        stepPair(c, d);
+        start = start + stride;
+    }
+    return;
+}
+
+// ---- spawning, and knowing when to stop ---------------------------------
+
+// One new tile in a random empty cell: a 2 nine times in ten, a 4 the
+// tenth. Where those numbers come from depends on the machine, and rng.8bs
+// is the one place that decides: seven targets get 8BitScript's own
+// deterministic generator, stepped once a frame in 2048.8bs's loop so the
+// sequence follows how long the player actually took between moves rather
+// than repeating the same game every run; the C64 and the Atari 8-bit read
+// their own hardware entropy instead, which on those two is both smaller
+// than computing it and genuinely unpredictable.
+export function spawnTile(): void {
+    let empties: utinyint = 0;
+    for (let i: utinyint = 0; i < 16; i++) {
+        if (board[i] == 0) {
+            empties++;
+        }
+    }
+    if (empties == 0) {
+        return;
+    }
+    let target: utinyint = rng.range(empties);
+    let exponent: utinyint = 1;
+    if (rng.range(10) == 0) {
+        exponent = 2;
+    }
+    let seenEmpty: utinyint = 0;
+    for (let i: utinyint = 0; i < 16; i++) {
+        if (board[i] == 0) {
+            if (seenEmpty == target) {
+                board[i] = exponent;
+                return;
+            }
+            seenEmpty++;
+        }
+    }
+}
+
+// No empty cell and no adjacent equal pair, in either direction, anywhere:
+// nothing left that any of the four moves could change.
+export function hasMoves(): bool {
+    for (let i: utinyint = 0; i < 16; i++) {
+        if (board[i] == 0) {
+            return true;
+        }
+        if ((i & 3) != 3 && board[i] == board[i + 1]) {
+            return true;
+        }
+        if (i < 12 && board[i] == board[i + 4]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export function resetGame(): void {
+    for (let i: utinyint = 0; i < 16; i++) {
+        board[i] = 0;
+        shown[i] = 255; // not an exponent: force every cell to stamp once
+    }
+    score = 0;
+    over = false;
+    won = false;
+    spawnTile();
+    spawnTile();
+    return;
+}
