@@ -1,21 +1,17 @@
-// 2048 — one source file, every 8BitScript target: VIC-20, C64, PET, C128,
-// Atari 8-bit, NES, Commander X16, MEGA65, and the web. Rules follow
-// https://github.com/gabrielecirulli/2048 (MIT): a 4x4 grid, arrows slide
-// every tile as far as it goes, two equal tiles that collide combine into
-// one worth their sum, and a new 2 (usually) or 4 (one time in ten) appears
-// after every move that actually changed the board.
-//
-// The board holds exponents, not face values: 0 is empty, and N is the tile
-// worth 2^N (1 = 2, 2 = 4, ... 11 = 2048). A `utinyint` holds that in one
-// byte where the real value would need two, and "two equal tiles merge"
-// becomes "two equal exponents merge into exponent + 1" — one add instead
-// of a double and a compare.
+// 2048 — for every 8BitScript target: VIC-20, C64, PET, C128, Atari 8-bit,
+// NES, Commander X16, MEGA65, and the web. This is the program: the loop
+// that reads the player and drives the game. The rules and the board are
+// game.8bs's, what goes on the screen is Screen.8bx's, and how a tile is
+// painted on each machine is tile.8bs's (and its twins'). Rules follow
+// https://github.com/gabrielecirulli/2048 (MIT) — see game.8bs.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
 import { raster } from "@8bitscript/raster";
 import { rng } from "./rng.8bs";
 import { Memory } from "@8bitscript/system";
-import { computeLayout, drawHud, drawTile, drawTitleScreen, wobbleTitle } from "./tile.8bs";
+import { computeLayout, wobbleTitle } from "./tile.8bs";
+import { shown, merged, stepped, moved, over, started, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "./game.8bs";
+import { Board, Screen, Tiles, Title } from "./Screen.8bx";
 
 // Whether this machine can change the picture part-way down a frame — the
 // guard on the title screen's raster effect. A compile-time fact: the
@@ -33,9 +29,6 @@ const HAS_RASTER: bool = #fact(video.raster);
 // bytes on the 4K PET before this guard was added).
 const HAS_RESIZE: bool = screen.RESIZABLE;
 
-const SIZE: utinyint = 4; // 4x4 — 2048's own board, on every target
-const MAX_EXPONENT: utinyint = 11; // 2^11 = 2048, the tile that wins
-
 // Builds with this much RAM to spare animate a move: tiles slide one board
 // cell per repaint instead of teleporting. Memory.RAM is a build-time fact
 // and the branch on it folds, so the builds below the line — the 4K PET
@@ -50,180 +43,14 @@ const ANIM_MIN_RAM: usmallint = 4096;
 // same position, so this is the one knob and it is safe to turn.
 const ANIM_STEP_FRAMES: utinyint = 1;
 
-// Exponent to face value — the only place 2^N is written down in the
-// rules (tile.8bs has its own copy for drawing; the PET twin never
-// needs it, and linking it there would spend 24 bytes of the 4K
-// image on a table mergeLine() already has).
-const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-
-// The board, and the one scratch row/column a move is worked out in. Both
-// are RAM, not data: a move rewrites them, so neither can be a `const`.
-// `shown` is what is actually on screen, so a stationary tile is never
-// erased and redrawn — fill-then-stamp on a tile that did not move is
-// the blink.
-let board: array<utinyint, 16>;
-let shown: array<utinyint, 16>;
-let line: array<utinyint, 4>;
-
-// Animated builds only (both fold away below ANIM_MIN_RAM): merged[i]
-// rides along with the tile in cell i for the length of one move, so a
-// tile that has already combined once cannot combine again while it is
-// still sliding — the rule mergeLine() gets for free from its single
-// left-to-right pass. stepped is "did the last step move anything":
-// false ends the move.
-let merged: array<utinyint, 16>;
-let stepped: bool = false;
-
-let score: usmallint = 0;
-let moved: bool = false; // did the move just played actually change the board?
-let over: bool = false; // no move left that would change the board
-let won: bool = false; // a 2048 has appeared; play continues past it, as upstream does
-let started: bool = false; // false until the title screen's confirm starts a game
-
-// ---- moving a line -----------------------------------------------------
-//
-// Every direction is the same three-step slide over a 4-cell line — compress
-// (push non-zero values together, preserving order), merge (equal
-// neighbours combine once, left to right), compress again (a merge leaves a
-// zero where the second tile was). The four directions only differ in the
-// start cell, the step along the line, and the stride to the next line —
-// `moveLines` walks them with wrapping utinyint add (255 is −1, 252 is −4).
-//
-// Helpers that would otherwise be inlined (a no-parameter void with no
-// `return`) end with `return` so the compiler keeps them as real calls:
-// four directions × compress/merge used to paste the same body into main
-// four times, and that was most of the 7K image.
-
-function compressLine(): void {
-    let write: utinyint = 0;
-    for (let read: utinyint = 0; read < SIZE; read++) {
-        if (line[read] != 0) {
-            if (write != read) {
-                line[write] = line[read];
-                line[read] = 0;
-                moved = true;
-            }
-            write++;
-        }
-    }
-    return;
-}
-
-function mergeLine(): void {
-    for (let i: utinyint = 0; i < SIZE - 1; i++) {
-        if (line[i] != 0 && line[i] == line[i + 1]) {
-            line[i] = line[i] + 1; // one higher exponent: double the value
-            line[i + 1] = 0;
-            score = score + POW2[line[i]];
-            if (line[i] == MAX_EXPONENT) {
-                won = true;
-            }
-            moved = true;
-        }
-    }
-    return;
-}
-
-function slide(a: utinyint, b: utinyint, c: utinyint, d: utinyint): void {
-    line[0] = board[a];
-    line[1] = board[b];
-    line[2] = board[c];
-    line[3] = board[d];
-    compressLine();
-    mergeLine();
-    compressLine();
-    board[a] = line[0];
-    board[b] = line[1];
-    board[c] = line[2];
-    board[d] = line[3];
-    return;
-}
-
-function moveLines(start: utinyint, step: utinyint, stride: utinyint): void {
-    for (let n: utinyint = 0; n < SIZE; n++) {
-        let a: utinyint = start;
-        let b: utinyint = a + step;
-        let c: utinyint = b + step;
-        let d: utinyint = c + step;
-        slide(a, b, c, d);
-        start = start + stride;
-    }
-    return;
-}
-
 // ---- the animated move --------------------------------------------------
 //
-// The same move as compress/merge/compress, taken one cell at a time so
-// there is something to watch: each step, every tile that can advance one
-// cell toward the wall does — into an empty neighbour, or onto an equal
-// tile neither half of which has merged this move — the board is
-// repainted, and the step lingers ANIM_STEP_FRAMES. When a step moves
-// nothing the move is finished, and the board it settles on is exactly the
-// board moveLines() would have written at once: iterating "shift or merge
-// one cell" with the merged[] lock reaches the same fixed point (the lock
-// is what stops 2 2 2 2 collapsing past 4 4, and a fresh 4 swallowing the
-// 4 sliding up behind it).
-
-function stepPair(a: utinyint, b: utinyint): void {
-    // b is the cell one step behind a. One step of one tile: advance
-    // b's tile into a, or merge it onto a's.
-    if (board[b] == 0) {
-        return;
-    }
-    if (board[a] == 0) {
-        board[a] = board[b];
-        merged[a] = merged[b];
-        board[b] = 0;
-        merged[b] = 0;
-        stepped = true;
-        return;
-    }
-    if (board[a] == board[b] && merged[a] == 0 && merged[b] == 0) {
-        board[a] = board[a] + 1; // one higher exponent: double the value
-        merged[a] = 1;
-        board[b] = 0;
-        score = score + POW2[board[a]];
-        if (board[a] == MAX_EXPONENT) {
-            won = true;
-        }
-        stepped = true;
-    }
-    return;
-}
-
-// Front pair first, so a whole line in motion advances together in one
-// step — d follows c into the cell c just left — rather than one tile
-// per step.
-function stepLines(start: utinyint, step: utinyint, stride: utinyint): void {
-    for (let n: utinyint = 0; n < SIZE; n++) {
-        let a: utinyint = start;
-        let b: utinyint = a + step;
-        let c: utinyint = b + step;
-        let d: utinyint = c + step;
-        stepPair(a, b);
-        stepPair(b, c);
-        stepPair(c, d);
-        start = start + stride;
-    }
-    return;
-}
-
-// The per-step repaint: drawBoard()'s tile loop without the HUD — the
-// score a merge just banked appears with the settled board instead, and
-// the header is not repainted five times in 100ms. Its own copy of the
-// loop rather than a helper drawBoard() shares, so the builds that fold
-// the animation away keep drawBoard() — and the 4K PET image — exactly
-// as they were; here it costs a machine with RAM to spare ~30 bytes.
-function drawSlidTiles(): void {
-    for (let i: utinyint = 0; i < 16; i++) {
-        if (board[i] != shown[i]) {
-            drawTile(i >> 2, i & 3, board[i]);
-            shown[i] = board[i];
-        }
-    }
-    return;
-}
-
+// game.8bs's stepLines() takes the move one cell at a time; this repaints
+// the board after each step that moved something and lingers
+// ANIM_STEP_FRAMES, until a step moves nothing. Only the tiles are
+// repainted between steps — the score a merge just banked appears with
+// the settled board instead, and the header is not repainted five times
+// in 100ms.
 function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
     for (let i: utinyint = 0; i < 16; i++) {
         merged[i] = 0;
@@ -234,7 +61,7 @@ function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
         stepLines(start, step, stride);
         if (stepped) {
             moved = true;
-            drawSlidTiles();
+            Tiles();
             for (let f: utinyint = 0; f < ANIM_STEP_FRAMES; f++) {
                 waitFrame();
                 // Every waitFrame() needs a poll() right behind it (see
@@ -253,97 +80,6 @@ function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
             }
         }
     }
-    return;
-}
-
-// ---- spawning, and knowing when to stop ---------------------------------
-
-// One new tile in a random empty cell: a 2 nine times in ten, a 4 the
-// tenth. Where those numbers come from depends on the machine, and rng.8bs
-// is the one place that decides: seven targets get 8BitScript's own
-// deterministic generator, stepped once a frame in main()'s loop below so
-// the sequence follows how long the player actually took between moves
-// rather than repeating the same game every run; the C64 and the Atari
-// 8-bit read their own hardware entropy instead, which on those two is both
-// smaller than computing it and genuinely unpredictable.
-function spawnTile(): void {
-    let empties: utinyint = 0;
-    for (let i: utinyint = 0; i < 16; i++) {
-        if (board[i] == 0) {
-            empties++;
-        }
-    }
-    if (empties == 0) {
-        return;
-    }
-    let target: utinyint = rng.range(empties);
-    let exponent: utinyint = 1;
-    if (rng.range(10) == 0) {
-        exponent = 2;
-    }
-    let seenEmpty: utinyint = 0;
-    for (let i: utinyint = 0; i < 16; i++) {
-        if (board[i] == 0) {
-            if (seenEmpty == target) {
-                board[i] = exponent;
-                return;
-            }
-            seenEmpty++;
-        }
-    }
-}
-
-// No empty cell and no adjacent equal pair, in either direction, anywhere:
-// nothing left that any of the four moves could change.
-function hasMoves(): bool {
-    for (let i: utinyint = 0; i < 16; i++) {
-        if (board[i] == 0) {
-            return true;
-        }
-        if ((i & 3) != 3 && board[i] == board[i + 1]) {
-            return true;
-        }
-        if (i < 12 && board[i] == board[i + 4]) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// ---- drawing --------------------------------------------------------------
-//
-// drawTile() and drawHud() live in tile.8bs (tile.pet.8bs on the PET,
-// tile.web.8bs on the web) —
-// see that file's header for why those two need their own. The PET twin
-// writes screen codes directly so this file never links text.print; the
-// web twin stamps the same digit font through the host's 2×2 block
-// glyphs and keeps text.print for a coloured HUD.
-
-// Only tiles whose exponent changed since last paint are stamped. Sixteen
-// filled squares with a background-coloured gap between them already read
-// as one board; redrawing a tile that did not move blanks it first and
-// that is the blink.
-function drawBoard(): void {
-    drawHud(score, over, won);
-    for (let i: utinyint = 0; i < 16; i++) {
-        if (board[i] != shown[i]) {
-            drawTile(i >> 2, i & 3, board[i]);
-            shown[i] = board[i];
-        }
-    }
-    return;
-}
-
-function resetGame(): void {
-    for (let i: utinyint = 0; i < 16; i++) {
-        board[i] = 0;
-        shown[i] = 255; // not an exponent: force every cell to stamp once
-    }
-    score = 0;
-    over = false;
-    won = false;
-    spawnTile();
-    spawnTile();
     return;
 }
 
@@ -374,7 +110,7 @@ export function main(): void {
     // and every other target treats it as one idle frame at start-up.
     waitFrame();
     input.poll();
-    drawTitleScreen();
+    Title();
 
     while (true) {
         waitFrame();
@@ -388,11 +124,12 @@ export function main(): void {
         // reblank plus forcing every cell to redraw (shown[] holds no valid
         // exponent) is the same recovery resetGame() gives a fresh board —
         // without touching score, over, or won, which a resize does not
-        // change. Guarded by HAS_RESIZE, not just screen.resized()'s own
-        // answer: resized() cannot fold, so without the guard this whole
-        // block — and the otherwise-unreferenced resized() itself — would
-        // link into all nine targets instead of just the one whose grid
-        // can actually change.
+        // change — and Screen() puts back whichever of the title and the
+        // board was up. Guarded by HAS_RESIZE, not just screen.resized()'s
+        // own answer: resized() cannot fold, so without the guard this
+        // whole block — and the otherwise-unreferenced resized() itself —
+        // would link into all nine targets instead of just the one whose
+        // grid can actually change.
         if (HAS_RESIZE) {
             if (screen.resized()) {
                 computeLayout();
@@ -400,11 +137,7 @@ export function main(): void {
                 for (let i: utinyint = 0; i < 16; i++) {
                     shown[i] = 255;
                 }
-                if (started) {
-                    drawBoard();
-                } else {
-                    drawTitleScreen();
-                }
+                Screen();
             }
         }
 
@@ -424,7 +157,7 @@ export function main(): void {
                 }
                 screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
                 resetGame();
-                drawBoard();
+                Board();
             }
             continue;
         }
@@ -440,7 +173,7 @@ export function main(): void {
                 // what lets the narrowest of them carry the message at all.
                 screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
                 resetGame();
-                drawBoard();
+                Board();
             }
         } else {
             moved = false;
@@ -477,7 +210,7 @@ export function main(): void {
                 if (!hasMoves()) {
                     over = true;
                 }
-                drawBoard();
+                Board();
             }
         }
     }
