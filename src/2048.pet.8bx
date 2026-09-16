@@ -1,0 +1,49 @@
+// PET presentation twin — block-digit tiles in tile.pet.8bs, same API as
+// 2048.8bx everywhere else.
+import {
+    computeLayout as layoutBody,
+    drawHud as hudBody,
+    drawTile as tileBody,
+    drawTitleScreen as titleBody,
+    wobbleTitle as wobbleBody,
+} from "./tile.pet.8bs";
+
+component Layout() {
+    layoutBody();
+}
+
+export function computeLayout(): void {
+    <Layout />;
+}
+
+component TitleScreen() {
+    titleBody();
+}
+
+export function drawTitleScreen(): void {
+    <TitleScreen />;
+}
+
+component TitleWobble() {
+    wobbleBody();
+}
+
+export function wobbleTitle(): void {
+    <TitleWobble />;
+}
+
+component Hud(score: usmallint, over: bool, won: bool) {
+    hudBody(score, over, won);
+}
+
+export function drawHud(score: usmallint, over: bool, won: bool): void {
+    <Hud score={score} over={over} won={won} />;
+}
+
+component Tile(row: utinyint, col: utinyint, exponent: utinyint) {
+    tileBody(row, col, exponent);
+}
+
+export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    <Tile row={row} col={col} exponent={exponent} />;
+}

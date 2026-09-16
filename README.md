@@ -66,7 +66,7 @@ Then, from this directory:
 | --- | --- |
 | `pnpm start` | VIC-20 (NTSC) |
 | `pnpm run start:c64` | C64 |
-| `pnpm run start:pet` | PET (a 32K 4032 by default; `--profile 2001 --hardware ram=4` for a stock 4K 2001 — the game is 2440 bytes of program, inside that machine's ~3K of usable RAM; `--profile 8032` for 80 columns) |
+| `pnpm run start:pet` | PET (a 32K 4032 by default; `--profile 2001 --hardware ram=4` for a stock 4K 2001 — the game is 2816 bytes of program, inside that machine's ~3K of usable RAM; `--profile 8032` for 80 columns) |
 | `pnpm run start:c128` | C128 |
 | `pnpm run start:atari8` | Atari 8-bit |
 | `pnpm run start:nes` | NES |
@@ -130,9 +130,9 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   deterministic generator added to 8BitScript itself for this, stepped once
   every frame regardless of input so the sequence a game sees depends on how
   long the player took between moves and not just how many they made.
-  `rng.8bs` is the one place that picks, with `rng.c64.8bs` and
-  `rng.atari8.8bs` as its per-machine twins; the seven software builds are
-  byte-for-byte what they were before the split, the 4K PET included. The
+  `rng.8bs` is the one place that picks, gated by `#system()` rather than
+  split into per-machine twin files; the seven software builds still fold
+  the hardware branches away to nothing, the 4K PET included. The
   price on the two hardware builds is replay — every spawn reads a register,
   so those games cannot be replayed from a start state or reproduced from a
   screenshot, which is exactly why both packages sit behind their own
@@ -147,13 +147,12 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   The PET and the web both stamp a 2×3-cell block-digit into an 8×5
   square so a "2" fills the tile the way the PET's own ROM digits do;
   `tile.web.8bs` is the web's twin of `tile.pet.8bs`.
-- **RAM is tiny everywhere.** `8bs build` reports 54 bytes of RAM on a
+- **RAM is tiny everywhere.** `8bs build` reports 55 bytes of RAM on a
   PET 2001 and 81 on the web — the board, a 16-byte copy of what is on
   screen (so a tile that did not move is never erased and redrawn), the
   scratch row, the animated builds' merge-lock mask, the score, and a
   handful of flags. The PET program itself is
-  **2440 bytes** on a 2001/4K (down from 2983, and from 4005 before the
-  compiler's 0.2.3 leaner 6502 codegen): the PET HUD is baked screen codes
+  **2816 bytes** on a 2001/4K: the PET HUD is baked screen codes
   rather than `text.print` / `printNumber`, the four move helpers are one
   start/step/stride walk, and helpers that would otherwise be inlined into
   `main` four times stay as calls. That is what fits a stock 4K 2001.

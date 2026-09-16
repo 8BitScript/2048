@@ -15,7 +15,7 @@ import { input } from "@8bitscript/input";
 import { raster } from "@8bitscript/raster";
 import { rng } from "./rng.8bs";
 import { Memory } from "@8bitscript/system";
-import { computeLayout, drawHud, drawTile, drawTitleScreen, wobbleTitle } from "./tile.8bs";
+import { computeLayout, drawHud, drawTile, drawTitleScreen, wobbleTitle } from "./2048.8bx";
 
 // Whether this machine can change the picture part-way down a frame — the
 // guard on the title screen's raster effect. A compile-time fact: the
@@ -312,7 +312,7 @@ function hasMoves(): bool {
 
 // ---- drawing --------------------------------------------------------------
 //
-// drawTile() and drawHud() live in tile.8bs (tile.pet.8bs on the PET,
+// drawTile() and drawHud() live in 2048.8bx (2048.pet.8bx on the PET,
 // tile.web.8bs on the web) —
 // see that file's header for why those two need their own. The PET twin
 // writes screen codes directly so this file never links text.print; the

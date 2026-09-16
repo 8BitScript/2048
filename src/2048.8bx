@@ -1,0 +1,50 @@
+// Presentation for 2048 on every portable target except the PET twin
+// (2048.pet.8bx). Stateless BX components elaborate to the same calls
+// tile.8bs already exports — the game logic in 2048.8bs stays unchanged.
+import {
+    computeLayout as layoutBody,
+    drawHud as hudBody,
+    drawTile as tileBody,
+    drawTitleScreen as titleBody,
+    wobbleTitle as wobbleBody,
+} from "./tile.8bs";
+
+component Layout() {
+    layoutBody();
+}
+
+export function computeLayout(): void {
+    <Layout />;
+}
+
+component TitleScreen() {
+    titleBody();
+}
+
+export function drawTitleScreen(): void {
+    <TitleScreen />;
+}
+
+component TitleWobble() {
+    wobbleBody();
+}
+
+export function wobbleTitle(): void {
+    <TitleWobble />;
+}
+
+component Hud(score: usmallint, over: bool, won: bool) {
+    hudBody(score, over, won);
+}
+
+export function drawHud(score: usmallint, over: bool, won: bool): void {
+    <Hud score={score} over={over} won={won} />;
+}
+
+component Tile(row: utinyint, col: utinyint, exponent: utinyint) {
+    tileBody(row, col, exponent);
+}
+
+export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    <Tile row={row} col={col} exponent={exponent} />;
+}

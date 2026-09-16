@@ -1,0 +1,655 @@
+// Fixed-layout web machine skins (c64, pet-2001, vic20), folded per build.
+import { text, TextColor } from "@8bitscript/text";
+import { input } from "@8bitscript/input";
+import { raster, Slot } from "@8bitscript/raster";
+import { BorderColor, BackgroundColor } from "@8bitscript/screen";
+
+// ---- c64 skin ----
+// Web C64 skin: 40×25, 6×4 reverse-video tiles — the same board
+// tile.8bs draws on a real C64. Picked up when the web build's hardware
+// tag is `c64`. Draws through @8bitscript/text; does not import tile.8bs
+const C64_VERSION_LINE: string = "v0.2.0";
+
+const C64_ROW: usmallint = text.COLUMNS; // 40
+const C64_TILE_W: utinyint = 6;
+const C64_TILE_H: utinyint = 4;
+const C64_BLANK: string = "      ";
+
+const C64_POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+
+const C64_TILE_COLOR: array<utinyint, 12> = [
+    TextColor.WHITE,
+    TextColor.WHITE,
+    TextColor.CYAN,
+    TextColor.GREEN,
+    TextColor.GREEN,
+    TextColor.YELLOW,
+    TextColor.YELLOW,
+    TextColor.PURPLE,
+    TextColor.PURPLE,
+    TextColor.RED,
+    TextColor.RED,
+    TextColor.BLUE,
+];
+
+// boardTop 3, left 6, 6×4 tiles, 1-cell gaps (stride 7×5)
+const C64_ORIGIN: array<usmallint, 16> = [
+    126, 133, 140, 147,
+    326, 333, 340, 347,
+    526, 533, 540, 547,
+    726, 733, 740, 747,
+];
+
+const C64_HEADER_AT: usmallint = 46;
+const C64_SCORE_HEADER_LEN: utinyint = 11;
+const C64_STATUS_AT: usmallint = 926;
+const C64_TITLE_AT: usmallint = 458;
+const C64_PROMPT_AT: usmallint = 534;
+const C64_TOUCH_PROMPT_AT: usmallint = 533;  // "TOUCH TO START" is two
+                                          // characters longer, so it
+                                          // centres two columns left
+const C64_VERSION_AT: usmallint = 994;
+
+// ---- the game-over message ------------------------------------------------
+//
+// "GAME OVER" in the blank row between the first and second rows of tiles
+// (row 7), how to play again in the row between the third and fourth (row
+// 17), instead of one line under the board — the same two lines every other
+// skin draws, at this skin's own numbers. Both rows are already empty (a
+// gap row is the one thing drawTile() never touches), so the message costs
+// the board nothing and leaves the position that ended the game in view.
+// Each line is centred on the screen: (40 - length) / 2.
+const C64_OVER_AT: usmallint = 295;         // row 7, col 15 — "GAME OVER"
+const C64_OVER_TOUCH_AT: usmallint = 691;   // row 17, col 11 — "TOUCH TO TRY AGAIN"
+const C64_OVER_KEY_AT: usmallint = 688;     // row 17, col 8 — "PRESS ENTER TO TRY AGAIN"
+// The status line is the only thing this skin erases: the game-over
+// lines are cleared by main.8bs blanking the screen for the next game.
+const C64_STATUS_BLANK: string = "                   "; // 19 spaces
+
+// ---- the copyright line ---------------------------------------------------
+//
+// The port's own line, on the second-to-last row so the version keeps the
+// last one and the middle of the screen stays clear. The original game's
+// author and repo are credited in README.md rather than here.
+//
+// "(" and ")" are not in the portable character set, so the line is printed
+// with spaces where they go and the glyphs poked in after: putChar writes a
+// glyph and nothing else, and the print is what put the colour on those
+// cells. The web host's font is indexed by ASCII outright, so these are the
+// two ASCII codes.
+const C64_CREDIT_PORT_AT: usmallint = 930;
+const C64_PAREN_OPEN: utinyint = 40;
+const C64_PAREN_CLOSE: utinyint = 41;
+
+function c64_computeLayout(): void {
+}
+
+function c64_drawTitleScreen(): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    text.print(C64_TITLE_AT, "2048");
+    if (input.touch()) {
+        text.print(C64_TOUCH_PROMPT_AT, "TOUCH TO START");
+    } else {
+        text.print(C64_PROMPT_AT, "PRESS ENTER");
+    }
+    text.print(C64_CREDIT_PORT_AT, " C  2026 8BITSCRIPT");
+    text.putChar(C64_CREDIT_PORT_AT, C64_PAREN_OPEN);
+    text.putChar(C64_CREDIT_PORT_AT + 2, C64_PAREN_CLOSE);
+    text.print(C64_VERSION_AT, C64_VERSION_LINE);
+    // The list, built once, in ascending line order — tile.8bs's shape at
+    // this skin's numbers: the band opens a text row above the title,
+    // the wobble rides the title's own eight scanlines, straightens out
+    // on the band's last line, and the band closes a row below.
+    raster.clear();
+    raster.at(C64_BAND_TOP - 8, Slot.BACKGROUND, C64_BAND_BACKGROUND);
+    raster.at(C64_BAND_TOP - 8, Slot.BORDER, C64_BAND_BORDER);
+    for (let i: utinyint = 0; i < C64_WOBBLE_ENTRIES; i++) {
+        raster.at(C64_BAND_TOP + i * 2, Slot.SCROLL_X, C64_SINE[i]);
+    }
+    raster.at(C64_BAND_TOP + 8, Slot.SCROLL_X, 0);
+    raster.at(C64_BAND_TOP + 16, Slot.BACKGROUND, BackgroundColor.BLACK);
+    raster.at(C64_BAND_TOP + 16, Slot.BORDER, BorderColor.BLUE);
+    raster.enable();
+    return;
+}
+
+function c64_drawHud(score: usmallint, over: bool, won: bool): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    text.print(C64_HEADER_AT, "2048");
+    text.print(text.COLUMNS - C64_SCORE_HEADER_LEN, `SCORE ${score:5}`);
+    // Always write the status line, never just leave it: the branch that
+    // printed nothing is what used to strand a message across a restart on
+    // a touch host, where ARROWS TO MOVE is suppressed.
+    if (won) {
+        text.print(C64_STATUS_AT, "YOU MADE 2048      ");
+    } else if (!over && !input.touch()) {
+        text.print(C64_STATUS_AT, "ARROWS TO MOVE     ");
+    } else {
+        text.print(C64_STATUS_AT, C64_STATUS_BLANK);
+    }
+    // Nothing erases these two lines: main.8bs blanks the screen when the
+    // next game starts, which is the only way out of a finished game.
+    if (over) {
+        text.print(C64_OVER_AT, "GAME OVER");
+        if (input.touch()) {
+            text.print(C64_OVER_TOUCH_AT, "TOUCH TO TRY AGAIN");
+        } else {
+            text.print(C64_OVER_KEY_AT, "PRESS ENTER TO TRY AGAIN");
+        }
+    }
+    return;
+}
+
+function c64_tileWidth(value: usmallint): utinyint {
+    if (value >= 1000) {
+        return 4;
+    }
+    if (value >= 100) {
+        return 3;
+    }
+    if (value >= 10) {
+        return 2;
+    }
+    return 1;
+}
+
+function c64_drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    let origin: usmallint = C64_ORIGIN[row * 4 + col];
+    let value: usmallint = C64_POW2[exponent];
+    text.setColor(C64_TILE_COLOR[exponent]);
+    text.setReverse(true);
+    let line: utinyint = 0;
+    while (line < C64_TILE_H) {
+        text.print(origin + line * C64_ROW, C64_BLANK);
+        line++;
+    }
+    if (value != 0) {
+        let width: utinyint = c64_tileWidth(value);
+        let offset: utinyint = (C64_TILE_W - width) >> 1;
+        text.printNumber(origin + (C64_TILE_H >> 1) * C64_ROW + offset, value, width);
+    }
+    text.setReverse(false);
+    return;
+}
+
+// ---- the title wobble -----------------------------------------------------
+//
+// The same treatment tile.8bs gives the real C64, at this skin's own
+// numbers: the web answers #fact(video.raster) true, so the title screen
+// gets the raster showpiece too — background and border switch colour a
+// text row above "2048" and back a row below it, and the title row itself
+// rides a sine-driven SCROLL_X wobble, one entry per two scanlines
+// (fancy's measured pitch, kept so the two skins show the same picture).
+// drawTitleScreen() builds the list; 2048.8bs's loop animates it
+// (wobbleTitle) and tears it down (raster.disable) the moment the game
+// starts, the same as on the real machine.
+//
+// XSCROLL 0-7 over 32 steps — fancy's own table, the one tile.8bs carries.
+const C64_SINE: array<utinyint, 32> = [
+    4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 7, 6, 6, 5, 5, 4,
+    3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3,
+];
+
+// The wobble covers the title's one text row: eight scanlines, four
+// SCROLL_X entries at the two-line pitch. The colour band opens one text
+// row above it and closes one below.
+const C64_WOBBLE_ENTRIES: utinyint = 4;
+const C64_BAND_BACKGROUND: utinyint = 2; // red behind the title
+const C64_BAND_BORDER: utinyint = 7;     // yellow beside it
+const C64_BAND_TOP: usmallint = 88;      // C64_TITLE_AT's row (11) * 8 — "2048"'s first scanline
+
+// Where the four SCROLL_X value bytes live in the list. No stride probe
+// here, unlike tile.8bs: this skin only ever reads the web rasterline,
+// whose entries are documented as three bytes with `entry` the byte
+// offset (index * 3). The first SCROLL_X entry is index 2 — the two
+// opening colour splits come first.
+const C64_WOBBLE_STRIDE: utinyint = 3;
+const C64_WOBBLE_FIRST: utinyint = 6;
+let c64_wobblePhase: utinyint = 0;
+
+// One step of the wobble, called once per title-screen frame from
+// 2048.8bs's loop: rewrite only the four SCROLL_X value bytes, right
+// after waitFrame(), before the next paint reads the list.
+function c64_wobbleTitle(): void {
+    c64_wobblePhase = (c64_wobblePhase + 1) & 31;
+    for (let i: utinyint = 0; i < C64_WOBBLE_ENTRIES; i++) {
+        raster.setValue(C64_WOBBLE_FIRST + i * C64_WOBBLE_STRIDE, C64_SINE[(i + c64_wobblePhase) & 31]);
+    }
+    return;
+}
+
+// ---- pet skin ----
+// Web PET 2001 skin: 40×25 block-digit tiles, green host, no per-cell
+// color. HUD matches the 4K PET (PRESS RETURN, 2048 left / SCORE right).
+// Picked up when the web build's hardware tag is `pet-2001`. Draws through
+const PET_VERSION_LINE: string = "v0.2.0";
+
+const PET_ROW: usmallint = text.COLUMNS; // 40
+const PET_TILE_H: utinyint = 5;
+const PET_BLANK: string = "        ";
+
+const PET_POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+
+const PET_TILE_DIGIT_AT: array<utinyint, 13> = [0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26];
+const PET_TILE_DIGIT: array<utinyint, 26> = [
+    2, 4, 8,
+    1, 6, 3, 2, 6, 4,
+    1, 2, 8, 2, 5, 6, 5, 1, 2,
+    1, 0, 2, 4, 2, 0, 4, 8,
+];
+
+const PET_DIGIT_TILES: array<utinyint, 60> = [
+    142, 138, 138, 138, 139, 138,
+    135, 128, 141, 128, 135, 130,
+    140, 138, 131, 138, 139, 130,
+    140, 138, 131, 138, 131, 138,
+    138, 138, 139, 138, 128, 138,
+    142, 136, 139, 130, 131, 138,
+    142, 136, 139, 130, 139, 138,
+    140, 138, 128, 138, 128, 138,
+    142, 138, 139, 138, 139, 138,
+    142, 138, 139, 138, 131, 138,
+];
+
+const PET_ORIGIN: array<usmallint, 16> = [
+    42, 51, 60, 69,
+    282, 291, 300, 309,
+    522, 531, 540, 549,
+    762, 771, 780, 789,
+];
+
+const PET_HEADER_AT: usmallint = 2;
+const PET_SCORE_HEADER_LEN: utinyint = 11;
+const PET_STATUS_AT: usmallint = 962;
+const PET_TITLE_AT: usmallint = 458;
+const PET_PROMPT_AT: usmallint = 534;
+const PET_TOUCH_PROMPT_AT: usmallint = 533;  // "TOUCH TO START" is two
+                                          // characters longer, so it
+                                          // centres two columns left
+const PET_VERSION_AT: usmallint = 994;
+
+// ---- the game-over message ------------------------------------------------
+//
+// "GAME OVER" in the blank row between the first and second rows of tiles
+// (row 6), how to play again in the row between the third and fourth (row
+// 18), instead of one line under the board — the same two lines every other
+// skin draws, at this skin's own numbers, and the same rows the 4K PET puts
+// them on. Both are already empty (a gap row is the one thing drawTile()
+// never touches), so the message costs the board nothing and leaves the
+// position that ended the game in view. Each line is centred on the screen:
+// (40 - length) / 2. Nothing here goes red the way the colour skins do —
+// this host has no per-cell colour, and the message is already the only
+// text inside the board.
+const PET_OVER_AT: usmallint = 255;         // row 6, col 15 — "GAME OVER"
+const PET_OVER_TOUCH_AT: usmallint = 731;   // row 18, col 11 — "TOUCH TO TRY AGAIN"
+const PET_OVER_KEY_AT: usmallint = 727;     // row 18, col 7 — "PRESS RETURN TO TRY AGAIN"
+// The status line is the only thing this skin erases: the game-over
+// lines are cleared by main.8bs blanking the screen for the next game.
+const PET_STATUS_BLANK: string = "                   "; // 19 spaces
+
+// ---- the copyright line ---------------------------------------------------
+//
+// The port's own line, on the second-to-last row so the version keeps the
+// last one and the middle of the screen stays clear. The original game's
+// author and repo are credited in README.md rather than here.
+//
+// "(" and ")" are not in the portable character set, so the line is printed
+// with spaces where they go and the glyphs poked in after: putChar writes a
+// glyph and nothing else, and the print is what put the colour on those
+// cells. The web host's font is indexed by ASCII outright, so these are the
+// two ASCII codes.
+const PET_CREDIT_PORT_AT: usmallint = 930;
+const PET_PAREN_OPEN: utinyint = 40;
+const PET_PAREN_CLOSE: utinyint = 41;
+
+function pet_computeLayout(): void {
+}
+
+function pet_drawTitleScreen(): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    text.print(PET_TITLE_AT, "2048");
+    if (input.touch()) {
+        text.print(PET_TOUCH_PROMPT_AT, "TOUCH TO START");
+    } else {
+        text.print(PET_PROMPT_AT, "PRESS RETURN");
+    }
+    text.print(PET_CREDIT_PORT_AT, " C  2026 8BITSCRIPT");
+    text.putChar(PET_CREDIT_PORT_AT, PET_PAREN_OPEN);
+    text.putChar(PET_CREDIT_PORT_AT + 2, PET_PAREN_CLOSE);
+    text.print(PET_VERSION_AT, PET_VERSION_LINE);
+    return;
+}
+
+function pet_drawHud(score: usmallint, over: bool, won: bool): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    text.print(PET_HEADER_AT, "2048");
+    text.print(text.COLUMNS - PET_SCORE_HEADER_LEN, `SCORE ${score:5}`);
+    // Always write the status line, never just leave it: the branch that
+    // printed nothing is what used to strand a message across a restart on
+    // a touch host, where ARROWS TO MOVE is suppressed.
+    if (won) {
+        text.print(PET_STATUS_AT, "YOU MADE 2048      ");
+    } else if (!over && !input.touch()) {
+        text.print(PET_STATUS_AT, "ARROWS TO MOVE     ");
+    } else {
+        text.print(PET_STATUS_AT, PET_STATUS_BLANK);
+    }
+    // Nothing erases these two lines: main.8bs blanks the screen when the
+    // next game starts, which is the only way out of a finished game.
+    if (over) {
+        text.print(PET_OVER_AT, "GAME OVER");
+        if (input.touch()) {
+            text.print(PET_OVER_TOUCH_AT, "TOUCH TO TRY AGAIN");
+        } else {
+            text.print(PET_OVER_KEY_AT, "PRESS RETURN TO TRY AGAIN");
+        }
+    }
+    return;
+}
+
+function pet_fillTile(origin: usmallint): void {
+    text.setColor(TextColor.WHITE);
+    text.setReverse(true);
+    let rowCell: usmallint = origin;
+    let row: utinyint = 0;
+    while (row < PET_TILE_H) {
+        text.print(rowCell, PET_BLANK);
+        rowCell = rowCell + PET_ROW;
+        row++;
+    }
+    return;
+}
+
+function pet_drawDigit(cell: usmallint, value: utinyint): void {
+    let base: utinyint = value * 6;
+    let rowCell: usmallint = cell;
+    let row: utinyint = 0;
+    while (row < 3) {
+        text.putChar(rowCell, PET_DIGIT_TILES[base]);
+        text.putChar(rowCell + 1, PET_DIGIT_TILES[base + 1]);
+        base = base + 2;
+        rowCell = rowCell + PET_ROW;
+        row++;
+    }
+    return;
+}
+
+function pet_drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    let origin: usmallint = PET_ORIGIN[row * 4 + col];
+    pet_fillTile(origin);
+    let base: utinyint = PET_TILE_DIGIT_AT[exponent];
+    let count: utinyint = PET_TILE_DIGIT_AT[exponent + 1] - base;
+    if (count != 0) {
+        let at: usmallint = origin + PET_ROW + (4 - count);
+        let i: utinyint = 0;
+        while (i < count) {
+            pet_drawDigit(at, PET_TILE_DIGIT[base + i]);
+            at = at + 2;
+            i++;
+        }
+    }
+    text.setReverse(false);
+    return;
+}
+
+// The title wobble is tile.8bs's — the portable skin, read by the one
+// 6502 machine with a per-scanline hook (the C64). The web answers
+// #fact(video.raster) true too, but this skin draws its own title and
+// does not take the effect up yet; an empty function here means the
+// compiler deletes the call, and the game's raster.disable() at start is
+// a no-op against a list that was never built.
+function pet_wobbleTitle(): void {
+    return;
+}
+
+// ---- vic skin ----
+// Web VIC-20 skin: 22×23, 4-wide tiles with a one-cell gap — the same
+// board tile.8bs draws on a real VIC-20. Picked up when the web build's
+const VIC_VERSION_LINE: string = "v0.2.0";
+
+const VIC_ROW: usmallint = text.COLUMNS; // 22
+const VIC_TILE_W: utinyint = 4;
+const VIC_TILE_H: utinyint = 3;
+const VIC_BLANK: string = "    ";
+
+const VIC_POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+
+const VIC_TILE_COLOR: array<utinyint, 12> = [
+    TextColor.WHITE,
+    TextColor.WHITE,
+    TextColor.CYAN,
+    TextColor.GREEN,
+    TextColor.GREEN,
+    TextColor.YELLOW,
+    TextColor.YELLOW,
+    TextColor.PURPLE,
+    TextColor.PURPLE,
+    TextColor.RED,
+    TextColor.RED,
+    TextColor.BLUE,
+];
+
+// boardTop 4, left 1, 4×3 tiles, 1-cell gaps (stride 5×4)
+const VIC_ORIGIN: array<usmallint, 16> = [
+    89, 94, 99, 104,
+    177, 182, 187, 192,
+    265, 270, 275, 280,
+    353, 358, 363, 368,
+];
+
+const VIC_HEADER_AT: usmallint = 45;
+const VIC_SCORE_HEADER_LEN: utinyint = 11;
+const VIC_STATUS_AT: usmallint = 441;
+const VIC_TITLE_AT: usmallint = 229;
+const VIC_PROMPT_AT: usmallint = 269;
+const VIC_TOUCH_PROMPT_AT: usmallint = 268;  // "TOUCH TO START" is two
+                                          // characters longer, so it
+                                          // centres two columns left
+const VIC_VERSION_AT: usmallint = 500;
+
+// ---- the game-over message ------------------------------------------------
+//
+// "GAME OVER" in the blank row between the first and second rows of tiles
+// (row 7), how to play again in the row between the third and fourth (row
+// 15), instead of one line under the board — the same two lines every other
+// skin draws, at this skin's own numbers. Both rows are already empty (a
+// gap row is the one thing drawTile() never touches), so the message costs
+// the board nothing and leaves the position that ended the game in view.
+// Each line is centred on the screen: (22 - length) / 2, which is what
+// decides the wording. PRESS ENTER TO TRY AGAIN, which the 40- and
+// 48-column skins say, is 24 characters and would not fit on the screen at
+// all — and at 20 characters even PRESS ENTER TO RETRY ran the full width
+// of the row, reading as a bar across the board rather than a line inside
+// it (2026-09-13, screenshot). So this skin drops the PRESS, and both
+// prompts are 18 characters at the same column.
+const VIC_OVER_AT: usmallint = 160;         // row 7, col 6 — "GAME OVER"
+const VIC_OVER_PROMPT_AT: usmallint = 332;  // row 15, col 2 — both prompts are 18
+// One blank as wide as the longest line, from the column that line starts
+// in: it covers either gap row, and the 19-column status line as well.
+// The status line is the only thing this skin erases: the game-over
+// lines are cleared by main.8bs blanking the screen for the next game.
+const VIC_STATUS_BLANK: string = "                   "; // 19 spaces
+
+// ---- the copyright line ---------------------------------------------------
+//
+// The port's own line, on the second-to-last row so the version keeps the
+// last one and the middle of the screen stays clear. The original game's
+// author and repo are credited in README.md rather than here.
+//
+// "(" and ")" are not in the portable character set, so the line is printed
+// with spaces where they go and the glyphs poked in after: putChar writes a
+// glyph and nothing else, and the print is what put the colour on those
+// cells. The web host's font is indexed by ASCII outright, so these are the
+// two ASCII codes.
+const VIC_CREDIT_PORT_AT: usmallint = 463;
+const VIC_PAREN_OPEN: utinyint = 40;
+const VIC_PAREN_CLOSE: utinyint = 41;
+
+function vic_computeLayout(): void {
+}
+
+function vic_drawTitleScreen(): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    text.print(VIC_TITLE_AT, "2048");
+    if (input.touch()) {
+        text.print(VIC_TOUCH_PROMPT_AT, "TOUCH TO START");
+    } else {
+        text.print(VIC_PROMPT_AT, "PRESS ENTER");
+    }
+    text.print(VIC_CREDIT_PORT_AT, " C  2026 8BITSCRIPT");
+    text.putChar(VIC_CREDIT_PORT_AT, VIC_PAREN_OPEN);
+    text.putChar(VIC_CREDIT_PORT_AT + 2, VIC_PAREN_CLOSE);
+    text.print(VIC_VERSION_AT, VIC_VERSION_LINE);
+    return;
+}
+
+function vic_drawHud(score: usmallint, over: bool, won: bool): void {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    text.print(VIC_HEADER_AT, "2048");
+    text.print(text.COLUMNS - VIC_SCORE_HEADER_LEN, `SCORE ${score:5}`);
+    // Always write the status line, never just leave it: the branch that
+    // printed nothing is what used to strand a message across a restart on
+    // a touch host, where ARROWS TO MOVE is suppressed.
+    if (won) {
+        text.print(VIC_STATUS_AT, "YOU MADE 2048      ");
+    } else if (!over && !input.touch()) {
+        text.print(VIC_STATUS_AT, "ARROWS TO MOVE     ");
+    } else {
+        text.print(VIC_STATUS_AT, VIC_STATUS_BLANK);
+    }
+    // Nothing erases these two lines: main.8bs blanks the screen when the
+    // next game starts, which is the only way out of a finished game.
+    if (over) {
+        text.print(VIC_OVER_AT, "GAME OVER");
+        if (input.touch()) {
+            text.print(VIC_OVER_PROMPT_AT, "TOUCH TO TRY AGAIN");
+        } else {
+            text.print(VIC_OVER_PROMPT_AT, "ENTER TO TRY AGAIN");
+        }
+    }
+    return;
+}
+
+function vic_tileWidth(value: usmallint): utinyint {
+    if (value >= 1000) {
+        return 4;
+    }
+    if (value >= 100) {
+        return 3;
+    }
+    if (value >= 10) {
+        return 2;
+    }
+    return 1;
+}
+
+function vic_drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    let origin: usmallint = VIC_ORIGIN[row * 4 + col];
+    let value: usmallint = VIC_POW2[exponent];
+    text.setColor(VIC_TILE_COLOR[exponent]);
+    text.setReverse(true);
+    let line: utinyint = 0;
+    while (line < VIC_TILE_H) {
+        text.print(origin + line * VIC_ROW, VIC_BLANK);
+        line++;
+    }
+    if (value != 0) {
+        let width: utinyint = vic_tileWidth(value);
+        let offset: utinyint = (VIC_TILE_W - width) >> 1;
+        text.printNumber(origin + (VIC_TILE_H >> 1) * VIC_ROW + offset, value, width);
+    }
+    text.setReverse(false);
+    return;
+}
+
+// The title wobble is tile.8bs's — the portable skin, read by the one
+// 6502 machine with a per-scanline hook (the C64). The web answers
+// #fact(video.raster) true too, but this skin draws its own title and
+// does not take the effect up yet; an empty function here means the
+// compiler deletes the call, and the game's raster.disable() at start is
+// a no-op against a list that was never built.
+function vic_wobbleTitle(): void {
+    return;
+}
+
+export function computeLayout(): void {
+    if (#fact(video.columns) == 40 && #fact(video.colorPerCell)) {
+        c64_computeLayout();
+        return;
+    }
+    if (#fact(video.columns) == 40 && !#fact(video.colorPerCell) && #fact(video.characterSetSwapped)) {
+        pet_computeLayout();
+        return;
+    }
+    if (#fact(video.columns) == 22) {
+        vic_computeLayout();
+        return;
+    }
+}
+
+export function drawTitleScreen(): void {
+    if (#fact(video.columns) == 40 && #fact(video.colorPerCell)) {
+        c64_drawTitleScreen();
+        return;
+    }
+    if (#fact(video.columns) == 40 && !#fact(video.colorPerCell) && #fact(video.characterSetSwapped)) {
+        pet_drawTitleScreen();
+        return;
+    }
+    if (#fact(video.columns) == 22) {
+        vic_drawTitleScreen();
+        return;
+    }
+}
+
+export function drawHud(score: usmallint, over: bool, won: bool): void {
+    if (#fact(video.columns) == 40 && #fact(video.colorPerCell)) {
+        c64_drawHud(score, over, won);
+        return;
+    }
+    if (#fact(video.columns) == 40 && !#fact(video.colorPerCell) && #fact(video.characterSetSwapped)) {
+        pet_drawHud(score, over, won);
+        return;
+    }
+    if (#fact(video.columns) == 22) {
+        vic_drawHud(score, over, won);
+        return;
+    }
+}
+
+export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    if (#fact(video.columns) == 40 && #fact(video.colorPerCell)) {
+        c64_drawTile(row, col, exponent);
+        return;
+    }
+    if (#fact(video.columns) == 40 && !#fact(video.colorPerCell) && #fact(video.characterSetSwapped)) {
+        pet_drawTile(row, col, exponent);
+        return;
+    }
+    if (#fact(video.columns) == 22) {
+        vic_drawTile(row, col, exponent);
+        return;
+    }
+}
+
+export function wobbleTitle(): void {
+    if (#fact(video.columns) == 40 && #fact(video.colorPerCell)) {
+        c64_wobbleTitle();
+        return;
+    }
+    if (#fact(video.columns) == 40 && !#fact(video.colorPerCell) && #fact(video.characterSetSwapped)) {
+        pet_wobbleTitle();
+        return;
+    }
+    if (#fact(video.columns) == 22) {
+        vic_wobbleTitle();
+        return;
+    }
+}
+

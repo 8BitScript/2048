@@ -139,7 +139,7 @@ let statusRow: usmallint = 0;
 // ends. They also sit symmetrically about the board's middle, so the pair
 // reads as one message rather than two strings that happened to land in
 // the gaps. Every skin does this; only the numbers differ (tile.pet.8bs
-// and the tile.web.*.8bs twins have their own).
+// and tile.web.skins.8bs for fixed web machine presets).
 //
 // The prompt names ONE input where the title screen names both: "PRESS
 // RETURN OR FIRE TO TRY AGAIN" is 28 characters and the VIC-20's screen is
@@ -320,7 +320,7 @@ let wobbleFirst: utinyint = 0;
 // after waitFrame(), before the raster reaches the band. On a machine
 // with no raster this folds to an empty function and the compiler
 // deletes the call — the same way text.setColor costs the PET nothing.
-// The twins (tile.pet.8bs, tile.web.*.8bs) export their own empty copy:
+// The twins (tile.pet.8bs, tile.web.skins.8bs) export their own empty copy:
 // the PET has no raster, and the web skins draw their own title and do
 // not take the effect up yet.
 export function wobbleTitle(): void {

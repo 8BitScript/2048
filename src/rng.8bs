@@ -1,40 +1,33 @@
-// Where the game's random numbers come from, in one place, so that the two
-// machines with an entropy source in silicon can read it and the other
-// seven never notice the difference.
-//
-// This file is the portable default: @8bitscript/random's deterministic
-// generator, seeded by nothing and stepped once a frame from main(), so the
-// sequence a player actually sees follows how long they took between moves
-// rather than only how many moves they made. `rng.c64.8bs` and
-// `rng.atari8.8bs` are this file's twins for the two targets that can read
-// entropy out of the hardware instead. Nothing in 2048.8bs names them — the
-// compiler picks a twin up for those builds on its own, the same mechanism
-// tile.pet.8bs's header describes.
-//
-// **`range()` computes; it does not delegate.** Writing the body as
-// `random.range(bound)` instead of `random.next() % bound` costs 8 bytes on
-// every one of the seven targets that use this file: the forwarding call
-// does not inline away, and it turns a free abstraction into a real one.
-// Measured against 0.6.2 on the PET, VIC-20, C128, CX16 and MEGA65 alike —
-// all five moved by exactly 8. Please don't "simplify" it back.
+// Where the game's random numbers come from, in one place. The portable
+// default is @8bitscript/random's deterministic generator; the C64 and
+// Atari 8-bit read hardware entropy when `#system()` says that is the
+// build — dead branches fold away on the other seven targets.
 import { random } from "@8bitscript/random";
+import { random as c64Random } from "@8bitscript/c64/random";
+import { random as atariRandom } from "@8bitscript/atari8/random";
+import { System } from "@8bitscript/system";
 
 export namespace rng {
-    // Nothing to claim on a machine with no entropy source. Empty, so it
-    // inlines away to nothing and costs these seven targets no bytes.
     function begin(): void {
+        if (#system() == System.C64) {
+            c64Random.begin();
+        }
     }
 
-    // One step of the generator per frame, whether or not the player moved
-    // — this is what makes the spawn sequence depend on their timing and
-    // not just their move count. The two hardware twins leave this empty:
-    // a register that free-runs on its own needs no help from the program.
     function tick(): void {
-        random.next();
+        if (#system() == System.C64 || #system() == System.ATARI8) {
+        } else {
+            random.next();
+        }
     }
 
-    // A value from 0 up to (not including) bound.
     function range(bound: utinyint): utinyint {
+        if (#system() == System.C64) {
+            return c64Random.byte() % bound;
+        }
+        if (#system() == System.ATARI8) {
+            return atariRandom.byte() % bound;
+        }
         return random.next() % bound;
     }
 }
