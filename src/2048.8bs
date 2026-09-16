@@ -23,6 +23,16 @@ import { computeLayout, drawHud, drawTile, drawTitleScreen, wobbleTitle } from "
 // disable() call nor a reference to the raster list.
 const HAS_RASTER: bool = #fact(video.raster);
 
+// Whether this build's grid can change shape under a running program —
+// true only for the web's Modern host. A build-time constant, so
+// `if (HAS_RESIZE)` folds the whole branch away on the eight machines
+// whose grid cannot, the same way HAS_RASTER above does for the wobble:
+// screen.resized() itself is a real runtime call (it tracks state, not a
+// fact), so calling it unconditionally would link it — and the redraw it
+// guards — into every target instead of just this one (measured: +57
+// bytes on the 4K PET before this guard was added).
+const HAS_RESIZE: bool = screen.RESIZABLE;
+
 const SIZE: utinyint = 4; // 4x4 — 2048's own board, on every target
 const MAX_EXPONENT: utinyint = 11; // 2^11 = 2048, the tile that wins
 
@@ -345,6 +355,14 @@ export function main(): void {
     rng.begin();
     screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
     computeLayout();
+    if (HAS_RESIZE) {
+        // Establishes the grid computeLayout() just laid out for as the
+        // baseline screen.resized() compares against, so the loop's own
+        // check below only fires on a real later change — not on the
+        // guaranteed-true first call resized() always makes (see
+        // @8bitscript/web's screen.8bs).
+        screen.resized();
+    }
     input.begin();
     // One frame before the title is drawn, because on the web the host has
     // not finished introducing itself yet. The page writes its status byte —
@@ -362,6 +380,33 @@ export function main(): void {
         waitFrame();
         input.poll();
         rng.tick(); // keep the generator moving between moves — see spawnTile()
+
+        // The window resized or the phone rotated: every position tile.8bs
+        // (or a twin) computed depends on the grid computeLayout() read, so
+        // it has to run again before anything else this frame draws. The
+        // grid changed shape under whatever was already on screen, so a
+        // reblank plus forcing every cell to redraw (shown[] holds no valid
+        // exponent) is the same recovery resetGame() gives a fresh board —
+        // without touching score, over, or won, which a resize does not
+        // change. Guarded by HAS_RESIZE, not just screen.resized()'s own
+        // answer: resized() cannot fold, so without the guard this whole
+        // block — and the otherwise-unreferenced resized() itself — would
+        // link into all nine targets instead of just the one whose grid
+        // can actually change.
+        if (HAS_RESIZE) {
+            if (screen.resized()) {
+                computeLayout();
+                screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
+                for (let i: utinyint = 0; i < 16; i++) {
+                    shown[i] = 255;
+                }
+                if (started) {
+                    drawBoard();
+                } else {
+                    drawTitleScreen();
+                }
+            }
+        }
 
         if (!started) {
             // One step of the title's raster wobble — an empty call,
