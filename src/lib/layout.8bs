@@ -1,8 +1,8 @@
 // Where everything goes: how big a tile is, where the board sits, and
 // where the lines around it land — for every target that draws through
 // @8bitscript/text. That is eight machines with a fixed grid, the web's
-// fixed C64 and VIC-20 replicas (the same rules at their columns — see
-// layout.web.c64.8bs and layout.web.vic20.8bs while they last), and the
+// fixed C64 and VIC-20 replicas (the same rules at their columns — a
+// replica is the machine's own layout, so it reads this file), and the
 // web's fluid host, whose grid changes shape under a running game. The
 // PET (layout.pet.8bs) and the web's PET replica (layout.web.pet-2001.8bs)
 // have their own numbers.
