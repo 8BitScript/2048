@@ -1,0 +1,125 @@
+// The game's name, the score, and a line that says how to move, that the
+// player made 2048, or — once the game is over and the board itself says
+// so — nothing. One element for every machine; the PET's lines are runs
+// of pre-converted screen codes out of lib/petscii.8bs's table — no
+// character-set lookup at run time, which is what a 4K 2001 can afford —
+// at cells that are the build's own (40 or 80 columns).
+//
+// Two arrangements, and lib/layout.8bs says which: a header row above the
+// board and a status row below it — every fixed grid, and the fluid web
+// host when its window is narrow — or, when the fluid host is WIDE, the
+// name, the score and a two-line hint in the margins beside the board,
+// where the spare columns are. FLUID is a build-time constant, so a fixed
+// grid's image carries only the header/status arm.
+import { screen, BorderColor } from "@8bitscript/screen";
+import { text, TextColor } from "@8bitscript/text";
+import { System, Video } from "@8bitscript/system";
+import { headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "../lib/layout.8bs";
+import { host } from "../lib/host.8bs";
+import { graphicsSet, writeCells, blankCells, printScore5, hud } from "../lib/petscii.8bs";
+
+const FLUID: bool = screen.RESIZABLE;
+const SCORE_HEADER_LEN: utinyint = 11; // "SCORE " plus a five-digit score field
+
+export component ScoreBar(score: usmallint, over: bool, won: bool) {
+    if (#system() == System.PET) {
+        graphicsSet();
+        let header: usmallint = 2;
+        let status: usmallint = 962;
+        if (Video.COLUMNS != 40) {
+            header = 22;
+            status = 1942;
+        }
+        writeCells(header, hud.TITLE_AT, hud.TITLE_LEN);
+        writeCells(
+            Video.COLUMNS - hud.SCORE_DIGITS_LEN - hud.SCORE_LABEL_LEN,
+            hud.SCORE_LABEL_AT,
+            hud.SCORE_LABEL_LEN,
+        );
+        printScore5(Video.COLUMNS - hud.SCORE_DIGITS_LEN, score);
+        if (won) {
+            writeCells(status, hud.WON, hud.STATUS_LEN);
+        } else if (!over) {
+            writeCells(status, hud.ARROWS, hud.STATUS_LEN);
+        } else {
+            blankCells(status, hud.STATUS_LEN);
+        }
+    } else if (FLUID && wide) {
+        text.setReverse(false);
+        text.setColor(TextColor.WHITE);
+        text.print(titleNameAt, "2048");
+        text.print(scoreLabelAt, "SCORE");
+        text.print(scoreValueAt, `${score:5}`);
+        // Always write both hint lines, never just leave them: the branch
+        // that printed nothing is what used to strand "YOU MADE 2048" on
+        // screen across a restart, and would now strand the move hint
+        // through a game over. Both input methods are real possibilities
+        // on this host (a touchscreen laptop has both), so the hint names
+        // both rather than picking one.
+        if (won) {
+            text.print(hintTopAt, "SWIPE");
+            text.print(hintBottomAt, "WIN! ");
+        } else if (!over) {
+            text.print(hintTopAt, "SWIPE");
+            text.print(hintBottomAt, "ARROW");
+        } else {
+            text.print(hintTopAt, "     ");
+            text.print(hintBottomAt, "     ");
+        }
+    } else {
+        if (FLUID) {
+            text.setReverse(false);
+        }
+        text.setColor(TextColor.WHITE);
+        text.print(headerAt + boardLeft, "2048");
+        if (FLUID) {
+            // Right-aligned on the board's own right edge, not the
+            // screen's: the score's last digit lands directly above the
+            // last tile column instead of running out to whatever margin
+            // a wide window happens to have.
+            text.print(headerAt + boardLeft + boardWidth - SCORE_HEADER_LEN, `SCORE ${score:5}`);
+        } else {
+            text.print(headerAt + text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
+        }
+        // The status line does not announce the end of the game —
+        // <GameOver /> does — so it goes blank rather than keeping the move
+        // hint up under a board that cannot move. Always write it, never
+        // just leave it: the branch that printed nothing is what strands
+        // a message across a restart. Each build's three lines are the
+        // same width, the length of its longest, so a shorter one never
+        // leaves a leftover glyph. The wording is the machine's: a
+        // touchscreen may be in the web's hands, and the web's fixed
+        // replicas say nothing at all on one.
+        if (FLUID) {
+            if (won) {
+                text.print(statusAt, "YOU WIN!       ");
+            } else if (!over) {
+                text.print(statusAt, "SWIPE OR ARROWS");
+            } else {
+                text.print(statusAt, "               ");
+            }
+        } else if (#system() == System.WEB) {
+            if (won) {
+                text.print(statusAt, "YOU MADE 2048      ");
+            } else if (!over && !host.touch()) {
+                text.print(statusAt, "ARROWS TO MOVE     ");
+            } else {
+                text.print(statusAt, "                   ");
+            }
+        } else {
+            if (won) {
+                text.print(statusAt, "YOU MADE 2048 ");
+            } else if (!over) {
+                text.print(statusAt, "ARROWS TO MOVE");
+            } else {
+                text.print(statusAt, "              ");
+            }
+        }
+    }
+    if (FLUID) {
+        // The border 2048.8bs blanks to at start-up — the playing border.
+        // <GameOver /> turns it red on the one frame a game ends, and the
+        // next game's first <ScoreBar /> turns it back.
+        screen.setBorder(BorderColor.BLUE);
+    }
+}

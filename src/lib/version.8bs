@@ -1,0 +1,5 @@
+// The version the title screen shows, in one place for every skin that
+// prints it as text (the PET stamps its own screen codes for it, in
+// lib/petscii.8bs's HUD table). Not read from package.json: a string const
+// is program data, and the build knows nothing about the package.
+export const VERSION_LINE: string = "v0.2.0";

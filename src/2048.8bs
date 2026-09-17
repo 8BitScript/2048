@@ -1,17 +1,20 @@
 // 2048 — for every 8BitScript target: VIC-20, C64, PET, C128, Atari 8-bit,
 // NES, Commander X16, MEGA65, and the web. This is the program: the loop
 // that reads the player and drives the game. The rules and the board are
-// game.8bs's, what goes on the screen is Screen.8bx's, and how a tile is
-// painted on each machine is tile.8bs's (and its twins'). Rules follow
-// https://github.com/gabrielecirulli/2048 (MIT) — see game.8bs.
+// lib/game.8bs's, what goes on the screen is ui/'s — App.8bx is the root —
+// and where each machine puts it is lib/layout.8bs's (the PET's,
+// lib/petscii.8bs's).
+// Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see lib/game.8bs.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
 import { raster } from "@8bitscript/raster";
-import { rng } from "./rng.8bs";
+import { rng } from "./lib/rng.8bs";
 import { Memory } from "@8bitscript/system";
-import { computeLayout, wobbleTitle } from "./tile.8bs";
-import { shown, merged, stepped, moved, over, started, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "./game.8bs";
-import { Board, Screen, Tiles, Title } from "./Screen.8bx";
+import { computeLayout } from "./lib/layout.8bs";
+import { wobble } from "./lib/wobble.8bs";
+import { shown, merged, stepped, moved, over, started, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "./lib/game.8bs";
+import { App, Board, Tiles } from "./ui/App.8bx";
+import { TitleScreen } from "./ui/TitleScreen.8bx";
 
 // Whether this machine can change the picture part-way down a frame — the
 // guard on the title screen's raster effect. A compile-time fact: the
@@ -110,21 +113,21 @@ export function main(): void {
     // and every other target treats it as one idle frame at start-up.
     waitFrame();
     input.poll();
-    Title();
+    TitleScreen();
 
     while (true) {
         waitFrame();
         input.poll();
         rng.tick(); // keep the generator moving between moves — see spawnTile()
 
-        // The window resized or the phone rotated: every position tile.8bs
-        // (or a twin) computed depends on the grid computeLayout() read, so
+        // The window resized or the phone rotated: every position lib/layout.8bs
+        // computed depends on the grid computeLayout() read, so
         // it has to run again before anything else this frame draws. The
         // grid changed shape under whatever was already on screen, so a
         // reblank plus forcing every cell to redraw (shown[] holds no valid
         // exponent) is the same recovery resetGame() gives a fresh board —
         // without touching score, over, or won, which a resize does not
-        // change — and Screen() puts back whichever of the title and the
+        // change — and App() puts back whichever of the title and the
         // board was up. Guarded by HAS_RESIZE, not just screen.resized()'s
         // own answer: resized() cannot fold, so without the guard this
         // whole block — and the otherwise-unreferenced resized() itself —
@@ -137,15 +140,15 @@ export function main(): void {
                 for (let i: utinyint = 0; i < 16; i++) {
                     shown[i] = 255;
                 }
-                Screen();
+                App();
             }
         }
 
         if (!started) {
             // One step of the title's raster wobble — an empty call,
-            // deleted by the compiler, everywhere tile.8bs (or a twin)
-            // makes it an empty function.
-            wobbleTitle();
+            // deleted by the compiler, everywhere #fact(video.raster) is
+            // false (see lib/wobble.8bs).
+            wobble.step();
             if (input.confirm()) {
                 started = true;
                 if (HAS_RASTER) {
@@ -167,7 +170,7 @@ export function main(): void {
                 // Clear the screen first, the same way starting the first
                 // game does. The game-over message every skin draws sits in
                 // the board's own gap rows, and a gap row is the one thing
-                // drawTile() never paints over — so without this the message
+                // <Tile /> never paints over — so without this the message
                 // would survive into the next game. One blank here costs
                 // every target less than an erase in every skin, and it is
                 // what lets the narrowest of them carry the message at all.

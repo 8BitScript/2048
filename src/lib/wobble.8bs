@@ -1,0 +1,68 @@
+// The title's raster showpiece, shared by the real C64 and the web's C64
+// skin — the fancy example's treatment (packages/examples/fancy in the
+// 8bitscript repository) scaled to one text row: background and border
+// switch colour a row above "2048" and back a row below it, and the title
+// row itself rides a sine-driven SCROLL_X wobble, one entry per TWO
+// scanlines. That pitch is fancy's measured C64 constraint (a per-line
+// cascade collapses the effect — see that example's header), not a choice
+// made here.
+//
+// ui/TitleWobble.8bx builds the list from these tables; wobble.step()
+// below animates it, once per title-screen frame from 2048.8bs's loop.
+// Whether a build takes the effect is TAKES_WOBBLE below: a per-scanline
+// hook, on the 40-column, 16-colour picture the band was drawn for — the
+// real C64, and the web's C64 replica, which answers #fact(video.raster)
+// true too. Never the fluid host: the band's own row is a build-time
+// fact, and a resize would leave it behind. Every term is a fact, so
+// every branch on it folds: where it is false this file costs the image
+// nothing — the 4K PET and the unexpanded VIC-20 are byte-identical with
+// and without it. (Written out again in ui/TitleScreen.8bx: a const may
+// not be initialized by an expression, and a function called from two
+// places is not folded into either today.)
+import { raster } from "@8bitscript/raster";
+import { screen } from "@8bitscript/screen";
+import { text } from "@8bitscript/text";
+
+// XSCROLL 0-7 over 32 steps — fancy's own table, verified on screen by
+// packages/c64/test/wobble-probe.8bs, so the wave is a known-good shape.
+export const SINE: array<utinyint, 32> = [
+    4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 7, 6, 6, 5, 5, 4,
+    3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3,
+];
+
+// The wobble covers the title's one text row: eight scanlines, four
+// SCROLL_X entries at the two-line pitch. The colour band opens one text
+// row above it and closes one below. A namespace so ui/TitleWobble.8bx can
+// import them: an imported bare number const does not survive the linker
+// today, a namespace member does.
+export namespace band {
+    const ENTRIES: utinyint = 4;
+    const BACKGROUND: utinyint = 2; // red behind the title
+    const BORDER: utinyint = 7;     // yellow beside it — also the stride probe's known value
+}
+
+// The wobble's walk through the sine table, and the two numbers the
+// per-frame rewrite needs, which <TitleWobble /> works out when it builds
+// the list: bytes per entry in setValue's unit (probed the way fancy
+// probes it — offset 3 names entry 1 where entries are three bytes and is
+// refused untouched where they are four), and the byte offset of the
+// first SCROLL_X entry (index 2 — the two opening colour splits come
+// first). Only ever touched inside `if (TITLE_WOBBLES)`.
+export let wobblePhase: utinyint = 0;
+export let wobbleStride: utinyint = 0;
+export let wobbleFirst: utinyint = 0;
+
+export namespace wobble {
+    // One step: rewrite only the four SCROLL_X value bytes, right after
+    // waitFrame(), before the raster reaches the band. Empty where the
+    // skin does not take the effect, and the compiler deletes the call.
+    function step(): void {
+        if (#fact(video.raster) && !screen.RESIZABLE && text.COLUMNS == 40 && #fact(video.palette) == 16) {
+            wobblePhase = (wobblePhase + 1) & 31;
+            for (let i: utinyint = 0; i < band.ENTRIES; i++) {
+                raster.setValue(wobbleFirst + i * wobbleStride, SINE[(i + wobblePhase) & 31]);
+            }
+        }
+        return;
+    }
+}

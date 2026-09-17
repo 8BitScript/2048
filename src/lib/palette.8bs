@@ -1,0 +1,39 @@
+// The tables every skin reads and none should own: what a tile is worth,
+// what colour it is, how many digits it shows. Written once here — they
+// used to be copied into each skin (POW2 five times, TILE_COLOR four).
+import { TextColor } from "@8bitscript/text";
+
+// Exponent to face value — the drawing side's copy. The rules keep their
+// own in lib/game.8bs; the two never share a module, and a skin that never
+// prints a number (the PET's block digits) never links this one.
+export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+
+// How many digits 2^exponent has. A twelve-byte table instead of the chain
+// of compares on the value that used to work it out: the compares cost the
+// unexpanded VIC-20 six times what the table does, and the exponent is
+// already in hand at every call site.
+export const TILE_DIGITS: array<utinyint, 12> = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4];
+
+// Exponent to colour, on the targets with per-cell colour — a deliberately
+// empty text.setColor() on the others (PET, Atari 8-bit, NES; see
+// @8bitscript/ui's AGENTS.md for why those three), so an element draws the
+// same calls everywhere and the machines that cannot colour a cell simply
+// do not. Index 0 is the empty square's own colour (every cell is a filled
+// block — see ui/Tile.8bx) and shares WHITE with the "2" tile rather than
+// using BLACK: a black reverse block on the black screen behind the board
+// is invisible, and the sixteen-square grid would vanish everywhere but
+// the occupied cells.
+export const TILE_COLOR: array<utinyint, 12> = [
+    TextColor.WHITE,  // 0: empty
+    TextColor.WHITE,  // 2
+    TextColor.CYAN,   // 4
+    TextColor.GREEN,  // 8
+    TextColor.GREEN,  // 16
+    TextColor.YELLOW, // 32
+    TextColor.YELLOW, // 64
+    TextColor.PURPLE, // 128
+    TextColor.PURPLE, // 256
+    TextColor.RED,    // 512
+    TextColor.RED,    // 1024
+    TextColor.BLUE,   // 2048
+];

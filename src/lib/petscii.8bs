@@ -1,12 +1,15 @@
-// The PET's own tile: a solid block of quadrant-block pseudo-pixels with
-// the value cut into it in inverted PET block-digits, instead of the
-// portable tile.8bs's reverse-video text field. Picked up automatically
-// for PET builds only — nothing in main.8bs or 8bs.config.ts names this
-// file; see docs/packages.md's "System-specific files" and tile.8bs's own
-// header comment for why a PET version exists at all.
+// The PET's own screen: where everything goes on its 40 or 80 columns,
+// and how it is written — screen codes straight into video RAM at $8000,
+// a solid block of quadrant-block pseudo-pixels for a tile with the value
+// cut into it in inverted block-digits (lib/font.pet.8bs), and every line
+// of text as a run of pre-converted codes. Not a twin: the elements in
+// ui/ reach this from their `#system() == System.PET` arm, and on the
+// other eight machines that arm folds away and nothing here is linked —
+// a twin's names cannot be imported from a machine that has no twin, and
+// a dead arm that names one is still a link error.
 //
 // Why the PET needs a different tile at all: text.printNumber's centring
-// (see tile.8bs) is exact only when cellWidth - digitWidth is even, and a
+// (see layout.8bs) is exact only when cellWidth - digitWidth is even, and a
 // 1-character-wide digit makes that parity flip between 1-, 2-, 3- and
 // 4-digit tiles — there is no cellWidth that centres all four. A PET
 // quadrant-block digit is 2 cells wide, so the same leftover is always
@@ -31,13 +34,14 @@
 // over baked codes is smaller than linking the converter, and it is
 // what lets a stock 4K 2001's ~3K of usable RAM hold the game.
 import { Video } from "@8bitscript/system";
+import { DIGIT_TILES } from "./font.8bs";
 
 const ROW: usmallint = Video.COLUMNS; // 40, or 80 on an 8032 build
 
 const TILE_H: utinyint = 5;
 
 // Screen code 160 is all four quadrants on — the same reverse-space a
-// filled tile is. Written directly so fillTile is a store, not a call
+// filled tile is. Written directly so fillSquare is a store, not a call
 // into text.print (five prints of eight spaces cost more than this loop).
 const SOLID: utinyint = 160;
 
@@ -48,32 +52,7 @@ const GRAPHICS_SET: utinyint = 0x0C;
 const VIA_PCR: usmallint = 0xE84C;
 const SCREEN: usmallint = 0x8000;
 
-// Decimal digits of 2^exponent, packed without the trailing zeros a
-// four-wide slot would carry, and a 13-entry offset table so count is
-// `TILE_DIGIT_AT[e+1] - TILE_DIGIT_AT[e]`. Pad is 4 − count (TILE_W is 8,
-// a digit is 2 cells, leftover is always even).
-const TILE_DIGIT_AT: array<utinyint, 13> = [0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26];
-const TILE_DIGIT: array<utinyint, 26> = [
-    2, 4, 8,
-    1, 6, 3, 2, 6, 4,
-    1, 2, 8, 2, 5, 6, 5, 1, 2,
-    1, 0, 2, 4, 2, 0, 4, 8,
-];
 
-// Inverted 2×3-cell glyphs for digits 0-9, six screen codes each, matching
-// @8bitscript/pet/blocks's DIGIT_TILES with bit 7 flipped. Index is digit×6.
-const DIGIT_TILES: array<utinyint, 60> = [
-    108, 225, 225, 225, 124, 225,
-    126, 160, 123, 160, 126, 251,
-    98,  225, 226, 225, 124, 251,
-    98,  225, 226, 225, 226, 225,
-    225, 225, 124, 225, 160, 225,
-    108, 254, 124, 251, 226, 225,
-    108, 254, 124, 251, 124, 225,
-    98,  225, 160, 225, 160, 225,
-    108, 225, 124, 225, 124, 225,
-    108, 225, 124, 225, 226, 225,
-];
 
 // Graphics-set screen codes for the HUD, the game-over message and the
 // title screen. Header is 12, each status line is 19 (the longest of them,
@@ -98,31 +77,36 @@ const HUD: array<utinyint, 99> = [
     40, 3, 41, 32, 50, 48, 50, 54, 32, 56, 2, 9, 20, 19, 3, 18, 9, 16, 20,  // "(C) 2026 8BITSCRIPT" (19)
     22, 48, 46, 49, 46, 52,  // "V0.1.4" (6) — V is screen code 22, not ASCII 118
 ];
-const HUD_ARROWS: utinyint = 12;
-const HUD_WON: utinyint = 26;
-const HUD_OVER_TITLE: utinyint = 40;
-const HUD_OVER_TITLE_LEN: utinyint = 9;
-const HUD_OVER_PROMPT: utinyint = 49;
-const HUD_OVER_PROMPT_LEN: utinyint = 25;
-const HUD_COPYRIGHT: utinyint = 74;
-const HUD_COPYRIGHT_LEN: utinyint = 19;
-const HUD_TITLE_AT: utinyint = 0;
-const HUD_TITLE_LEN: utinyint = 4;
-const HUD_SCORE_LABEL_AT: utinyint = 6;
-const HUD_SCORE_LABEL_LEN: utinyint = 6;
-const HUD_STATUS_LEN: utinyint = 14;
-const SCORE_DIGITS_LEN: utinyint = 5;
-const TITLE_PRESS_RETURN: utinyint = 49; // the prompt's own first twelve codes
-const TITLE_PRESS_RETURN_LEN: utinyint = 12;
-const TITLE_VERSION: utinyint = 93;
-const TITLE_VERSION_LEN: utinyint = 6;
+// Where each run of codes starts in HUD, and how long it is. A namespace
+// so the elements' PET arms can import them: an imported bare
+// number const does not survive the linker today, a namespace member does.
+export namespace hud {
+    const ARROWS: utinyint = 12;
+    const WON: utinyint = 26;
+    const OVER_TITLE: utinyint = 40;
+    const OVER_TITLE_LEN: utinyint = 9;
+    const OVER_PROMPT: utinyint = 49;
+    const OVER_PROMPT_LEN: utinyint = 25;
+    const COPYRIGHT: utinyint = 74;
+    const COPYRIGHT_LEN: utinyint = 19;
+    const TITLE_AT: utinyint = 0;
+    const TITLE_LEN: utinyint = 4;
+    const SCORE_LABEL_AT: utinyint = 6;
+    const SCORE_LABEL_LEN: utinyint = 6;
+    const STATUS_LEN: utinyint = 14;
+    const SCORE_DIGITS_LEN: utinyint = 5;
+    const TITLE_PRESS_RETURN: utinyint = 49; // the prompt's own first twelve codes
+    const TITLE_PRESS_RETURN_LEN: utinyint = 12;
+    const TITLE_VERSION: utinyint = 93;
+    const TITLE_VERSION_LEN: utinyint = 6;
+}
 
 // ---- where the game-over message goes -------------------------------------
 //
 // "GAME OVER" in the blank row between the first and second rows of tiles
 // (row 6), the retry prompt in the row between the third and fourth (row
 // 18), instead of one line under the board. Both rows are already empty —
-// drawTile() never touches a gap row — so the message costs the board
+// <Tile /> never touches a gap row — so the message costs the board
 // nothing and leaves the position the player just lost on in full view.
 // Each line is centred on the screen: (columns - length) / 2. Cells are
 // written out per width the same way the header and status rows are, so
@@ -133,39 +117,34 @@ const TITLE_VERSION_LEN: utinyint = 6;
 // The port's own copyright line, on the second-to-last row so the version
 // keeps the last one. The original game's author and repo are credited in
 // README.md rather than on screen.
-const COPYRIGHT_AT_40: usmallint = 930;  // row 23, col 10
-const COPYRIGHT_AT_80: usmallint = 1870; // row 23, col 30
-
-const OVER_TITLE_AT_40: usmallint = 255;   // row 6, col 15
-const OVER_PROMPT_AT_40: usmallint = 727;  // row 18, col 7
-const OVER_TITLE_AT_80: usmallint = 515;   // row 6, col 35
-const OVER_PROMPT_AT_80: usmallint = 1467; // row 18, col 27
+export namespace at {
+    const COPYRIGHT_40: usmallint = 930;  // row 23, col 10
+    const COPYRIGHT_80: usmallint = 1870; // row 23, col 30
+    const OVER_TITLE_40: usmallint = 255;   // row 6, col 15
+    const OVER_PROMPT_40: usmallint = 727;  // row 18, col 7
+    const OVER_TITLE_80: usmallint = 515;   // row 6, col 35
+    const OVER_PROMPT_80: usmallint = 1467; // row 18, col 27
+}
 
 const SCORE_PLACES: array<usmallint, 5> = [10000, 1000, 100, 10, 1];
 
 // Top-left cell of each board square. Compile-time data: (1 + row×6)×
 // columns + leftMargin + col×9. The unused table is pruned, and an index
 // is smaller than the 16-bit multiply that would recompute it.
-const ORIGIN_40: array<usmallint, 16> = [
+export const ORIGIN_40: array<usmallint, 16> = [
     42, 51, 60, 69,
     282, 291, 300, 309,
     522, 531, 540, 549,
     762, 771, 780, 789,
 ];
-const ORIGIN_80: array<usmallint, 16> = [
+export const ORIGIN_80: array<usmallint, 16> = [
     102, 111, 120, 129,
     582, 591, 600, 609,
     1062, 1071, 1080, 1089,
     1542, 1551, 1560, 1569,
 ];
 
-// Layout is a property of the build (40 vs 80 columns), so computeLayout
-// has nothing to work out at run time — an empty body is deleted, and
-// main()'s call to it costs the PET nothing.
-export function computeLayout(): void {
-}
-
-function writeCells(cell: usmallint, base: utinyint, count: utinyint): void {
+export function writeCells(cell: usmallint, base: utinyint, count: utinyint): void {
     let i: utinyint = 0;
     while (i < count) {
         memory.write(SCREEN + cell + i, HUD[base + i]);
@@ -178,7 +157,7 @@ function writeCells(cell: usmallint, base: utinyint, count: utinyint): void {
 // has taken over announcing the end of the game — as a loop rather than 19
 // bytes of 32s in HUD: space is a screen code like any other, so nothing
 // has to be looked up to write it.
-function blankCells(cell: usmallint, count: utinyint): void {
+export function blankCells(cell: usmallint, count: utinyint): void {
     let i: utinyint = 0;
     while (i < count) {
         memory.write(SCREEN + cell + i, 32);
@@ -187,7 +166,7 @@ function blankCells(cell: usmallint, count: utinyint): void {
     return;
 }
 
-function printScore5(cell: usmallint, value: usmallint): void {
+export function printScore5(cell: usmallint, value: usmallint): void {
     let i: utinyint = 0;
     while (i < 5) {
         let digit: utinyint = 48;
@@ -201,67 +180,16 @@ function printScore5(cell: usmallint, value: usmallint): void {
     return;
 }
 
-export function drawTitleScreen(): void {
+// The PET has two character sets and the HUD is baked for the graphics
+// one (V is screen code 22 there); the VIA's PCR bit picks it. Every
+// element that writes text calls this first.
+export function graphicsSet(): void {
     memory.write(VIA_PCR, GRAPHICS_SET);
-    // 25-row grid: title on 11, prompt on 13, version on 24. The 80-column
-    // arm folds away on a 4032/2001 build (and the 40-column literals on
-    // an 8032), so neither multiply nor the unused cells reach the image.
-    let titleAt: usmallint = 458;
-    let promptAt: usmallint = 534;
-    let versionAt: usmallint = 994;
-    let portAt: usmallint = COPYRIGHT_AT_40;
-    if (Video.COLUMNS != 40) {
-        titleAt = 918;
-        promptAt = 1074;
-        versionAt = 1994;
-        portAt = COPYRIGHT_AT_80;
-    }
-    writeCells(titleAt, HUD_TITLE_AT, HUD_TITLE_LEN);
-    writeCells(promptAt, TITLE_PRESS_RETURN, TITLE_PRESS_RETURN_LEN);
-    writeCells(portAt, HUD_COPYRIGHT, HUD_COPYRIGHT_LEN);
-    writeCells(versionAt, TITLE_VERSION, TITLE_VERSION_LEN);
-    return;
 }
 
-export function drawHud(score: usmallint, over: bool, won: bool): void {
-    memory.write(VIA_PCR, GRAPHICS_SET);
-    let headerAt: usmallint = 2;
-    let statusAt: usmallint = 962;
-    let overTitleAt: usmallint = OVER_TITLE_AT_40;
-    let overPromptAt: usmallint = OVER_PROMPT_AT_40;
-    if (Video.COLUMNS != 40) {
-        headerAt = 22;
-        statusAt = 1942;
-        overTitleAt = OVER_TITLE_AT_80;
-        overPromptAt = OVER_PROMPT_AT_80;
-    }
-    writeCells(headerAt, HUD_TITLE_AT, HUD_TITLE_LEN);
-    writeCells(
-        ROW - SCORE_DIGITS_LEN - HUD_SCORE_LABEL_LEN,
-        HUD_SCORE_LABEL_AT,
-        HUD_SCORE_LABEL_LEN,
-    );
-    printScore5(ROW - SCORE_DIGITS_LEN, score);
-    // The status line no longer announces the end of the game — the board
-    // does — so it goes blank rather than keeping ARROWS TO MOVE up under a
-    // board that cannot move.
-    if (won) {
-        writeCells(statusAt, HUD_WON, HUD_STATUS_LEN);
-    } else if (!over) {
-        writeCells(statusAt, HUD_ARROWS, HUD_STATUS_LEN);
-    } else {
-        blankCells(statusAt, HUD_STATUS_LEN);
-    }
-    // Nothing erases these two lines: main.8bs blanks the screen when the
-    // next game starts, which is the only way out of a finished game.
-    if (over) {
-        writeCells(overTitleAt, HUD_OVER_TITLE, HUD_OVER_TITLE_LEN);
-        writeCells(overPromptAt, HUD_OVER_PROMPT, HUD_OVER_PROMPT_LEN);
-    }
-    return;
-}
 
-function fillTile(origin: usmallint): void {
+
+export function fillSquare(origin: usmallint): void {
     let rowCell: usmallint = origin;
     let row: utinyint = 0;
     while (row < TILE_H) {
@@ -276,7 +204,7 @@ function fillTile(origin: usmallint): void {
     return;
 }
 
-function drawDigit(cell: usmallint, value: utinyint): void {
+export function stampDigit(cell: usmallint, value: utinyint): void {
     let base: utinyint = value * 6;
     let rowCell: usmallint = cell;
     let row: utinyint = 0;
@@ -290,32 +218,8 @@ function drawDigit(cell: usmallint, value: utinyint): void {
     return;
 }
 
-export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
-    let cell: utinyint = row * 4 + col;
-    let origin: usmallint = ORIGIN_40[cell];
-    if (Video.COLUMNS != 40) {
-        origin = ORIGIN_80[cell];
-    }
-    fillTile(origin);
-    let base: utinyint = TILE_DIGIT_AT[exponent];
-    let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
-    if (count != 0) {
-        let at: usmallint = origin + ROW + (4 - count);
-        let i: utinyint = 0;
-        while (i < count) {
-            drawDigit(at, TILE_DIGIT[base + i]);
-            at = at + 2;
-            i++;
-        }
-    }
-    return;
-}
 
-// The title wobble is tile.8bs's — the portable skin, read by the one
-// machine with a per-scanline hook (the C64). No PET answers
-// #fact(video.raster), so this skin's copy is deliberately empty and the
-// compiler deletes the call, the same way an empty text.setColor costs
-// the PET nothing.
-export function wobbleTitle(): void {
-    return;
-}
+// The tile itself is ui/Tile.8bx's PET arm: fillSquare() and stampDigit()
+// above, the ORIGIN tables and lib/font.pet.8bs are what it is made of.
+
+// No PET has a raster; the title screen never takes the wobble.

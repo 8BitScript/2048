@@ -1,0 +1,37 @@
+// The front door before the first deal: the name, how to start, the credit
+// line, the version — and, on a machine with a per-scanline hook, the
+// raster band and wobble behind the name. Each is an element of its own.
+// Whether a build takes the wobble is the facts' answer (the same terms
+// lib/wobble.8bs's step() checks — see there for why it is written out
+// twice): a raster, on the 40-column, 16-colour picture the band was
+// drawn for, never the fluid host. Every term folds, so the wobble is not
+// in the image of a machine that cannot draw it. The PET has two
+// character sets and its text is baked for the graphics one, so it
+// selects that first (lib/petscii.8bs) where the others set the colour.
+import { text, TextColor } from "@8bitscript/text";
+import { screen } from "@8bitscript/screen";
+import { System } from "@8bitscript/system";
+import { graphicsSet } from "../lib/petscii.8bs";
+import { Logo } from "./Logo.8bx";
+import { StartMessage } from "./StartMessage.8bx";
+import { Copyright } from "./Copyright.8bx";
+import { Version } from "./Version.8bx";
+import { TitleWobble } from "./TitleWobble.8bx";
+
+export component TitleScreen() {
+    if (#system() == System.PET) {
+        graphicsSet();
+    } else {
+        text.setReverse(false);
+        text.setColor(TextColor.WHITE);
+    }
+    return (
+        <>
+            <Logo />
+            <StartMessage />
+            <Copyright />
+            <Version />
+            {#fact(video.raster) && !screen.RESIZABLE && text.COLUMNS == 40 && #fact(video.palette) == 16 && <TitleWobble />}
+        </>
+    );
+}

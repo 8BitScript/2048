@@ -1,0 +1,74 @@
+// The web's PET 2001 replica: 40×25, green host, no per-cell colour, and
+// the 4K PET's own arrangement — 8×5 block-digit tiles, 2048 left and
+// SCORE right on the top row, the status line on the last — drawn through
+// @8bitscript/text rather than video RAM. Picked up when the web build's
+// hardware tag is `pet-2001`. The same surface as layout.8bs, so the
+// elements in ui/ are the same files; every number here is the PET's.
+import { text } from "@8bitscript/text";
+
+const ROW: usmallint = text.COLUMNS; // 40
+
+// ---- what the elements ask this skin ---------------------------------------
+
+
+// Always block digits — an 8-wide tile has room for four of them, which
+// is the whole point of the PET's arrangement.
+export const BLOCK_DIGITS: bool = true;
+export function blockDigitsFit(): bool {
+    return true;
+}
+
+// The PET's key, in the PET's words.
+export const START_KEY: string = "PRESS RETURN";
+export const TRY_AGAIN_KEY: string = "PRESS RETURN TO TRY AGAIN";
+export namespace len {
+    const START_KEY: utinyint = 12;
+    const TRY_AGAIN_KEY: utinyint = 25;
+    const TRY_AGAIN_KEY_NARROW: utinyint = 25; // never narrow here
+    const TRY_AGAIN_TOUCH: utinyint = 18;      // "TOUCH TO TRY AGAIN"
+}
+export namespace board {
+    const FULL_WIDTH: usmallint = 23;
+}
+
+// ---- the positions -------------------------------------------------------
+//
+// Top-left cell of each board square: (1 + row×6)×40 + 2 + col×9. Data,
+// so an index replaces the multiply; boardTop 1, 8×5 tiles, 1-cell gaps.
+const ORIGIN: array<usmallint, 16> = [
+    42, 51, 60, 69,
+    282, 291, 300, 309,
+    522, 531, 540, 549,
+    762, 771, 780, 789,
+];
+
+export let tileW: usmallint = 8;
+export let tileH: utinyint = 5;
+export let rowWidth: usmallint = 40;
+export let boardLeft: usmallint = 2;
+export let boardTop: usmallint = 1;
+export let boardWidth: usmallint = 35;
+export let headerAt: usmallint = 0;    // row 0: "2048" at col 2, SCORE at col 29
+export let statusAt: usmallint = 962;  // row 24, col 2 — directly under the board
+// "GAME OVER" in the blank row between the first and second rows of
+// tiles (row 6), how to play again in the row between the third and
+// fourth (row 18) — the rows the 4K PET puts them on, each centred:
+// (40 - length) / 2.
+export let overAt: usmallint = 255;        // row 6, col 15
+export let overPromptAt: usmallint = 727;  // row 18, col 7 — "PRESS RETURN TO TRY AGAIN"
+export let overTouchAt: usmallint = 731;   // row 18, col 11 — "TOUCH TO TRY AGAIN"
+// The fluid host's own: never WIDE here, and never read.
+export let wide: bool = true;
+export let titleNameAt: usmallint = 0;
+export let scoreLabelAt: usmallint = 0;
+export let scoreValueAt: usmallint = 0;
+export let hintTopAt: usmallint = 0;
+export let hintBottomAt: usmallint = 0;
+
+// Every number above is the build's; nothing to work out at run time.
+export function computeLayout(): void {
+}
+
+export function tileCell(row: utinyint, col: utinyint): usmallint {
+    return ORIGIN[row * 4 + col];
+}
