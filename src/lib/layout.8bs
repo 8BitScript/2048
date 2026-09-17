@@ -20,6 +20,7 @@
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { Input, System, Video } from "@8bitscript/system";
+import { GAME_OVER, RETURN_TO_TRY_AGAIN, RETURN_TO_TRY_AGAIN_NARROW, START_TO_TRY_AGAIN, FIRE_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN_NARROW, TOUCH_TO_TRY_AGAIN } from "./strings.8bs";
 
 // Whether this build's grid can change shape under a running program —
 // true only for the web's fluid host. A build-time constant, so every
@@ -33,6 +34,12 @@ const ROW: usmallint = text.COLUMNS;
 
 // ---- what the elements ask this skin ---------------------------------------
 
+// What the confirm key is called on the web: a PC keyboard's Enter. The
+// web's PET replica (layout.web.pet-2001.8bs) says RETURN, the PET's own
+// word; the strings for both are lib/strings.8bs's, and the element picks
+// by this. A machine build never reads it — its arm names its own key.
+export const ENTER_KEY: bool = true;
+
 // Whether a tile's value may be stamped as block digits (lib/font.8bs)
 // rather than printed as a number: this skin's answer is "when the grid
 // can change" — the fluid host decides per resize in blockDigitsFit()
@@ -40,18 +47,6 @@ const ROW: usmallint = text.COLUMNS;
 // image.
 export const BLOCK_DIGITS: bool = screen.RESIZABLE;
 
-// The key the web names — an Enter key, where the machines say RETURN —
-// and how long the two prompts are, for centring them. A namespace for
-// the lengths: an imported bare number const does not survive the linker
-// today, a namespace member does.
-export const START_KEY: string = "PRESS ENTER";
-export const TRY_AGAIN_KEY: string = "PRESS ENTER TO TRY AGAIN";
-export namespace len {
-    const START_KEY: utinyint = 11;
-    const TRY_AGAIN_KEY: utinyint = 24;
-    const TRY_AGAIN_KEY_NARROW: utinyint = 18; // "ENTER TO TRY AGAIN"
-    const TRY_AGAIN_TOUCH: utinyint = 18;      // "TOUCH TO TRY AGAIN"
-}
 
 // ---- the board on a fixed grid ---------------------------------------------
 //
@@ -236,26 +231,28 @@ export function computeLayout(): void {
     // per machine costs the image exactly one string: the web says ENTER
     // and may say TOUCH; a machine with a keyboard says RETURN (a keyboard
     // always has one, so that is the one it names); a machine without one
-    // names its own button. A screen too narrow for "PRESS RETURN TO TRY
-    // AGAIN" — the VIC-20's 22 columns — drops the PRESS.
-    overAt = tileCell(1, 0) - ROW - boardLeft + ((text.COLUMNS - 9) >> 1);
+    // names its own button. A screen too narrow for the full prompt — the
+    // VIC-20's 22 columns — takes the narrow one. The arms here mirror
+    // ui/GameOver.8bx's, and each reads the length of the string that arm
+    // prints, so a translation moves the line with the words.
+    overAt = tileCell(1, 0) - ROW - boardLeft + ((text.COLUMNS - GAME_OVER.length) >> 1);
     if (#system() == System.WEB) {
         if (text.COLUMNS < board.FULL_WIDTH) {
-            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - len.TRY_AGAIN_KEY_NARROW) >> 1);
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - ENTER_TO_TRY_AGAIN_NARROW.length) >> 1);
         } else {
-            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - len.TRY_AGAIN_KEY) >> 1);
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - ENTER_TO_TRY_AGAIN.length) >> 1);
         }
-        overTouchAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - len.TRY_AGAIN_TOUCH) >> 1);
+        overTouchAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - TOUCH_TO_TRY_AGAIN.length) >> 1);
     } else if (Input.KEYBOARD) {
         if (text.COLUMNS < board.FULL_WIDTH) {
-            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - 19) >> 1); // "RETURN TO TRY AGAIN"
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - RETURN_TO_TRY_AGAIN_NARROW.length) >> 1);
         } else {
-            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - 25) >> 1); // "PRESS RETURN TO TRY AGAIN"
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - RETURN_TO_TRY_AGAIN.length) >> 1);
         }
     } else if (Input.PADS > 0) {
-        overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - 24) >> 1); // "PRESS START TO TRY AGAIN"
+        overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - START_TO_TRY_AGAIN.length) >> 1);
     } else {
-        overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - 23) >> 1); // "PRESS FIRE TO TRY AGAIN"
+        overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - FIRE_TO_TRY_AGAIN.length) >> 1);
     }
     return;
 }
@@ -395,9 +392,9 @@ function fluidLayout(): void {
     }
 
     // The game-over lines, in the gap rows tileCell() already knows.
-    overAt = tileCell(1, 0) - rowWidth - boardLeft + ((rowWidth - 9) >> 1);
-    overTouchAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - len.TRY_AGAIN_TOUCH) >> 1);
-    overPromptAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - len.TRY_AGAIN_KEY) >> 1);
+    overAt = tileCell(1, 0) - rowWidth - boardLeft + ((rowWidth - GAME_OVER.length) >> 1);
+    overTouchAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - TOUCH_TO_TRY_AGAIN.length) >> 1);
+    overPromptAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - ENTER_TO_TRY_AGAIN.length) >> 1);
     return;
 }
 

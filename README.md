@@ -102,6 +102,19 @@ builds that directory and deploys it to [2048.8bitscript.com](https://2048.8bits
 once the `8bitscript.com` zone is in Cloudflare and `CLOUDFLARE_API_TOKEN` is
 set. Every other target reads a real keyboard, joystick, or pad the same way.
 
+Every line the game prints is in [`src/lib/strings.8bs`](src/lib/strings.8bs),
+and `src/lib/strings.de.8bs` beside it is the German one: `pnpm exec 8bs
+build --target vic20 --locale de` (or `8bs run c64 --locale de`) builds a
+German game, `dist/2048-vic20-de-ntsc.prg` beside the English one, and the
+release ships the German web build and the German 4K PET. A locale is a
+build input, not a menu — a 4K PET has no room for a switch — and with no
+locale named no locale's file is read, so the English builds are the
+bytes they were. The PET does not print strings at all (its lines are
+baked screen codes, `src/lib/codes.8bs` and `codes.de.8bs`); the version
+line is the one string not yet in `strings.8bs` — it waits on 8bitscript
+0.13.0's `#package("version")`, which reads it out of `package.json` at
+compile time.
+
 ## How it's built
 
 - **The board is sixteen exponents, not sixteen numbers.** `board[i]` is 0
@@ -165,13 +178,14 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   what differs between them is a fact (`screen.RESIZABLE`, `#system()`,
   `Input.*`), and the arm a build cannot take folds away — measured, one
   element at a time, at exactly the bytes the per-machine twins cost.
-  `ui/Tile.8bx` *is* the tile:
-  the element owns the painting and the skin owns the tables it paints
-  from, which is what keeps it free — a `<Tile />` that merely called a
-  `drawTile()` in `lib/` was measured at +36 bytes, and one built from
-  `paintTile()` and `stampValue()` primitives at +56, because a function
-  with parameters called from one place is not inlined on 0.11.0
-  (8bitscript #184 inlines it, and measures that form at zero). A component is a function and an
+  `ui/Tile.8bx` says which of two calls paints the tile — `stampTile()`
+  in `lib/petscii.8bs` or `paintTile()` in `lib/draw.8bs` — and each
+  element's words are `lib/strings.8bs`'s; the elements are the
+  arrangement, and `lib/` is the how. That is free because a function
+  with one caller is written into it (8bitscript #184): on 0.11.0 the
+  same `Tile` measured +56 bytes on every 6502 and +84 on the PET, and a
+  `<Tile />` that merely forwarded to a `drawTile()` +36, which is why the
+  painting used to live in the element. A component is a function and an
   element is a call, so this is the same program it was when `2048.8bs`
   wrote those calls out by hand: the same functions at the same sizes on
   every target — 2759 bytes on the 4K PET 2001 and 3482 on the unexpanded

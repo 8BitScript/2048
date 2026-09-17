@@ -14,9 +14,11 @@
 import { screen, BorderColor } from "@8bitscript/screen";
 import { text, TextColor } from "@8bitscript/text";
 import { Input, System, Video } from "@8bitscript/system";
-import { overAt, overPromptAt, overTouchAt, board, TRY_AGAIN_KEY } from "../lib/layout.8bs";
+import { overAt, overPromptAt, overTouchAt, board, ENTER_KEY } from "../lib/layout.8bs";
+import { GAME_OVER, RETURN_TO_TRY_AGAIN, RETURN_TO_TRY_AGAIN_NARROW, START_TO_TRY_AGAIN, FIRE_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN_NARROW, TOUCH_TO_TRY_AGAIN } from "../lib/strings.8bs";
 import { host } from "../lib/host.8bs";
-import { writeCells, hud, at } from "../lib/petscii.8bs";
+import { writeCells } from "../lib/petscii.8bs";
+import { hud, at } from "../lib/codes.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 
@@ -36,25 +38,27 @@ export component GameOver() {
             text.setReverse(false);
             text.setColor(TextColor.WHITE);
         }
-        text.print(overAt, "GAME OVER");
+        text.print(overAt, GAME_OVER);
         if (#system() == System.WEB) {
             if (host.touch()) {
-                text.print(overTouchAt, "TOUCH TO TRY AGAIN");
+                text.print(overTouchAt, TOUCH_TO_TRY_AGAIN);
             } else if (!FLUID && text.COLUMNS < board.FULL_WIDTH) {
-                text.print(overPromptAt, "ENTER TO TRY AGAIN");
+                text.print(overPromptAt, ENTER_TO_TRY_AGAIN_NARROW);
+            } else if (ENTER_KEY) {
+                text.print(overPromptAt, ENTER_TO_TRY_AGAIN);
             } else {
-                text.print(overPromptAt, TRY_AGAIN_KEY);
+                text.print(overPromptAt, RETURN_TO_TRY_AGAIN);
             }
         } else if (Input.KEYBOARD) {
             if (text.COLUMNS < board.FULL_WIDTH) {
-                text.print(overPromptAt, "RETURN TO TRY AGAIN");
+                text.print(overPromptAt, RETURN_TO_TRY_AGAIN_NARROW);
             } else {
-                text.print(overPromptAt, "PRESS RETURN TO TRY AGAIN");
+                text.print(overPromptAt, RETURN_TO_TRY_AGAIN);
             }
         } else if (Input.PADS > 0) {
-            text.print(overPromptAt, "PRESS START TO TRY AGAIN");
+            text.print(overPromptAt, START_TO_TRY_AGAIN);
         } else {
-            text.print(overPromptAt, "PRESS FIRE TO TRY AGAIN");
+            text.print(overPromptAt, FIRE_TO_TRY_AGAIN);
         }
     }
 }

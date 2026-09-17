@@ -1,0 +1,44 @@
+// The German lines: strings.8bs's twin for `--locale de`. Same names, so
+// every element and lib/layout.8bs read it unchanged; each status line
+// keeps its arrangement's width, and nothing is wider than the 22-column
+// VIC-20 can centre. No umlauts: the machines' character sets have none,
+// so it is DRUECKEN, the way a German typewriter without them spells it.
+// Widths that matter are noted; `.length` is what the code reads.
+
+export const NAME: string = "2048";
+export const SCORE_LABEL: string = "PUNKTE"; // 6 — the header is one wider than SCORE's
+
+export const PRESS_RETURN: string = "RETURN DRUECKEN";
+export const PRESS_START: string = "START DRUECKEN";
+export const PRESS_FIRE: string = "FEUER DRUECKEN";
+export const PRESS_RETURN_OR_START: string = "RETURN ODER START";
+export const PRESS_RETURN_OR_FIRE: string = "RETURN ODER FEUER";
+export const PRESS_ENTER: string = "ENTER DRUECKEN";
+export const TOUCH_TO_START: string = "TIPPEN ZUM START";
+
+export const GAME_OVER: string = "SPIEL VORBEI";
+export const RETURN_TO_TRY_AGAIN: string = "RETURN: NEUES SPIEL";        // 19 — fits the VIC-20 as it is
+export const RETURN_TO_TRY_AGAIN_NARROW: string = "RETURN: NEUES SPIEL";
+export const START_TO_TRY_AGAIN: string = "START: NEUES SPIEL";
+export const FIRE_TO_TRY_AGAIN: string = "FEUER: NEUES SPIEL";
+export const ENTER_TO_TRY_AGAIN: string = "ENTER: NEUES SPIEL";
+export const ENTER_TO_TRY_AGAIN_NARROW: string = "ENTER: NEUES SPIEL";
+export const TOUCH_TO_TRY_AGAIN: string = "TIPPEN: NEUES SPIEL";
+
+export const STATUS_WON: string = "2048 GESCHAFFT";            // 14
+export const STATUS_MOVE: string = "PFEILE BEWEGEN";
+export const STATUS_CLEAR: string = "              ";
+export const FLUID_STATUS_WON: string = "GEWONNEN!      ";     // 15
+export const FLUID_STATUS_MOVE: string = "WISCHEN, PFEILE";
+export const FLUID_STATUS_CLEAR: string = "               ";
+export const REPLICA_STATUS_WON: string = "2048 GESCHAFFT     "; // 19
+export const REPLICA_STATUS_MOVE: string = "PFEILE BEWEGEN     ";
+export const REPLICA_STATUS_CLEAR: string = "                   ";
+
+export const HINT_SWIPE: string = "WISCH";
+export const HINT_ARROW: string = "PFEIL";
+export const HINT_WIN: string = "SIEG!";
+export const HINT_CLEAR: string = "     ";
+
+export const COPYRIGHT: string = " C  2026 8BITSCRIPT";
+export const COPYRIGHT_WORD: string = "COPYRIGHT 2026 8BITSCRIPT";

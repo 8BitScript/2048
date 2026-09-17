@@ -1,0 +1,94 @@
+// The PET's lines, as screen codes, and where each one goes. The PET does
+// not read lib/strings.8bs: text.print / asciiToScreenCode are a
+// conversion pipeline a stock 4K 2001 cannot afford to link, and a loop
+// over baked codes is smaller. So this file is what strings.8bs is for
+// the other eight machines, and codes.de.8bs beside it is the German one
+// a `--locale de` PET build takes — the same twin rule, one dimension in
+// (see 8bitscript's docs/config.md). Only the PET's arms in ui/ read it;
+// everywhere else those arms fold away and nothing here is linked.
+//
+// Graphics-set screen codes for the HUD, the game-over message and the
+// title screen. Header is 12, each status line is 19 (the longest of them,
+// padded so a shorter one never leaves a leftover glyph), then GAME OVER
+// (9), the retry prompt (25) — whose own first twelve codes are the title
+// screen's PRESS RETURN, rather than a second copy of them — the port's
+// copyright line, and the version; keep those last six bytes in sync with
+// package.json "version". A status line is 14 rather than 19 now that
+// GAME OVER - RESTART no longer lives among them. Writing screen codes
+// direct is also why "(C)" needs no special handling here: 40 and 41 are
+// "(" and ")" in the graphics set like any other code.
+// A=1 … Z=26, digits and space unchanged. ASCII 'v' (118) is a graphics
+// block in this set (codes 96-127); the version prefix is V, same as the
+// rest of the HUD. The PET has a keyboard and no joystick ports, so this
+// table never carries FIRE/START/ENTER variants.
+export const HUD: array<utinyint, 99> = [
+    50, 48, 52, 56, 32, 32, 19, 3, 15, 18, 5, 32,  // "2048  SCORE " (12)
+    1, 18, 18, 15, 23, 19, 32, 20, 15, 32, 13, 15, 22, 5,  // "ARROWS TO MOVE" (14)
+    25, 15, 21, 32, 13, 1, 4, 5, 32, 50, 48, 52, 56, 32,  // "YOU MADE 2048 " (14)
+    7, 1, 13, 5, 32, 15, 22, 5, 18,  // "GAME OVER" (9)
+    16, 18, 5, 19, 19, 32, 18, 5, 20, 21, 18, 14, 32, 20, 15, 32, 20, 18, 25, 32, 1, 7, 1, 9, 14,  // "PRESS RETURN TO TRY AGAIN" (25)
+    40, 3, 41, 32, 50, 48, 50, 54, 32, 56, 2, 9, 20, 19, 3, 18, 9, 16, 20,  // "(C) 2026 8BITSCRIPT" (19)
+    22, 48, 46, 49, 46, 52,  // "V0.1.4" (6) — V is screen code 22, not ASCII 118
+];
+// Where each run of codes starts in HUD, and how long it is. A namespace
+// so the elements' PET arms can import them: an imported bare
+// number const does not survive the linker today, a namespace member does.
+export namespace hud {
+    const ARROWS: utinyint = 12;
+    const WON: utinyint = 26;
+    const OVER_TITLE: utinyint = 40;
+    const OVER_TITLE_LEN: utinyint = 9;
+    const OVER_PROMPT: utinyint = 49;
+    const OVER_PROMPT_LEN: utinyint = 25;
+    const COPYRIGHT: utinyint = 74;
+    const COPYRIGHT_LEN: utinyint = 19;
+    const TITLE_AT: utinyint = 0;
+    const TITLE_LEN: utinyint = 4;
+    const SCORE_LABEL_AT: utinyint = 6;
+    const SCORE_LABEL_LEN: utinyint = 6;
+    const STATUS_LEN: utinyint = 14;
+    const SCORE_DIGITS_LEN: utinyint = 5;
+    const TITLE_PRESS_RETURN: utinyint = 49; // the prompt's own first twelve codes
+    const TITLE_PRESS_RETURN_LEN: utinyint = 12;
+    const TITLE_VERSION: utinyint = 93;
+    const TITLE_VERSION_LEN: utinyint = 6;
+}
+
+// ---- where the game-over message goes -------------------------------------
+//
+// "GAME OVER" in the blank row between the first and second rows of tiles
+// (row 6), the retry prompt in the row between the third and fourth (row
+// 18), instead of one line under the board. Both rows are already empty —
+// <Tile /> never touches a gap row — so the message costs the board
+// nothing and leaves the position the player just lost on in full view.
+// Each line is centred on the screen: (columns - length) / 2. Cells are
+// written out per width the same way the header and status rows are, so
+// the unused arm folds away on a 40- or 80-column build.
+//
+// Nothing erases them: main.8bs blanks the screen when the next game
+// starts, which is the only way out of a finished game.
+// Where the PET's lines go, as this build's cells (40 columns, or 80 on
+// an 8032 build) — every one is row × COLUMNS + (COLUMNS − length) >> 1,
+// the same centring every other machine writes out, worked out here once
+// as data because a const cannot be initialized by arithmetic yet
+// (8BS3001) and a helper that computes it is inlined but not folded
+// (+156 bytes on the PET for three sites, measured on 0.12.0). The
+// copyright keeps the second-to-last row so the version keeps the last.
+export namespace at {
+    const HEADER_40: usmallint = 2;         // row 0: the name, at the board's left
+    const HEADER_80: usmallint = 22;
+    const STATUS_40: usmallint = 962;       // row 24: the line under the board
+    const STATUS_80: usmallint = 1942;
+    const TITLE_40: usmallint = 458;        // row 11: "2048", 4 wide
+    const TITLE_80: usmallint = 918;
+    const PROMPT_40: usmallint = 534;       // row 13: "PRESS RETURN", 12 wide
+    const PROMPT_80: usmallint = 1074;
+    const VERSION_40: usmallint = 994;      // row 24: the version, right-aligned, 6 wide
+    const VERSION_80: usmallint = 1994;
+    const COPYRIGHT_40: usmallint = 930;    // row 23: the copyright, 19 wide
+    const COPYRIGHT_80: usmallint = 1870;
+    const OVER_TITLE_40: usmallint = 255;   // row 6: "GAME OVER", 9 wide
+    const OVER_TITLE_80: usmallint = 515;
+    const OVER_PROMPT_40: usmallint = 727;  // row 18: "PRESS RETURN TO TRY AGAIN", 25 wide
+    const OVER_PROMPT_80: usmallint = 1467;
+}

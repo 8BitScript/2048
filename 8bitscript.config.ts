@@ -33,7 +33,7 @@ export default {
     // download, and {} for this target's own default above (the 32K
     // 4032 build) — not the '4032' catalog preset, which also sets a
     // speaker option this project doesn't.
-    pet: { hardware: { model: '4032', ram: '32' }, release: ['2001', {}] },
+    pet: { hardware: { model: '4032', ram: '32' }, release: ['2001', {}, { profile: '2001', locale: 'de' }] },
     c128: {},
     atari8: {},
     nes: {},
@@ -45,6 +45,11 @@ export default {
         { hardware: { machine: 'c64' } },
         { hardware: { machine: 'pet-2001' } },
         { hardware: { machine: 'vic20' } },
+        // The German one: lib/strings.de.8bs in place of lib/strings.8bs,
+        // and nothing else. Any target builds it with `--locale de`; the
+        // release ships it for the web and the 4K PET (whose strings are
+        // lib/codes.de.8bs, baked screen codes — see that file).
+        { locale: 'de' },
       ],
     },
   },

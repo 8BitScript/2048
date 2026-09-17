@@ -5,7 +5,8 @@ import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { System, Video } from "@8bitscript/system";
 import { VERSION_LINE } from "../lib/version.8bs";
-import { writeCells, hud, at } from "../lib/petscii.8bs";
+import { writeCells } from "../lib/petscii.8bs";
+import { hud, at } from "../lib/codes.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;

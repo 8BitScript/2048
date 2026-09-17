@@ -5,7 +5,9 @@
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { System, Video } from "@8bitscript/system";
-import { writeCells, hud, at } from "../lib/petscii.8bs";
+import { writeCells } from "../lib/petscii.8bs";
+import { hud, at } from "../lib/codes.8bs";
+import { NAME } from "../lib/strings.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
@@ -22,8 +24,8 @@ export component Logo() {
         // a row times a width does not fit in one.
         let cols: usmallint = text.columns();
         let rows: usmallint = text.rows();
-        text.print(((rows >> 1) - 1) * cols + ((cols - 4) >> 1), "2048");
+        text.print(((rows >> 1) - 1) * cols + ((cols - NAME.length) >> 1), NAME);
     } else {
-        text.print(((Video.ROWS >> 1) - 1) * ROW + ((text.COLUMNS - 4) >> 1), "2048");
+        text.print(((Video.ROWS >> 1) - 1) * ROW + ((text.COLUMNS - NAME.length) >> 1), NAME);
     }
 }

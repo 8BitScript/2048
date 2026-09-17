@@ -16,10 +16,11 @@ import { text, TextColor } from "@8bitscript/text";
 import { System, Video } from "@8bitscript/system";
 import { headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "../lib/layout.8bs";
 import { host } from "../lib/host.8bs";
-import { graphicsSet, writeCells, blankCells, printScore5, hud, at } from "../lib/petscii.8bs";
+import { NAME, SCORE_LABEL, HINT_SWIPE, HINT_ARROW, HINT_WIN, HINT_CLEAR, STATUS_WON, STATUS_MOVE, STATUS_CLEAR, FLUID_STATUS_WON, FLUID_STATUS_MOVE, FLUID_STATUS_CLEAR, REPLICA_STATUS_WON, REPLICA_STATUS_MOVE, REPLICA_STATUS_CLEAR } from "../lib/strings.8bs";
+import { graphicsSet, writeCells, blankCells, printScore5 } from "../lib/petscii.8bs";
+import { hud, at } from "../lib/codes.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
-const SCORE_HEADER_LEN: utinyint = 11; // "SCORE " plus a five-digit score field
 
 export component ScoreBar(score: usmallint, over: bool, won: bool) {
     if (#system() == System.PET) {
@@ -47,8 +48,8 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
     } else if (FLUID && wide) {
         text.setReverse(false);
         text.setColor(TextColor.WHITE);
-        text.print(titleNameAt, "2048");
-        text.print(scoreLabelAt, "SCORE");
+        text.print(titleNameAt, NAME);
+        text.print(scoreLabelAt, SCORE_LABEL);
         text.print(scoreValueAt, `${score:5}`);
         // Always write both hint lines, never just leave them: the branch
         // that printed nothing is what used to strand "YOU MADE 2048" on
@@ -57,29 +58,31 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
         // on this host (a touchscreen laptop has both), so the hint names
         // both rather than picking one.
         if (won) {
-            text.print(hintTopAt, "SWIPE");
-            text.print(hintBottomAt, "WIN! ");
+            text.print(hintTopAt, HINT_SWIPE);
+            text.print(hintBottomAt, HINT_WIN);
         } else if (!over) {
-            text.print(hintTopAt, "SWIPE");
-            text.print(hintBottomAt, "ARROW");
+            text.print(hintTopAt, HINT_SWIPE);
+            text.print(hintBottomAt, HINT_ARROW);
         } else {
-            text.print(hintTopAt, "     ");
-            text.print(hintBottomAt, "     ");
+            text.print(hintTopAt, HINT_CLEAR);
+            text.print(hintBottomAt, HINT_CLEAR);
         }
     } else {
         if (FLUID) {
             text.setReverse(false);
         }
         text.setColor(TextColor.WHITE);
-        text.print(headerAt + boardLeft, "2048");
+        text.print(headerAt + boardLeft, NAME);
         if (FLUID) {
             // Right-aligned on the board's own right edge, not the
             // screen's: the score's last digit lands directly above the
             // last tile column instead of running out to whatever margin
             // a wide window happens to have.
-            text.print(headerAt + boardLeft + boardWidth - SCORE_HEADER_LEN, `SCORE ${score:5}`);
+            text.print(headerAt + boardLeft + boardWidth - (SCORE_LABEL.length + 6), SCORE_LABEL);
+            text.print(headerAt + boardLeft + boardWidth - 5, `${score:5}`);
         } else {
-            text.print(headerAt + text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
+            text.print(headerAt + text.COLUMNS - (SCORE_LABEL.length + 6), SCORE_LABEL);
+            text.print(headerAt + text.COLUMNS - 5, `${score:5}`);
         }
         // The status line does not announce the end of the game —
         // <GameOver /> does — so it goes blank rather than keeping the move
@@ -92,27 +95,27 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
         // replicas say nothing at all on one.
         if (FLUID) {
             if (won) {
-                text.print(statusAt, "YOU WIN!       ");
+                text.print(statusAt, FLUID_STATUS_WON);
             } else if (!over) {
-                text.print(statusAt, "SWIPE OR ARROWS");
+                text.print(statusAt, FLUID_STATUS_MOVE);
             } else {
-                text.print(statusAt, "               ");
+                text.print(statusAt, FLUID_STATUS_CLEAR);
             }
         } else if (#system() == System.WEB) {
             if (won) {
-                text.print(statusAt, "YOU MADE 2048      ");
+                text.print(statusAt, REPLICA_STATUS_WON);
             } else if (!over && !host.touch()) {
-                text.print(statusAt, "ARROWS TO MOVE     ");
+                text.print(statusAt, REPLICA_STATUS_MOVE);
             } else {
-                text.print(statusAt, "                   ");
+                text.print(statusAt, REPLICA_STATUS_CLEAR);
             }
         } else {
             if (won) {
-                text.print(statusAt, "YOU MADE 2048 ");
+                text.print(statusAt, STATUS_WON);
             } else if (!over) {
-                text.print(statusAt, "ARROWS TO MOVE");
+                text.print(statusAt, STATUS_MOVE);
             } else {
-                text.print(statusAt, "              ");
+                text.print(statusAt, STATUS_CLEAR);
             }
         }
     }
