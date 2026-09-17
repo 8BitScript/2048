@@ -11,7 +11,7 @@ export default {
     // laid out in module order), and before and after the title screen's
     // raster wobble, which folds away entirely here and on the unexpanded
     // VIC-20 (3490 bytes, also unchanged): #fact(video.raster) is false on
-    // both, and the PET reads layout.pet.8bs anyway.
+    // both, and the PET's arms read lib/petscii.8bs anyway.
     // (2581 at 0.9.0; 2420 at 0.6.1 before
     // the title screen, right-aligned HUD, and 0.6.2; 2624 before the
     // 0.6.1 linker stopped writing input.poll() out once per call site;
@@ -22,7 +22,7 @@ export default {
     // 4005 before the compiler's 0.2.3 leaner 6502 codegen),
     // so `--profile 2001 --hardware ram=4` fits a stock 4K 2001's
     // usable RAM ($0401–$0FFF). The default PET stays the 4032: 40
-    // columns (the layout layout.pet.8bs centres for), 32K, the biggest
+    // columns (the layout lib/petscii.8bs centres for), 32K, the biggest
     // on-board RAM a PET shipped with. `--profile 8032` still builds
     // the 80-column version.
     //

@@ -1,9 +1,12 @@
-// The PET's own layout and drawing: a solid block of quadrant-block
-// pseudo-pixels with the value cut into it in inverted PET block-digits
-// (lib/font.pet.8bs), instead of the portable layout.8bs's reverse-video
-// text field. Picked up automatically for PET builds only — nothing in
-// 2048.8bs or 8bitscript.config.ts names this file; the machine's name
-// beside the plain filename is its own version.
+// The PET's own screen: where everything goes on its 40 or 80 columns,
+// and how it is written — screen codes straight into video RAM at $8000,
+// a solid block of quadrant-block pseudo-pixels for a tile with the value
+// cut into it in inverted block-digits (lib/font.pet.8bs), and every line
+// of text as a run of pre-converted codes. Not a twin: the elements in
+// ui/ reach this from their `#system() == System.PET` arm, and on the
+// other eight machines that arm folds away and nothing here is linked —
+// a twin's names cannot be imported from a machine that has no twin, and
+// a dead arm that names one is still a link error.
 //
 // Why the PET needs a different tile at all: text.printNumber's centring
 // (see layout.8bs) is exact only when cellWidth - digitWidth is even, and a
@@ -38,7 +41,7 @@ const ROW: usmallint = Video.COLUMNS; // 40, or 80 on an 8032 build
 const TILE_H: utinyint = 5;
 
 // Screen code 160 is all four quadrants on — the same reverse-space a
-// filled tile is. Written directly so fillTile is a store, not a call
+// filled tile is. Written directly so fillSquare is a store, not a call
 // into text.print (five prints of eight spaces cost more than this loop).
 const SOLID: utinyint = 160;
 
@@ -75,7 +78,7 @@ const HUD: array<utinyint, 99> = [
     22, 48, 46, 49, 46, 52,  // "V0.1.4" (6) — V is screen code 22, not ASCII 118
 ];
 // Where each run of codes starts in HUD, and how long it is. A namespace
-// so ui/ScoreBar.pet.8bx and the rest can import them: an imported bare
+// so the elements' PET arms can import them: an imported bare
 // number const does not survive the linker today, a namespace member does.
 export namespace hud {
     const ARROWS: utinyint = 12;
@@ -141,12 +144,6 @@ export const ORIGIN_80: array<usmallint, 16> = [
     1542, 1551, 1560, 1569,
 ];
 
-// Layout is a property of the build (40 vs 80 columns), so computeLayout
-// has nothing to work out at run time — an empty body is deleted, and
-// main()'s call to it costs the PET nothing.
-export function computeLayout(): void {
-}
-
 export function writeCells(cell: usmallint, base: utinyint, count: utinyint): void {
     let i: utinyint = 0;
     while (i < count) {
@@ -192,7 +189,7 @@ export function graphicsSet(): void {
 
 
 
-export function fillTile(origin: usmallint): void {
+export function fillSquare(origin: usmallint): void {
     let rowCell: usmallint = origin;
     let row: utinyint = 0;
     while (row < TILE_H) {
@@ -207,7 +204,7 @@ export function fillTile(origin: usmallint): void {
     return;
 }
 
-export function drawDigit(cell: usmallint, value: utinyint): void {
+export function stampDigit(cell: usmallint, value: utinyint): void {
     let base: utinyint = value * 6;
     let rowCell: usmallint = cell;
     let row: utinyint = 0;
@@ -222,7 +219,7 @@ export function drawDigit(cell: usmallint, value: utinyint): void {
 }
 
 
-// The tile itself is ui/Tile.pet.8bx: fillTile() and drawDigit() above,
-// the ORIGIN tables and lib/font.pet.8bs are what it is made of.
+// The tile itself is ui/Tile.8bx's PET arm: fillSquare() and stampDigit()
+// above, the ORIGIN tables and lib/font.pet.8bs are what it is made of.
 
 // No PET has a raster; the title screen never takes the wobble.

@@ -1,6 +1,6 @@
 // How to start, one row below the middle of the screen, in the words of
-// this machine's controls. The 4K PET's baked screen codes are
-// StartMessage.pet.8bx.
+// this machine's controls. The PET writes PRESS RETURN as twelve screen
+// codes (lib/petscii.8bs — the retry prompt's own first twelve) on row 13.
 //
 // On the machines the control is a compile-time fact (Input.*), so
 // unused strings never reach the image. A stick or pad cannot be probed
@@ -16,6 +16,7 @@ import { screen } from "@8bitscript/screen";
 import { Input, System, Video } from "@8bitscript/system";
 import { START_KEY, len } from "../lib/layout.8bs";
 import { host } from "../lib/host.8bs";
+import { writeCells, hud } from "../lib/petscii.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
@@ -27,7 +28,13 @@ const TOUCH_LEN: utinyint = 14; // "TOUCH TO START"
 // costs a 16-bit add and a slot in the image (+35 bytes on the VIC-20).
 // The fluid host asks the live grid instead.
 export component StartMessage() {
-    if (FLUID) {
+    if (#system() == System.PET) {
+        let cell: usmallint = 534;
+        if (Video.COLUMNS != 40) {
+            cell = 1074;
+        }
+        writeCells(cell, hud.TITLE_PRESS_RETURN, hud.TITLE_PRESS_RETURN_LEN);
+    } else if (FLUID) {
         let cols: usmallint = text.columns();
         let rows: usmallint = text.rows();
         if (host.touch()) {

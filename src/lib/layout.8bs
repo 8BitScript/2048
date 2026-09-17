@@ -4,8 +4,9 @@
 // fixed C64 and VIC-20 replicas (the same rules at their columns — a
 // replica is the machine's own layout, so it reads this file), and the
 // web's fluid host, whose grid changes shape under a running game. The
-// PET (layout.pet.8bs) and the web's PET replica (layout.web.pet-2001.8bs)
-// have their own numbers.
+// web's PET replica (layout.web.pet-2001.8bs) has its own numbers; the
+// PET itself lays nothing out — its positions are literals in
+// lib/petscii.8bs, and computeLayout() returns before the first store.
 //
 // One surface, every skin: the elements in ui/ import these names and
 // never a twin's own. A position is a `let` the fluid host recomputes on
@@ -144,44 +145,52 @@ const RIGHT_HUD_WIDTH: utinyint = 6; // the version — the widest field rightAt
 // `text.COLUMNS` and `Video.ROWS` are only known once a target is linked
 // in — and again on every resize on the fluid host, where the grid is a
 // run-time fact. Only what this build's arm assigns is in its image; the
-// fluid host's own lets are pruned from a fixed grid's.
-export let tileW: usmallint = FULL_TILE_W;
-export let tileH: utinyint = DEFAULT_TILE_H;
-export let boardLeft: usmallint = 0;
-export let boardTop: usmallint = 0;
-export let boardWidth: usmallint = 0;
-export let headerAt: usmallint = 0; // the header row's first cell
-export let statusAt: usmallint = 0; // the status row, at the board's left edge
+// fluid host's own lets are pruned from a fixed grid's. None carries an
+// initializer: computeLayout() runs before anything reads one, and an
+// initializer is a store in the image whether or not the let survives.
+export let tileW: usmallint;
+export let tileH: utinyint;
+export let boardLeft: usmallint;
+export let boardTop: usmallint;
+export let boardWidth: usmallint;
+export let headerAt: usmallint; // the header row's first cell
+export let statusAt: usmallint; // the status row, at the board's left edge
 // The two gap rows the game-over message goes in: "GAME OVER" in the
 // blank row between the first and second rows of tiles, how to play again
 // in the row between the third and fourth — the rows <Tile /> never
 // touches, so the message costs the board nothing and leaves the position
 // the player lost on in view. Both lines are centred on the screen, not
 // the board.
-export let overAt: usmallint = 0;
-export let overPromptAt: usmallint = 0;
-export let overTouchAt: usmallint = 0; // the web's "TOUCH TO TRY AGAIN" — a different length
+export let overAt: usmallint;
+export let overPromptAt: usmallint;
+export let overTouchAt: usmallint; // the web's "TOUCH TO TRY AGAIN" — a different length
 
 // The fluid host alone. Which arrangement this frame is in — a `let`, not
 // a `const`: it depends on the live rowWidth.
-export let wide: bool = true;
-export let rowWidth: usmallint = 0; // this frame's row width, so cell = y * rowWidth + x
-let gridRows: usmallint = 0;        // this frame's row count
-let boardHeight: usmallint = 0;
+export let wide: bool;
+export let rowWidth: usmallint; // this frame's row width, so cell = y * rowWidth + x
+let gridRows: usmallint;        // this frame's row count
+let boardHeight: usmallint;
 // WIDE-only HUD positions (the side margins): the name level with the
 // board's top and left of it, the score label and value right of it, and
 // two 5-column hint lines against the board's last two rows.
-export let titleNameAt: usmallint = 0;
-export let scoreLabelAt: usmallint = 0;
-export let scoreValueAt: usmallint = 0;
-export let hintTopAt: usmallint = 0;
-export let hintBottomAt: usmallint = 0;
+export let titleNameAt: usmallint;
+export let scoreLabelAt: usmallint;
+export let scoreValueAt: usmallint;
+export let hintTopAt: usmallint;
+export let hintBottomAt: usmallint;
 
 // Once, before the loop, on a fixed grid; again on every resize on the
 // fluid host. Both arms in one function rather than a call into each:
 // a parameterless function that only calls another costs the VIC-20 four
 // bytes today.
 export function computeLayout(): void {
+    if (#system() == System.PET) {
+        // The PET's positions are the build's own literals (lib/petscii.8bs);
+        // nothing below is linked into its image, and its arms in ui/ read
+        // none of the lets above.
+        return;
+    }
     if (FLUID) {
         fluidLayout();
         return;

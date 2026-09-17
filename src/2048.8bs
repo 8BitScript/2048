@@ -2,7 +2,8 @@
 // NES, Commander X16, MEGA65, and the web. This is the program: the loop
 // that reads the player and drives the game. The rules and the board are
 // lib/game.8bs's, what goes on the screen is ui/'s — App.8bx is the root —
-// and where each machine puts it is lib/layout.8bs's (and its twins').
+// and where each machine puts it is lib/layout.8bs's (the PET's,
+// lib/petscii.8bs's).
 // Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see lib/game.8bs.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";

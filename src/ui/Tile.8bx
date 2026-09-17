@@ -1,15 +1,20 @@
 // One tile of the board: a filled square in the tile's colour, its value
-// on the middle row. One element for every machine that draws through
-// @8bitscript/text; the 4K PET, which writes screen codes straight into
-// video RAM, is Tile.pet.8bx.
+// on the middle row. One element for every machine, in three arms, and a
+// build's image carries only the one it takes:
 //
-// Two ways to show the value, and the skin says which (lib/layout.8bs's
-// BLOCK_DIGITS): a fixed grid prints the number, right-aligned in a field
-// centred on the middle row; a grid with room for it — the fluid web host
-// when its tile is wide enough, the web's PET replica always — stamps it
-// as 2×3-cell block digits from lib/font.8bs. BLOCK_DIGITS is a
-// build-time constant, so a fixed grid's image carries only the arm it
-// takes.
+// - The PET: an 8×5 solid square of screen codes written straight into
+//   video RAM, and the value as 2×3 block digits stamped right-aligned on
+//   its second row — lib/petscii.8bs's fillSquare() and stampDigit(), its
+//   ORIGIN tables (compile-time data: an index is smaller than the 16-bit
+//   multiply that would recompute it) and lib/font.pet.8bs's digits. A
+//   quadrant-block digit is 2 cells wide, so the leftover is always even
+//   and every digit count from "2" to "2048" centres exactly.
+// - A grid with room for block digits (lib/layout.8bs's BLOCK_DIGITS: the
+//   fluid web host when its tile is wide enough, the web's PET replica
+//   always): the same arrangement through @8bitscript/text, from
+//   lib/font.8bs, or a printed number when the tile is too narrow.
+// - Every other fixed grid: a printed number, right-aligned in a field
+//   centred on the middle row.
 //
 // The element is the drawing, not a call to a drawTile() somewhere else,
 // because that is what makes it free: measured 2763 / 3490 / 4599 bytes on
@@ -18,10 +23,12 @@
 // +56 bytes here and +84 on the PET, because a function with parameters
 // called from one place is not inlined today.
 import { text } from "@8bitscript/text";
+import { System, Video } from "@8bitscript/system";
 import { tileCell, tileW, tileH, rowWidth, BLOCK_DIGITS, blockDigitsFit } from "../lib/layout.8bs";
 import { POW2, TILE_COLOR, TILE_DIGITS } from "../lib/palette.8bs";
 import { TILE_DIGIT_AT, TILE_DIGIT } from "../lib/font.8bs";
 import { fillTile, drawDigit } from "../lib/draw.8bs";
+import { fillSquare, stampDigit, ORIGIN_40, ORIGIN_80 } from "../lib/petscii.8bs";
 
 // This machine's row width on a fixed grid, so cell = y * ROW + x.
 // Declared here rather than imported: an imported scalar const does not
@@ -29,8 +36,26 @@ import { fillTile, drawDigit } from "../lib/draw.8bs";
 const ROW: usmallint = text.COLUMNS;
 
 export component Tile(row: utinyint, col: utinyint, exponent: utinyint) {
-    let origin: usmallint = tileCell(row, col);
-    if (BLOCK_DIGITS) {
+    if (#system() == System.PET) {
+        let cell: utinyint = row * 4 + col;
+        let origin: usmallint = ORIGIN_40[cell];
+        if (Video.COLUMNS != 40) {
+            origin = ORIGIN_80[cell];
+        }
+        fillSquare(origin);
+        let base: utinyint = TILE_DIGIT_AT[exponent];
+        let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
+        if (count != 0) {
+            let at: usmallint = origin + ROW + (4 - count);
+            let i: utinyint = 0;
+            while (i < count) {
+                stampDigit(at, TILE_DIGIT[base + i]);
+                at = at + 2;
+                i++;
+            }
+        }
+    } else if (BLOCK_DIGITS) {
+        let origin: usmallint = tileCell(row, col);
         fillTile(origin, exponent);
         if (blockDigitsFit()) {
             // Digits are 2 cells wide and 3 rows tall. Across tileW that
@@ -63,6 +88,7 @@ export component Tile(row: utinyint, col: utinyint, exponent: utinyint) {
                 text.printNumber(numRow + offset, value, width);
             }
         }
+        text.setReverse(false); // so the next print — this frame's or the next — is not inverted
     } else {
         // Every tile — empty or not — is a filled tileW x tileH block of
         // reverse video: `text.setReverse(true)` turns a printed space into
@@ -74,6 +100,7 @@ export component Tile(row: utinyint, col: utinyint, exponent: utinyint) {
         // when tileW - width is odd, falls to the right — `>> 1`
         // truncates, never rounds up); the top and bottom rows are blank on
         // purpose — they are the rest of the square, not wasted space.
+        let origin: usmallint = tileCell(row, col);
         let value: usmallint = POW2[exponent];
         text.setColor(TILE_COLOR[exponent]);
         text.setReverse(true);
@@ -97,6 +124,6 @@ export component Tile(row: utinyint, col: utinyint, exponent: utinyint) {
             let offset: utinyint = (tileW - width) >> 1;
             text.printNumber(numRow + offset, value, width);
         }
+        text.setReverse(false); // so the next print — this frame's or the next — is not inverted
     }
-    text.setReverse(false); // so the next print — this frame's or the next — is not inverted
 }

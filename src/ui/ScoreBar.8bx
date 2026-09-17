@@ -1,7 +1,9 @@
 // The game's name, the score, and a line that says how to move, that the
 // player made 2048, or — once the game is over and the board itself says
-// so — nothing. One element for every machine that draws through
-// @8bitscript/text; the 4K PET's baked screen codes are ScoreBar.pet.8bx.
+// so — nothing. One element for every machine; the PET's lines are runs
+// of pre-converted screen codes out of lib/petscii.8bs's table — no
+// character-set lookup at run time, which is what a 4K 2001 can afford —
+// at cells that are the build's own (40 or 80 columns).
 //
 // Two arrangements, and lib/layout.8bs says which: a header row above the
 // board and a status row below it — every fixed grid, and the fluid web
@@ -11,19 +13,40 @@
 // grid's image carries only the header/status arm.
 import { screen, BorderColor } from "@8bitscript/screen";
 import { text, TextColor } from "@8bitscript/text";
-import { System } from "@8bitscript/system";
+import { System, Video } from "@8bitscript/system";
 import { headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "../lib/layout.8bs";
 import { host } from "../lib/host.8bs";
+import { graphicsSet, writeCells, blankCells, printScore5, hud } from "../lib/petscii.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const SCORE_HEADER_LEN: utinyint = 11; // "SCORE " plus a five-digit score field
 
 export component ScoreBar(score: usmallint, over: bool, won: bool) {
-    if (FLUID) {
+    if (#system() == System.PET) {
+        graphicsSet();
+        let header: usmallint = 2;
+        let status: usmallint = 962;
+        if (Video.COLUMNS != 40) {
+            header = 22;
+            status = 1942;
+        }
+        writeCells(header, hud.TITLE_AT, hud.TITLE_LEN);
+        writeCells(
+            Video.COLUMNS - hud.SCORE_DIGITS_LEN - hud.SCORE_LABEL_LEN,
+            hud.SCORE_LABEL_AT,
+            hud.SCORE_LABEL_LEN,
+        );
+        printScore5(Video.COLUMNS - hud.SCORE_DIGITS_LEN, score);
+        if (won) {
+            writeCells(status, hud.WON, hud.STATUS_LEN);
+        } else if (!over) {
+            writeCells(status, hud.ARROWS, hud.STATUS_LEN);
+        } else {
+            blankCells(status, hud.STATUS_LEN);
+        }
+    } else if (FLUID && wide) {
         text.setReverse(false);
-    }
-    text.setColor(TextColor.WHITE);
-    if (FLUID && wide) {
+        text.setColor(TextColor.WHITE);
         text.print(titleNameAt, "2048");
         text.print(scoreLabelAt, "SCORE");
         text.print(scoreValueAt, `${score:5}`);
@@ -44,6 +67,10 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
             text.print(hintBottomAt, "     ");
         }
     } else {
+        if (FLUID) {
+            text.setReverse(false);
+        }
+        text.setColor(TextColor.WHITE);
         text.print(headerAt + boardLeft, "2048");
         if (FLUID) {
             // Right-aligned on the board's own right edge, not the

@@ -12,11 +12,13 @@ loop that reads the player); [`src/ui/`](src/ui) is what goes on the screen,
 as [8BX](https://github.com/8BitScript/8bitscript/blob/trunk/docs/project/8bx.md)
 elements — `App.8bx` is the root, one file per element; and
 [`src/lib/`](src/lib) is the `.8bs` underneath: `game.8bs` the rules and
-the board, `layout.8bs` where everything goes (with a twin for the PET and
-for the web's fixed replicas), `palette.8bs` and `font.8bs` the tables,
-`draw.8bs` the shared primitives, `host.8bs` what the machine is like,
-`rng.8bs` where the numbers come from. Machine twins live in `lib/` and
-nowhere else.
+the board, `layout.8bs` where everything goes, `petscii.8bs` the PET's
+own screen (its positions and its screen codes), `palette.8bs` and
+`font.8bs` the tables, `draw.8bs` the shared primitives, `host.8bs` what
+the machine is like, `rng.8bs` where the numbers come from. Machine twins
+live in `lib/` and nowhere else, and there are four: the PET's font, the
+web's PET replica, the web's host, and the two machines with hardware
+random numbers.
 
 ```
 2048  SCORE 00042
@@ -155,11 +157,11 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   written as 8BX elements over the positions `lib/layout.8bs` works out
   and the tables `lib/palette.8bs` and `lib/font.8bs` keep, with none of
   the screen addresses those files are made of. Each element is one file
-  for every machine that draws through `@8bitscript/text`, fixed grid or
-  fluid: what differs between them is a fact (`screen.RESIZABLE`,
-  `#system()`, `Input.*`), the arm a build cannot take folds away, and the
-  4K PET's baked screen codes are the one measured exception, its own
-  `*.pet.8bx` twin per element. `ui/Tile.8bx` *is* the tile:
+  for every machine, fixed grid, fluid host or the 4K PET's video RAM:
+  what differs between them is a fact (`screen.RESIZABLE`, `#system()`,
+  `Input.*`), and the arm a build cannot take folds away — measured, one
+  element at a time, at exactly the bytes the per-machine twins cost.
+  `ui/Tile.8bx` *is* the tile:
   the element owns the painting and the skin owns the tables it paints
   from, which is what keeps it free — a `<Tile />` that merely called a
   `drawTile()` in `lib/` was measured at +36 bytes, and one built from

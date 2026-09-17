@@ -1,16 +1,23 @@
 // "2048", centred, one row above the middle of the screen — worked out
 // from the grid: a fixed grid's facts fold to one literal, the fluid web
-// host asks the live grid every time it draws. The 4K PET's baked screen
-// codes are Logo.pet.8bx.
+// host asks the live grid every time it draws. The PET writes its four
+// screen codes (lib/petscii.8bs) on row 11, centred for the build's width.
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
-import { Video } from "@8bitscript/system";
+import { System, Video } from "@8bitscript/system";
+import { writeCells, hud } from "../lib/petscii.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
 
 export component Logo() {
-    if (FLUID) {
+    if (#system() == System.PET) {
+        let cell: usmallint = 458;
+        if (Video.COLUMNS != 40) {
+            cell = 918;
+        }
+        writeCells(cell, hud.TITLE_AT, hud.TITLE_LEN);
+    } else if (FLUID) {
         // Widened before the multiply: the live grid answers in a byte, and
         // a row times a width does not fit in one.
         let cols: usmallint = text.columns();
