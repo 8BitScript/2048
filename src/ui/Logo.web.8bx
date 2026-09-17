@@ -1,7 +1,0 @@
-// "2048" where the skin put it.
-import { text } from "@8bitscript/text";
-import { titleAt } from "../lib/tile.8bs";
-
-export component Logo() {
-    text.print(titleAt, "2048");
-}

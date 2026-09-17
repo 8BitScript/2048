@@ -2,18 +2,38 @@
 // the rows <Tile /> never touches — so the position the player lost on
 // stays in full view. The prompt names this machine's confirm control:
 // RETURN on a keyboard (without the PRESS on a screen too narrow for it),
-// START on a pad, FIRE on a stick. Each is a compile-time fact, so one
-// print survives per build.
+// START on a pad, FIRE on a stick, ENTER or a touch in a browser. Each is
+// a compile-time fact but the touch, so one print survives per build.
 //
 // Nothing here erases these lines: 2048.8bs blanks the screen when the
-// next game starts, which is the only way out of a finished game.
-import { text } from "@8bitscript/text";
-import { Input } from "@8bitscript/system";
-import { overTitleAt, overPromptAt, board } from "../lib/tile.8bs";
+// next game starts, which is the only way out of a finished game. On the
+// fluid web host the border turns red too — two lines inside the board
+// are a quiet thing to say, and the border is the rest of the screen
+// saying it.
+import { screen, BorderColor } from "@8bitscript/screen";
+import { text, TextColor } from "@8bitscript/text";
+import { Input, System } from "@8bitscript/system";
+import { overAt, overPromptAt, overTouchAt, board, TRY_AGAIN_KEY } from "../lib/layout.8bs";
+import { host } from "../lib/host.8bs";
+
+const FLUID: bool = screen.RESIZABLE;
 
 export component GameOver() {
-    text.print(overTitleAt, "GAME OVER");
-    if (Input.KEYBOARD) {
+    if (FLUID) {
+        screen.setBorder(BorderColor.RED);
+        text.setReverse(false);
+        text.setColor(TextColor.WHITE);
+    }
+    text.print(overAt, "GAME OVER");
+    if (#system() == System.WEB) {
+        if (host.touch()) {
+            text.print(overTouchAt, "TOUCH TO TRY AGAIN");
+        } else if (!FLUID && text.COLUMNS < board.FULL_WIDTH) {
+            text.print(overPromptAt, "ENTER TO TRY AGAIN");
+        } else {
+            text.print(overPromptAt, TRY_AGAIN_KEY);
+        }
+    } else if (Input.KEYBOARD) {
         if (text.COLUMNS < board.FULL_WIDTH) {
             text.print(overPromptAt, "RETURN TO TRY AGAIN");
         } else {

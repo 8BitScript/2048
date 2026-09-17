@@ -17,7 +17,7 @@ const SIZE: utinyint = 4; // 4x4 — 2048's own board, on every target
 const MAX_EXPONENT: utinyint = 11; // 2^11 = 2048, the tile that wins
 
 // Exponent to face value — the only place 2^N is written down in the
-// rules (tile.8bs has its own copy for drawing; the PET twin never
+// rules (lib/palette.8bs has its own copy for drawing; the PET never
 // needs it, and linking it there would spend 24 bytes of the 4K
 // image on a table mergeLine() already has).
 const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];

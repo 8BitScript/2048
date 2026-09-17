@@ -1,0 +1,430 @@
+// Where everything goes: how big a tile is, where the board sits, and
+// where the lines around it land — for every target that draws through
+// @8bitscript/text. That is eight machines with a fixed grid, the web's
+// fixed C64 and VIC-20 replicas (the same rules at their columns — see
+// layout.web.c64.8bs and layout.web.vic20.8bs while they last), and the
+// web's fluid host, whose grid changes shape under a running game. The
+// PET (layout.pet.8bs) and the web's PET replica (layout.web.pet-2001.8bs)
+// have their own numbers.
+//
+// One surface, every skin: the elements in ui/ import these names and
+// never a twin's own. A position is a `let` the fluid host recomputes on
+// every resize and a fixed grid works out once before the loop — never a
+// `const`, because a const folds only a literal or another const's bare
+// name, and centring needs arithmetic on text.COLUMNS. The title screen's
+// own positions are the exception: they are pure grid arithmetic, so the
+// elements write them out in place (Logo.8bx and the rest), where a
+// fixed grid folds them to a literal — a `let` would cost the unexpanded
+// VIC-20 twelve bytes apiece (measured 2026-09-17).
+import { text } from "@8bitscript/text";
+import { screen } from "@8bitscript/screen";
+import { Input, System, Video } from "@8bitscript/system";
+
+// Whether this build's grid can change shape under a running program —
+// true only for the web's fluid host. A build-time constant, so every
+// `if (FLUID)` below folds and a fixed grid carries none of the fluid
+// arithmetic.
+const FLUID: bool = screen.RESIZABLE;
+
+// This machine's row width on a fixed grid, so cell = y * ROW + x. The
+// fluid host reads rowWidth below instead, on every resize.
+const ROW: usmallint = text.COLUMNS;
+
+// ---- what the elements ask this skin ---------------------------------------
+
+// Whether a tile's value may be stamped as block digits (lib/font.8bs)
+// rather than printed as a number: this skin's answer is "when the grid
+// can change" — the fluid host decides per resize in blockDigitsFit()
+// below. A fixed grid prints, and ui/Tile.8bx's block arm is not in its
+// image.
+export const BLOCK_DIGITS: bool = screen.RESIZABLE;
+
+// The key the web names — an Enter key, where the machines say RETURN —
+// and how long the two prompts are, for centring them. A namespace for
+// the lengths: an imported bare number const does not survive the linker
+// today, a namespace member does.
+export const START_KEY: string = "PRESS ENTER";
+export const TRY_AGAIN_KEY: string = "PRESS ENTER TO TRY AGAIN";
+export namespace len {
+    const START_KEY: utinyint = 11;
+    const TRY_AGAIN_KEY: utinyint = 24;
+    const TRY_AGAIN_KEY_NARROW: utinyint = 18; // "ENTER TO TRY AGAIN"
+    const TRY_AGAIN_TOUCH: utinyint = 18;      // "TOUCH TO TRY AGAIN"
+}
+
+// ---- the board on a fixed grid ---------------------------------------------
+//
+// A tile is a filled block of reverse video, not a number in a strip: a
+// solid square in TILE_COLOR[exponent] (a plain inverted block on the
+// machines with no per-cell colour), with a one-cell gap between tiles so
+// the sixteen read as separate squares making up one big square, the way
+// https://github.com/gabrielecirulli/2048 draws its own board — the gap
+// matters more than it looks: without it, a whole row of empty (same-
+// coloured) tiles fuses into one bar and the grid disappears (2026-09-07,
+// screenshot, tried on the VIC-20). Three rows so a tile reads as a
+// square rather than a one-line strip.
+//
+// A tile's WIDTH is the harder number. Five columns — one wider than
+// "2048" itself needs — gives every digit count from one to four at least
+// one spare cell to centre a number in; four was tried first and rejected
+// (2026-09-07, screenshots). But four tiles five wide plus three gaps is
+// 23 columns, one past the VIC-20's 22, so the VIC-20 alone keeps the
+// narrower 4-wide tile (gap intact) and lives with tighter centring; the
+// C64 and the X16 take a larger tile that fills their own grids (6×4 and
+// 12×8) and everyone else keeps five.
+const FULL_TILE_W: utinyint = 5;
+const NARROW_TILE_W: utinyint = 4; // the VIC-20's own width — see above
+const DEFAULT_TILE_H: utinyint = 3;
+// C64 text mode is 40×25 with the stock border; four 6×4 tiles plus gaps
+// is 27×19, which still leaves a header row, status row, and margins
+// (measured in cells, 2026-09-12, screenshot before this change).
+const C64_TILE_W: utinyint = 6;
+const C64_TILE_H: utinyint = 4;
+// Commander X16 text is 76×56 inside the border inset. The portable 5×3
+// tile that fits a 40-column machine occupies 23×15 of that — about a
+// third of the width — and reads as a postage stamp (x16emu, 2026-09-13).
+// 12×8 is 2× the C64's 6×4, the same 3:2 cell aspect, on a grid a little
+// under twice as wide and more than twice as tall.
+const CX16_TILE_W: utinyint = 12;
+const CX16_TILE_H: utinyint = 8;
+const COL_GAP: utinyint = 1; // between tile columns — always on, see above
+const ROW_GAP: utinyint = 1; // between tile rows — never contended for room
+
+// The board's width in cells — the number that decides whether a machine
+// is too narrow for the full tile and the long form of the try-again
+// prompt (the VIC-20's 22 columns). A namespace so ui/GameOver.8bx can
+// import it.
+export namespace board {
+    const FULL_WIDTH: usmallint = 23; // 4 tiles * 5 + 3 gaps * 1
+}
+const NARROW_BOARD_WIDTH: usmallint = 19; // 4 tiles * 4 + 3 gaps * 1
+
+// ---- the board on the fluid host ------------------------------------------
+//
+// A landscape window has columns to spare and rows are the scarce thing:
+// the WIDE arrangement (a HUD down the side margins) spends those spare
+// columns on the HUD so every row goes to the board. It holds at any
+// width the WIDE board plus its margins fits in — 48 columns and up, this
+// host's original baseline. A portrait phone inverts that: the live grid
+// can drop to 24 columns while rows are plentiful, so below the threshold
+// the NARROW arrangement takes over — the fixed grids' own shape, a
+// header row above the board and a status row below.
+//
+// Neither arrangement's tile size is fixed: fluidLayout() works tileW and
+// tileH out independently, each the biggest that fits four of it plus
+// gaps on its own axis plus what that arrangement's HUD needs there. The
+// tile is kept even because a block digit is two cells wide, so a run of
+// them centres exactly only on an even tile.
+const WIDE_MIN_COLUMNS: usmallint = 48;
+// Columns reserved outside the WIDE board for the side margins — 6 for
+// the widest field (the version) plus a gap column on the right, 6 on
+// the left for symmetry: 13, exactly what the original 48-wide, 35-board
+// design left over. Rows reserved above and below: 2 each.
+const WIDE_MARGIN_COLUMNS: usmallint = 13;
+const WIDE_MARGIN_ROWS: usmallint = 4;
+// The smallest and largest tile either arrangement will pick, so a huge
+// window doesn't get a comically large board and a barely-fitting one
+// doesn't get a tile too small to hold "2048"'s four digits.
+const WIDE_TILE_MIN: usmallint = 8;
+const WIDE_TILE_MAX: usmallint = 20;
+const WIDE_TILE_H_MIN: usmallint = 5;
+const WIDE_TILE_H_MAX: usmallint = 14;
+const NARROW_TILE_MIN: usmallint = 4;
+const NARROW_TILE_MAX: usmallint = 16;
+// The block-digit font needs 2 cells per digit, 4 digits wide for "2048" —
+// the 8 WIDE_TILE_MIN already guarantees; NARROW's square tile clears it
+// whenever the live grid has the room, which is most shapes wider than a
+// true phone portrait.
+const BLOCK_DIGIT_MIN: usmallint = WIDE_TILE_MIN;
+const RIGHT_HUD_WIDTH: utinyint = 6; // the version — the widest field rightAt anchors
+
+// ---- the positions -------------------------------------------------------
+//
+// Worked out in computeLayout(): once, before the loop, on a fixed grid —
+// `text.COLUMNS` and `Video.ROWS` are only known once a target is linked
+// in — and again on every resize on the fluid host, where the grid is a
+// run-time fact. Only what this build's arm assigns is in its image; the
+// fluid host's own lets are pruned from a fixed grid's.
+export let tileW: usmallint = FULL_TILE_W;
+export let tileH: utinyint = DEFAULT_TILE_H;
+export let boardLeft: usmallint = 0;
+export let boardTop: usmallint = 0;
+export let boardWidth: usmallint = 0;
+export let headerAt: usmallint = 0; // the header row's first cell
+export let statusAt: usmallint = 0; // the status row, at the board's left edge
+// The two gap rows the game-over message goes in: "GAME OVER" in the
+// blank row between the first and second rows of tiles, how to play again
+// in the row between the third and fourth — the rows <Tile /> never
+// touches, so the message costs the board nothing and leaves the position
+// the player lost on in view. Both lines are centred on the screen, not
+// the board.
+export let overAt: usmallint = 0;
+export let overPromptAt: usmallint = 0;
+export let overTouchAt: usmallint = 0; // the web's "TOUCH TO TRY AGAIN" — a different length
+
+// The fluid host alone. Which arrangement this frame is in — a `let`, not
+// a `const`: it depends on the live rowWidth.
+export let wide: bool = true;
+export let rowWidth: usmallint = 0; // this frame's row width, so cell = y * rowWidth + x
+let gridRows: usmallint = 0;        // this frame's row count
+let boardHeight: usmallint = 0;
+// WIDE-only HUD positions (the side margins): the name level with the
+// board's top and left of it, the score label and value right of it, and
+// two 5-column hint lines against the board's last two rows.
+export let titleNameAt: usmallint = 0;
+export let scoreLabelAt: usmallint = 0;
+export let scoreValueAt: usmallint = 0;
+export let hintTopAt: usmallint = 0;
+export let hintBottomAt: usmallint = 0;
+
+// Once, before the loop, on a fixed grid; again on every resize on the
+// fluid host. Both arms in one function rather than a call into each:
+// a parameterless function that only calls another costs the VIC-20 four
+// bytes today.
+export function computeLayout(): void {
+    if (FLUID) {
+        fluidLayout();
+        return;
+    }
+    // A fixed grid: one arm per machine, each setting the tile size, rather
+    // than a default set first and then overwritten — a branch on a
+    // build-time fact folds, so whichever arm this build takes is the only
+    // one in the image, but assignments AHEAD of the branch are not dead to
+    // the folder. The narrow test comes first because the C64 arm is 40
+    // columns and could never reach it anyway.
+    let width: usmallint = NARROW_BOARD_WIDTH;
+    if (text.COLUMNS < board.FULL_WIDTH) {
+        tileW = NARROW_TILE_W;
+        tileH = DEFAULT_TILE_H;
+    } else if (#fact(video.raster) && text.COLUMNS == 40 && #fact(video.palette) == 16) {
+        tileW = C64_TILE_W;
+        tileH = C64_TILE_H;
+        width = 27;
+    } else if (#system() == System.CX16) {
+        tileW = CX16_TILE_W;
+        tileH = CX16_TILE_H;
+        width = 51; // 4 tiles * 12 + 3 gaps
+    } else {
+        tileW = FULL_TILE_W;
+        tileH = DEFAULT_TILE_H;
+        width = board.FULL_WIDTH;
+    }
+    let height: usmallint = 4 * tileH + 3 * ROW_GAP;
+    boardLeft = (text.COLUMNS - width) >> 1;
+    // header + gap + board + gap + status, centred on the rows.
+    let headerRow: usmallint = (Video.ROWS - (height + 4)) >> 1;
+    boardTop = headerRow + 2;
+    headerAt = headerRow * ROW;
+    statusAt = (boardTop + height + 1) * ROW + boardLeft;
+    // A gap row is the row directly above the tile row that follows it, so
+    // tileCell() — which already knows where a tile row lands — gives both
+    // without a second copy of that arithmetic, and without a second
+    // inlined 16-bit multiply, which the unexpanded VIC-20 has no room
+    // for. boardLeft comes back off because these two lines are centred
+    // on the screen rather than on the board.
+    //
+    // Only the arm this build takes survives folding, so naming one prompt
+    // per machine costs the image exactly one string: the web says ENTER
+    // and may say TOUCH; a machine with a keyboard says RETURN (a keyboard
+    // always has one, so that is the one it names); a machine without one
+    // names its own button. A screen too narrow for "PRESS RETURN TO TRY
+    // AGAIN" — the VIC-20's 22 columns — drops the PRESS.
+    overAt = tileCell(1, 0) - ROW - boardLeft + ((text.COLUMNS - 9) >> 1);
+    if (#system() == System.WEB) {
+        if (text.COLUMNS < board.FULL_WIDTH) {
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - len.TRY_AGAIN_KEY_NARROW) >> 1);
+        } else {
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - len.TRY_AGAIN_KEY) >> 1);
+        }
+        overTouchAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - len.TRY_AGAIN_TOUCH) >> 1);
+    } else if (Input.KEYBOARD) {
+        if (text.COLUMNS < board.FULL_WIDTH) {
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - 19) >> 1); // "RETURN TO TRY AGAIN"
+        } else {
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - 25) >> 1); // "PRESS RETURN TO TRY AGAIN"
+        }
+    } else if (Input.PADS > 0) {
+        overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - 24) >> 1); // "PRESS START TO TRY AGAIN"
+    } else {
+        overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - 23) >> 1); // "PRESS FIRE TO TRY AGAIN"
+    }
+    return;
+}
+
+// The fluid host: everything from the live grid, again on every resize.
+function fluidLayout(): void {
+    rowWidth = text.columns();
+    let rows: usmallint = text.rows();
+    gridRows = rows;
+
+    wide = rowWidth >= WIDE_MIN_COLUMNS;
+    if (wide) {
+        // The biggest tile whose 4 columns plus 3 gaps plus the side
+        // margins fit rowWidth — rounded down to even for the block-digit
+        // font — and, independently, whose 4 rows plus 3 gaps plus the
+        // top/bottom margin fit rows.
+        let wFit: usmallint = WIDE_TILE_MIN;
+        if (rowWidth > WIDE_MARGIN_COLUMNS + 3) {
+            wFit = (rowWidth - WIDE_MARGIN_COLUMNS - 3) >> 2;
+        }
+        if ((wFit & 1) == 1) {
+            wFit = wFit - 1;
+        }
+        if (wFit < WIDE_TILE_MIN) {
+            wFit = WIDE_TILE_MIN;
+        } else if (wFit > WIDE_TILE_MAX) {
+            wFit = WIDE_TILE_MAX;
+        }
+        let hFit: usmallint = WIDE_TILE_H_MIN;
+        if (rows > WIDE_MARGIN_ROWS + 3) {
+            hFit = (rows - WIDE_MARGIN_ROWS - 3) >> 2;
+        }
+        if (hFit < WIDE_TILE_H_MIN) {
+            hFit = WIDE_TILE_H_MIN;
+        } else if (hFit > WIDE_TILE_H_MAX) {
+            hFit = WIDE_TILE_H_MAX;
+        }
+        tileW = wFit;
+        tileH = hFit;
+    } else {
+        // The biggest tile that fits with the header/status stack — tileW
+        // and tileH each against its own axis, not forced square. Both
+        // divisions reserve 2 more than the bare minimum so the leftover
+        // is guaranteed at least 2, and the header never sits flush
+        // against the top of the screen at some window sizes and not
+        // others. tileH is capped at 1.5× tileW: a tile wider than tall
+        // reads as an ordinary landscape tile, one much taller than wide
+        // as an obelisk, which a phone portrait's row budget would
+        // otherwise produce.
+        let wFit: usmallint = NARROW_TILE_MIN;
+        if (rowWidth > 5) {
+            wFit = (rowWidth - 5) >> 2;
+        }
+        let hFit: usmallint = NARROW_TILE_MIN;
+        if (rows > 9) {
+            hFit = (rows - 9) >> 2;
+        }
+        if (hFit > ((wFit * 3) >> 1)) {
+            hFit = (wFit * 3) >> 1;
+        }
+        if ((wFit & 1) == 1) {
+            wFit = wFit - 1;
+        }
+        if (wFit < NARROW_TILE_MIN) {
+            wFit = NARROW_TILE_MIN;
+        } else if (wFit > NARROW_TILE_MAX) {
+            wFit = NARROW_TILE_MAX;
+        }
+        if (hFit < NARROW_TILE_MIN) {
+            hFit = NARROW_TILE_MIN;
+        } else if (hFit > NARROW_TILE_MAX) {
+            hFit = NARROW_TILE_MAX;
+        }
+        tileW = wFit;
+        tileH = hFit;
+    }
+    boardWidth = 4 * tileW + 3;
+    boardHeight = 4 * tileH + 3;
+
+    // Centred when the live grid is bigger than the board's footprint,
+    // flush to the edge (never negative — usmallint is unsigned) when the
+    // host hands out a grid too small for it.
+    boardLeft = 0;
+    if (rowWidth > boardWidth) {
+        boardLeft = (rowWidth - boardWidth) >> 1;
+    }
+
+    if (wide) {
+        boardTop = 0;
+        if (rows > boardHeight) {
+            boardTop = (rows - boardHeight) >> 1;
+        }
+        // One clear column past the board's right edge, where the HUD's
+        // right half lives — clamped so the widest field anchored there
+        // (the version, 6 characters) never writes past the row's own
+        // right edge; at the 48-column baseline it lands exactly on 48.
+        let rightAt: usmallint = boardLeft + boardWidth + 1;
+        if (rightAt + RIGHT_HUD_WIDTH > rowWidth) {
+            if (rowWidth > RIGHT_HUD_WIDTH) {
+                rightAt = rowWidth - RIGHT_HUD_WIDTH;
+            } else {
+                rightAt = 0;
+            }
+        }
+        titleNameAt = boardTop * rowWidth + 1;
+        scoreLabelAt = boardTop * rowWidth + rightAt;
+        scoreValueAt = (boardTop + 1) * rowWidth + rightAt;
+        // The hint rows are the board's last two; a grid shorter than the
+        // board's footprint pushes both onto the last live row instead of
+        // past it.
+        let hintTopRow: usmallint = boardTop + boardHeight - 2;
+        if (hintTopRow >= rows) {
+            hintTopRow = rows - 1;
+        }
+        let hintBottomRow: usmallint = boardTop + boardHeight - 1;
+        if (hintBottomRow >= rows) {
+            hintBottomRow = rows - 1;
+        }
+        hintTopAt = hintTopRow * rowWidth + rightAt;
+        hintBottomAt = hintBottomRow * rowWidth + rightAt;
+    } else {
+        // The fixed grids' own shape: a header row, a blank row, the board,
+        // a blank row, a status row — centred on the live rows, packed from
+        // the top when the grid is shorter than the stack.
+        let totalHeight: usmallint = boardHeight + 4;
+        let headerRow: usmallint = 0;
+        if (rows > totalHeight) {
+            headerRow = (rows - totalHeight) >> 1;
+        }
+        headerAt = headerRow * rowWidth;
+        boardTop = headerRow + 2;
+        let statusRow: usmallint = boardTop + boardHeight + 1;
+        if (statusRow >= rows) {
+            statusRow = rows - 1;
+        }
+        statusAt = statusRow * rowWidth + boardLeft;
+    }
+
+    // The game-over lines, in the gap rows tileCell() already knows.
+    overAt = tileCell(1, 0) - rowWidth - boardLeft + ((rowWidth - 9) >> 1);
+    overTouchAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - len.TRY_AGAIN_TOUCH) >> 1);
+    overPromptAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - len.TRY_AGAIN_KEY) >> 1);
+    return;
+}
+
+// The screen cell a tile's top-left corner starts at. On the fluid host y
+// and x are each clamped to leave room for a full tileH-row/tileW-column
+// block: a live grid a little short of the board's footprint would
+// otherwise send a lower or righter tile's block past the last live row
+// or column — off the end of the character region and into colour RAM.
+export function tileCell(row: utinyint, col: utinyint): usmallint {
+    if (FLUID) {
+        let y: usmallint = boardTop + row * (tileH + 1);
+        if (y + tileH > gridRows) {
+            if (gridRows > tileH) {
+                y = gridRows - tileH;
+            } else {
+                y = 0;
+            }
+        }
+        let x: usmallint = boardLeft + col * (tileW + 1);
+        if (x + tileW > rowWidth) {
+            if (rowWidth > tileW) {
+                x = rowWidth - tileW;
+            } else {
+                x = 0;
+            }
+        }
+        return y * rowWidth + x;
+    }
+    let y: usmallint = boardTop + row * (tileH + ROW_GAP);
+    let x: usmallint = boardLeft + col * (tileW + COL_GAP);
+    return y * ROW + x;
+}
+
+// Whether this frame's tile is wide enough for the block-digit font —
+// ui/Tile.8bx's one question, on the host whose answer changes. One
+// compare, and it inlines.
+export function blockDigitsFit(): bool {
+    return tileW >= BLOCK_DIGIT_MIN;
+}

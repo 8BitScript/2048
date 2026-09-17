@@ -1,0 +1,10 @@
+// The web's host: a touchscreen or not is a property of the page, written
+// once at start-up by the host into the input snapshot — not a press. See
+// @8bitscript/web/input's touch().
+import { input } from "@8bitscript/input";
+
+export namespace host {
+    function touch(): bool {
+        return input.touch();
+    }
+}

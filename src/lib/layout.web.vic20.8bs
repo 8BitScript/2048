@@ -1,0 +1,57 @@
+// The web's fixed VIC-20 replica — the same board the real machine draws, at
+// its own columns, through @8bitscript/text. Picked up when the web
+// build's hardware tag is `vic20`. The same surface as layout.8bs, so the
+// elements in ui/ are the same files. These numbers are what layout.8bs
+// works out for this grid; the file exists only because the resolver
+// cannot yet hand a tagged web build the plain layout.8bs, and it goes
+// the moment it can.
+import { text } from "@8bitscript/text";
+
+export const BLOCK_DIGITS: bool = false;
+export function blockDigitsFit(): bool {
+    return false;
+}
+export const START_KEY: string = "PRESS ENTER";
+export const TRY_AGAIN_KEY: string = "PRESS ENTER TO TRY AGAIN";
+export namespace len {
+    const START_KEY: utinyint = 11;
+    const TRY_AGAIN_KEY: utinyint = 24;
+    const TRY_AGAIN_KEY_NARROW: utinyint = 18;
+    const TRY_AGAIN_TOUCH: utinyint = 18;
+}
+export namespace board {
+    const FULL_WIDTH: usmallint = 23;
+}
+
+// Top-left cell of each board square, as data.
+const ORIGIN: array<usmallint, 16> = [
+    89, 94, 99, 104,
+    177, 182, 187, 192,
+    265, 270, 275, 280,
+    353, 358, 363, 368,
+];
+
+export let tileW: usmallint = 4;
+export let tileH: utinyint = 3;
+export let rowWidth: usmallint = 22;
+export let boardLeft: usmallint = 1;
+export let boardTop: usmallint = 4;
+export let boardWidth: usmallint = 19;
+export let headerAt: usmallint = 44;
+export let statusAt: usmallint = 441;
+export let overAt: usmallint = 160;
+export let overPromptAt: usmallint = 332;
+export let overTouchAt: usmallint = 332;
+export let wide: bool = true;
+export let titleNameAt: usmallint = 0;
+export let scoreLabelAt: usmallint = 0;
+export let scoreValueAt: usmallint = 0;
+export let hintTopAt: usmallint = 0;
+export let hintBottomAt: usmallint = 0;
+
+export function computeLayout(): void {
+}
+
+export function tileCell(row: utinyint, col: utinyint): usmallint {
+    return ORIGIN[row * 4 + col];
+}

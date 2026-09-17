@@ -1,8 +1,7 @@
 // What 2048 puts on the screen, as composition. The rules and the board
 // are lib/game.8bs's; the tile, the score bar, the end of the game and
 // the title screen are elements of their own beside this one, over the
-// tables lib/tile.8bs (and its per-machine twins) keeps; this file is the
-// arrangement —
+// positions lib/layout.8bs works out; this file is the arrangement —
 // which of those goes on the screen, and when — and nothing else, so a
 // reader can see the whole picture without a single screen address.
 //

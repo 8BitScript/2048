@@ -1,9 +1,9 @@
 // The PET's header and status lines, as runs of pre-converted screen codes
-// out of lib/tile.pet.8bs's HUD table — no character-set lookup at run
+// out of lib/layout.pet.8bs's HUD table — no character-set lookup at run
 // time, which is what a 4K 2001 can afford. Where each run goes is a
 // property of the build (40 or 80 columns), so the unused arm folds away.
 import { Video } from "@8bitscript/system";
-import { graphicsSet, writeCells, blankCells, printScore5, hud } from "../lib/tile.8bs";
+import { graphicsSet, writeCells, blankCells, printScore5, hud } from "../lib/layout.8bs";
 
 const ROW: usmallint = Video.COLUMNS; // 40, or 80 on an 8032 build
 

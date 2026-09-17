@@ -1,0 +1,39 @@
+// Drawing primitives over @8bitscript/text that more than one element
+// shares — the filled square and the block-digit glyph — for the skins
+// that stamp a tile's value from lib/font.8bs (the fluid web host, the
+// web's PET replica). The portable tile paints its square inline in
+// ui/Tile.8bx: on a fixed grid that is the cheapest form, and these two
+// are never linked there.
+import { text } from "@8bitscript/text";
+import { TILE_COLOR } from "./palette.8bs";
+import { DIGIT_TILES } from "./font.8bs";
+import { tileW, tileH, rowWidth } from "./layout.8bs";
+
+// A tileW × tileH square of reverse video in the tile's colour, at origin.
+export function fillTile(origin: usmallint, exponent: utinyint): void {
+    text.setColor(TILE_COLOR[exponent]);
+    text.setReverse(true);
+    let rowCell: usmallint = origin;
+    let line: usmallint = 0;
+    while (line < tileH) {
+        text.fill(rowCell, tileW, 32);
+        rowCell = rowCell + rowWidth;
+        line++;
+    }
+    return;
+}
+
+// One block digit: two glyphs per row, three rows, top-left at cell.
+export function drawDigit(cell: usmallint, value: utinyint): void {
+    let base: utinyint = value * 6;
+    let rowCell: usmallint = cell;
+    let row: utinyint = 0;
+    while (row < 3) {
+        text.putChar(rowCell, DIGIT_TILES[base]);
+        text.putChar(rowCell + 1, DIGIT_TILES[base + 1]);
+        base = base + 2;
+        rowCell = rowCell + rowWidth;
+        row++;
+    }
+    return;
+}

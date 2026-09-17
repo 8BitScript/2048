@@ -1,12 +1,12 @@
-// The PET's own tile: a solid block of quadrant-block pseudo-pixels with
-// the value cut into it in inverted PET block-digits, instead of the
-// portable tile.8bs's reverse-video text field. Picked up automatically
-// for PET builds only — nothing in main.8bs or 8bs.config.ts names this
-// file; see docs/packages.md's "System-specific files" and tile.8bs's own
-// header comment for why a PET version exists at all.
+// The PET's own layout and drawing: a solid block of quadrant-block
+// pseudo-pixels with the value cut into it in inverted PET block-digits
+// (lib/font.pet.8bs), instead of the portable layout.8bs's reverse-video
+// text field. Picked up automatically for PET builds only — nothing in
+// 2048.8bs or 8bitscript.config.ts names this file; the machine's name
+// beside the plain filename is its own version.
 //
 // Why the PET needs a different tile at all: text.printNumber's centring
-// (see tile.8bs) is exact only when cellWidth - digitWidth is even, and a
+// (see layout.8bs) is exact only when cellWidth - digitWidth is even, and a
 // 1-character-wide digit makes that parity flip between 1-, 2-, 3- and
 // 4-digit tiles — there is no cellWidth that centres all four. A PET
 // quadrant-block digit is 2 cells wide, so the same leftover is always
@@ -31,6 +31,7 @@
 // over baked codes is smaller than linking the converter, and it is
 // what lets a stock 4K 2001's ~3K of usable RAM hold the game.
 import { Video } from "@8bitscript/system";
+import { DIGIT_TILES } from "./font.8bs";
 
 const ROW: usmallint = Video.COLUMNS; // 40, or 80 on an 8032 build
 
@@ -48,32 +49,7 @@ const GRAPHICS_SET: utinyint = 0x0C;
 const VIA_PCR: usmallint = 0xE84C;
 const SCREEN: usmallint = 0x8000;
 
-// Decimal digits of 2^exponent, packed without the trailing zeros a
-// four-wide slot would carry, and a 13-entry offset table so count is
-// `TILE_DIGIT_AT[e+1] - TILE_DIGIT_AT[e]`. Pad is 4 − count (TILE_W is 8,
-// a digit is 2 cells, leftover is always even).
-export const TILE_DIGIT_AT: array<utinyint, 13> = [0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26];
-export const TILE_DIGIT: array<utinyint, 26> = [
-    2, 4, 8,
-    1, 6, 3, 2, 6, 4,
-    1, 2, 8, 2, 5, 6, 5, 1, 2,
-    1, 0, 2, 4, 2, 0, 4, 8,
-];
 
-// Inverted 2×3-cell glyphs for digits 0-9, six screen codes each, matching
-// @8bitscript/pet/blocks's DIGIT_TILES with bit 7 flipped. Index is digit×6.
-const DIGIT_TILES: array<utinyint, 60> = [
-    108, 225, 225, 225, 124, 225,
-    126, 160, 123, 160, 126, 251,
-    98,  225, 226, 225, 124, 251,
-    98,  225, 226, 225, 226, 225,
-    225, 225, 124, 225, 160, 225,
-    108, 254, 124, 251, 226, 225,
-    108, 254, 124, 251, 124, 225,
-    98,  225, 160, 225, 160, 225,
-    108, 225, 124, 225, 124, 225,
-    108, 225, 124, 225, 226, 225,
-];
 
 // Graphics-set screen codes for the HUD, the game-over message and the
 // title screen. Header is 12, each status line is 19 (the longest of them,
@@ -246,8 +222,7 @@ export function drawDigit(cell: usmallint, value: utinyint): void {
 }
 
 
-// The tile itself is ui/Tile.pet.8bx: fillTile() and drawDigit() above and
-// the ORIGIN and TILE_DIGIT tables are what it is made of.
+// The tile itself is ui/Tile.pet.8bx: fillTile() and drawDigit() above,
+// the ORIGIN tables and lib/font.pet.8bs are what it is made of.
 
 // No PET has a raster; the title screen never takes the wobble.
-export const TITLE_WOBBLES: bool = false;

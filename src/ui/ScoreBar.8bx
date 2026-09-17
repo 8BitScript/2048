@@ -1,37 +1,98 @@
-// The line above the board and the line below it: the game's name and the
-// score in the header row, and a status line that says how to move, that
-// the player made 2048, or — once the game is over and the board itself
-// says so — nothing. This is the portable one; the PET (ScoreBar.pet.8bx)
-// writes its baked screen codes, and the fluid web host (ScoreBar.web.8bx)
-// has a second arrangement with the score in the margins.
+// The game's name, the score, and a line that says how to move, that the
+// player made 2048, or — once the game is over and the board itself says
+// so — nothing. One element for every machine that draws through
+// @8bitscript/text; the 4K PET's baked screen codes are ScoreBar.pet.8bx.
+//
+// Two arrangements, and lib/layout.8bs says which: a header row above the
+// board and a status row below it — every fixed grid, and the fluid web
+// host when its window is narrow — or, when the fluid host is WIDE, the
+// name, the score and a two-line hint in the margins beside the board,
+// where the spare columns are. FLUID is a build-time constant, so a fixed
+// grid's image carries only the header/status arm.
+import { screen, BorderColor } from "@8bitscript/screen";
 import { text, TextColor } from "@8bitscript/text";
-import { headerRow, statusRow, leftMargin } from "../lib/tile.8bs";
+import { System } from "@8bitscript/system";
+import { headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "../lib/layout.8bs";
+import { host } from "../lib/host.8bs";
 
-const ROW: usmallint = text.COLUMNS;
+const FLUID: bool = screen.RESIZABLE;
 const SCORE_HEADER_LEN: utinyint = 11; // "SCORE " plus a five-digit score field
 
 export component ScoreBar(score: usmallint, over: bool, won: bool) {
-    let headerAt: usmallint = headerRow * ROW;
-    // The status row's address joins it as a local rather than being written
-    // out in each arm below: the 6502 backend inlines a 16-bit multiply at
-    // every site, so three copies of statusRow * ROW is three multiplies.
-    // Hoisting it is most of what paid for the game-over message, on the
-    // unexpanded VIC-20 that had under a hundred bytes spare.
-    let statusAt: usmallint = statusRow * ROW + leftMargin;
+    if (FLUID) {
+        text.setReverse(false);
+    }
     text.setColor(TextColor.WHITE);
-    text.print(headerAt + leftMargin, "2048");
-    text.print(headerAt + text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
-    // The status line does not announce the end of the game — <GameOver />
-    // does — so it goes blank rather than keeping ARROWS TO MOVE up under a
-    // board that cannot move. Always write it, never just leave it: the
-    // branch that printed nothing is what strands a message across a
-    // restart. All three are 14 wide, the length of the longest, so a
-    // shorter one never leaves a leftover glyph.
-    if (won) {
-        text.print(statusAt, "YOU MADE 2048 ");
-    } else if (!over) {
-        text.print(statusAt, "ARROWS TO MOVE");
+    if (FLUID && wide) {
+        text.print(titleNameAt, "2048");
+        text.print(scoreLabelAt, "SCORE");
+        text.print(scoreValueAt, `${score:5}`);
+        // Always write both hint lines, never just leave them: the branch
+        // that printed nothing is what used to strand "YOU MADE 2048" on
+        // screen across a restart, and would now strand the move hint
+        // through a game over. Both input methods are real possibilities
+        // on this host (a touchscreen laptop has both), so the hint names
+        // both rather than picking one.
+        if (won) {
+            text.print(hintTopAt, "SWIPE");
+            text.print(hintBottomAt, "WIN! ");
+        } else if (!over) {
+            text.print(hintTopAt, "SWIPE");
+            text.print(hintBottomAt, "ARROW");
+        } else {
+            text.print(hintTopAt, "     ");
+            text.print(hintBottomAt, "     ");
+        }
     } else {
-        text.print(statusAt, "              ");
+        text.print(headerAt + boardLeft, "2048");
+        if (FLUID) {
+            // Right-aligned on the board's own right edge, not the
+            // screen's: the score's last digit lands directly above the
+            // last tile column instead of running out to whatever margin
+            // a wide window happens to have.
+            text.print(headerAt + boardLeft + boardWidth - SCORE_HEADER_LEN, `SCORE ${score:5}`);
+        } else {
+            text.print(headerAt + text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
+        }
+        // The status line does not announce the end of the game —
+        // <GameOver /> does — so it goes blank rather than keeping the move
+        // hint up under a board that cannot move. Always write it, never
+        // just leave it: the branch that printed nothing is what strands
+        // a message across a restart. Each build's three lines are the
+        // same width, the length of its longest, so a shorter one never
+        // leaves a leftover glyph. The wording is the machine's: a
+        // touchscreen may be in the web's hands, and the web's fixed
+        // replicas say nothing at all on one.
+        if (FLUID) {
+            if (won) {
+                text.print(statusAt, "YOU WIN!       ");
+            } else if (!over) {
+                text.print(statusAt, "SWIPE OR ARROWS");
+            } else {
+                text.print(statusAt, "               ");
+            }
+        } else if (#system() == System.WEB) {
+            if (won) {
+                text.print(statusAt, "YOU MADE 2048      ");
+            } else if (!over && !host.touch()) {
+                text.print(statusAt, "ARROWS TO MOVE     ");
+            } else {
+                text.print(statusAt, "                   ");
+            }
+        } else {
+            if (won) {
+                text.print(statusAt, "YOU MADE 2048 ");
+            } else if (!over) {
+                text.print(statusAt, "ARROWS TO MOVE");
+            } else {
+                text.print(statusAt, "              ");
+            }
+        }
+    }
+    if (FLUID) {
+        // The border 2048.8bs blanks to at start-up — the playing border.
+        // <GameOver /> turns it red on the one frame a game ends, and the
+        // next game's first <ScoreBar /> turns it back.
+        screen.setBorder(BorderColor.BLUE);
     }
 }

@@ -1,11 +1,20 @@
-// The version, flush right on the last row.
+// The version, flush right on the last row. The 4K PET's baked screen
+// codes are Version.pet.8bx.
 import { text } from "@8bitscript/text";
+import { screen } from "@8bitscript/screen";
 import { Video } from "@8bitscript/system";
 import { VERSION_LINE } from "../lib/version.8bs";
 
+const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
 const VERSION_LEN: utinyint = 6; // "v0.2.0"
 
 export component Version() {
-    text.print((Video.ROWS - 1) * ROW + text.COLUMNS - VERSION_LEN, VERSION_LINE);
+    if (FLUID) {
+        let cols: usmallint = text.columns();
+        let rows: usmallint = text.rows();
+        text.print((rows - 1) * cols + cols - VERSION_LEN, VERSION_LINE);
+    } else {
+        text.print((Video.ROWS - 1) * ROW + text.COLUMNS - VERSION_LEN, VERSION_LINE);
+    }
 }

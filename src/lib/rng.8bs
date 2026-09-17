@@ -9,7 +9,7 @@
 // `rng.atari8.8bs` are this file's twins for the two targets that can read
 // entropy out of the hardware instead. Nothing in 2048.8bs names them — the
 // compiler picks a twin up for those builds on its own, the same mechanism
-// tile.pet.8bs's header describes.
+// layout.pet.8bs's header describes.
 //
 // **`range()` computes; it does not delegate.** Writing the body as
 // `random.range(bound)` instead of `random.next() % bound` costs 8 bytes on

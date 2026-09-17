@@ -1,13 +1,14 @@
 // The PET's tile: an 8x5 solid square of screen codes written straight
 // into video RAM, and the value as 2x3 block digits stamped right-aligned
-// on its second row — lib/tile.pet.8bs's fillTile() and drawDigit(), its
+// on its second row — lib/layout.pet.8bs's fillTile() and drawDigit(), its
 // ORIGIN tables (compile-time data: an index is smaller than the 16-bit
-// multiply that would recompute it) and its TILE_DIGIT font. This twin
+// multiply that would recompute it) and lib/font.pet.8bs's digits. This twin
 // exists because the PET paints nothing through @8bitscript/text, and the
 // 4K 2001 build is the reason: 2763 bytes, the same as the drawTile() it
 // replaced.
 import { Video } from "@8bitscript/system";
-import { fillTile, drawDigit, ORIGIN_40, ORIGIN_80, TILE_DIGIT_AT, TILE_DIGIT } from "../lib/tile.8bs";
+import { fillTile, drawDigit, ORIGIN_40, ORIGIN_80 } from "../lib/layout.8bs";
+import { TILE_DIGIT_AT, TILE_DIGIT } from "../lib/font.8bs";
 
 const ROW: usmallint = Video.COLUMNS; // 40, or 80 on an 8032 build
 

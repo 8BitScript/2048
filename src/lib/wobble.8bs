@@ -9,15 +9,19 @@
 //
 // ui/TitleWobble.8bx builds the list from these tables; wobble.step()
 // below animates it, once per title-screen frame from 2048.8bs's loop.
-// Whether a build takes the effect is the skin's answer, TITLE_WOBBLES in
-// lib/tile.8bs and its twins — #fact(video.raster) on the machines that
-// read the portable skin, false on the PET and on the web skins that draw
-// their title without it, true on the web's C64 skin. A bool const, so
+// Whether a build takes the effect is TAKES_WOBBLE below: a per-scanline
+// hook, on the 40-column, 16-colour picture the band was drawn for — the
+// real C64, and the web's C64 replica, which answers #fact(video.raster)
+// true too. Never the fluid host: the band's own row is a build-time
+// fact, and a resize would leave it behind. Every term is a fact, so
 // every branch on it folds: where it is false this file costs the image
 // nothing — the 4K PET and the unexpanded VIC-20 are byte-identical with
-// and without it.
+// and without it. (Written out again in ui/TitleScreen.8bx: a const may
+// not be initialized by an expression, and a function called from two
+// places is not folded into either today.)
 import { raster } from "@8bitscript/raster";
-import { TITLE_WOBBLES } from "./tile.8bs";
+import { screen } from "@8bitscript/screen";
+import { text } from "@8bitscript/text";
 
 // XSCROLL 0-7 over 32 steps — fancy's own table, verified on screen by
 // packages/c64/test/wobble-probe.8bs, so the wave is a known-good shape.
@@ -53,7 +57,7 @@ export namespace wobble {
     // waitFrame(), before the raster reaches the band. Empty where the
     // skin does not take the effect, and the compiler deletes the call.
     function step(): void {
-        if (TITLE_WOBBLES) {
+        if (#fact(video.raster) && !screen.RESIZABLE && text.COLUMNS == 40 && #fact(video.palette) == 16) {
             wobblePhase = (wobblePhase + 1) & 31;
             for (let i: utinyint = 0; i < band.ENTRIES; i++) {
                 raster.setValue(wobbleFirst + i * wobbleStride, SINE[(i + wobblePhase) & 31]);

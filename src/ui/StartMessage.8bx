@@ -1,24 +1,47 @@
 // How to start, one row below the middle of the screen, in the words of
-// this machine's controls. Picked from Input.* facts, so unused strings
-// never reach the image (optimizeReachable folds the other arms and the
-// 6502 backend only emits referenced literals).
+// this machine's controls. The 4K PET's baked screen codes are
+// StartMessage.pet.8bx.
 //
-// A stick or pad cannot be probed the way a 1351 can (`mouse.present()`):
-// an idle CIA/PIA port reads the same with nothing plugged in as with a
-// stick at rest. So a keyboard machine that *has* joystick or pad ports
-// always names both confirm inputs; FIRE or START alone is only for a
-// build with no keyboard (the NES).
+// On the machines the control is a compile-time fact (Input.*), so
+// unused strings never reach the image. A stick or pad cannot be probed
+// the way a 1351 can (`mouse.present()`): an idle CIA/PIA port reads the
+// same with nothing plugged in as with a stick at rest. So a keyboard
+// machine that *has* joystick or pad ports always names both confirm
+// inputs; FIRE or START alone is only for a build with no keyboard (the
+// NES). The web asks the host once whether it is a touchscreen
+// (lib/host.web.8bs) and names the key otherwise — its own word for it,
+// lib/layout.8bs's START_KEY, ENTER on a PC and RETURN on the PET replica.
 import { text } from "@8bitscript/text";
-import { Input, Video } from "@8bitscript/system";
+import { screen } from "@8bitscript/screen";
+import { Input, System, Video } from "@8bitscript/system";
+import { START_KEY, len } from "../lib/layout.8bs";
+import { host } from "../lib/host.8bs";
 
+const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
+const TOUCH_LEN: utinyint = 14; // "TOUCH TO START"
 
 // Every address below is a compile-time constant on a fixed grid, and is
 // written out in full at each print rather than hoisted into a local: a
 // local is a variable to the folder, and the add it saves in the source
 // costs a 16-bit add and a slot in the image (+35 bytes on the VIC-20).
+// The fluid host asks the live grid instead.
 export component StartMessage() {
-    if (Input.PADS > 0) {
+    if (FLUID) {
+        let cols: usmallint = text.columns();
+        let rows: usmallint = text.rows();
+        if (host.touch()) {
+            text.print(((rows >> 1) + 1) * cols + ((cols - TOUCH_LEN) >> 1), "TOUCH TO START");
+        } else {
+            text.print(((rows >> 1) + 1) * cols + ((cols - len.START_KEY) >> 1), START_KEY);
+        }
+    } else if (#system() == System.WEB) {
+        if (host.touch()) {
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - TOUCH_LEN) >> 1), "TOUCH TO START");
+        } else {
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - len.START_KEY) >> 1), START_KEY);
+        }
+    } else if (Input.PADS > 0) {
         if (Input.KEYBOARD) {
             text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 21) >> 1), "PRESS RETURN OR START");
         } else {

@@ -10,10 +10,13 @@ X16, MEGA65, *and* the web, the way 8BitScript's own `examples/borders` and
 `examples/menubar` do. [`src/2048.8bs`](src/2048.8bs) is the program (the
 loop that reads the player); [`src/ui/`](src/ui) is what goes on the screen,
 as [8BX](https://github.com/8BitScript/8bitscript/blob/trunk/docs/project/8bx.md)
-elements — `App.8bx` is the root; and [`src/lib/`](src/lib) is the `.8bs`
-underneath: `game.8bs` the rules and the board, `tile.8bs` (with a twin per
-machine that needs one) how a tile is painted, `rng.8bs` where the numbers
-come from.
+elements — `App.8bx` is the root, one file per element; and
+[`src/lib/`](src/lib) is the `.8bs` underneath: `game.8bs` the rules and
+the board, `layout.8bs` where everything goes (with a twin for the PET and
+for the web's fixed replicas), `palette.8bs` and `font.8bs` the tables,
+`draw.8bs` the shared primitives, `host.8bs` what the machine is like,
+`rng.8bs` where the numbers come from. Machine twins live in `lib/` and
+nowhere else.
 
 ```
 2048  SCORE 00042
@@ -104,8 +107,8 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   2048) — one byte instead of two, and "two equal tiles merge" becomes "two
   equal exponents merge into exponent + 1," one add instead of a double and
   a compare. `POW2[]` in `game.8bs` is the rules' own 2<sup>N</sup> table
-  (score); `tile.8bs` has a second copy for drawing, and the PET twin never
-  links either drawing copy.
+  (score); `lib/palette.8bs` has a second copy for drawing, and the PET
+  never links either drawing copy.
 - **One board move is the same four-row (or column) slide.** `moveLines`
   walks a direction as start / step / stride — wrapping `utinyint` add
   so right is step 255 (−1) and down is step 252 (−4) — into a shared
@@ -149,9 +152,14 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   `<Copyright />`, the `<Version />`, and a `<TitleWobble />` where there
   is a raster to ride), or a `<Board />` that is a `<ScoreBar />`, a
   `<GameOver />` once the game has ended, and sixteen `<Tile />`s —
-  written as 8BX elements over the tables and primitives `lib/tile.8bs`
-  and its twins provide, with none of the screen addresses those files
-  are made of. `ui/Tile.8bx` *is* the tile:
+  written as 8BX elements over the positions `lib/layout.8bs` works out
+  and the tables `lib/palette.8bs` and `lib/font.8bs` keep, with none of
+  the screen addresses those files are made of. Each element is one file
+  for every machine that draws through `@8bitscript/text`, fixed grid or
+  fluid: what differs between them is a fact (`screen.RESIZABLE`,
+  `#system()`, `Input.*`), the arm a build cannot take folds away, and the
+  4K PET's baked screen codes are the one measured exception, its own
+  `*.pet.8bx` twin per element. `ui/Tile.8bx` *is* the tile:
   the element owns the painting and the skin owns the tables it paints
   from, which is what keeps it free — a `<Tile />` that merely called a
   `drawTile()` in `lib/` was measured at +36 bytes, and one built from
@@ -174,8 +182,9 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   Commander X16, MEGA65, web) show each tile value in a distinct colour,
   the closest a text-mode board gets to upstream 2048's own tile colours.
   The PET and the web both stamp a 2×3-cell block-digit into an 8×5
-  square so a "2" fills the tile the way the PET's own ROM digits do;
-  `tile.web.8bs` is the web's twin of `tile.pet.8bs`.
+  square so a "2" fills the tile the way the PET's own ROM digits do —
+  the same glyphs, `lib/font.8bs` for the web and `lib/font.pet.8bs` as
+  screen codes.
 - **RAM is tiny everywhere.** `8bs build` reports 54 bytes of RAM on a
   PET 2001 and 81 on the web — the board, a 16-byte copy of what is on
   screen (so a tile that did not move is never erased and redrawn), the

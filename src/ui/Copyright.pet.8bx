@@ -1,7 +1,7 @@
 // The port's own line on row 23 — the version keeps the last one. The
 // original game's author and repo are credited in README.md.
 import { Video } from "@8bitscript/system";
-import { writeCells, hud, at } from "../lib/tile.8bs";
+import { writeCells, hud, at } from "../lib/layout.8bs";
 
 export component Copyright() {
     let portAt: usmallint = at.COPYRIGHT_40;

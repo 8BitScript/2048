@@ -2,14 +2,14 @@
 // NES, Commander X16, MEGA65, and the web. This is the program: the loop
 // that reads the player and drives the game. The rules and the board are
 // lib/game.8bs's, what goes on the screen is ui/'s — App.8bx is the root —
-// and what each machine paints it with is lib/tile.8bs's (and its twins').
+// and where each machine puts it is lib/layout.8bs's (and its twins').
 // Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see lib/game.8bs.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
 import { raster } from "@8bitscript/raster";
 import { rng } from "./lib/rng.8bs";
 import { Memory } from "@8bitscript/system";
-import { computeLayout } from "./lib/tile.8bs";
+import { computeLayout } from "./lib/layout.8bs";
 import { wobble } from "./lib/wobble.8bs";
 import { shown, merged, stepped, moved, over, started, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "./lib/game.8bs";
 import { App, Board, Tiles } from "./ui/App.8bx";
@@ -119,8 +119,8 @@ export function main(): void {
         input.poll();
         rng.tick(); // keep the generator moving between moves — see spawnTile()
 
-        // The window resized or the phone rotated: every position lib/tile.8bs
-        // (or a twin) computed depends on the grid computeLayout() read, so
+        // The window resized or the phone rotated: every position lib/layout.8bs
+        // computed depends on the grid computeLayout() read, so
         // it has to run again before anything else this frame draws. The
         // grid changed shape under whatever was already on screen, so a
         // reblank plus forcing every cell to redraw (shown[] holds no valid

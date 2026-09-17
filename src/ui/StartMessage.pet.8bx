@@ -1,6 +1,6 @@
 // PRESS RETURN on row 13 — the prompt's own first twelve codes.
 import { Video } from "@8bitscript/system";
-import { writeCells, hud } from "../lib/tile.8bs";
+import { writeCells, hud } from "../lib/layout.8bs";
 
 export component StartMessage() {
     let promptAt: usmallint = 534;

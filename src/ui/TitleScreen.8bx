@@ -1,17 +1,19 @@
 // The front door before the first deal: the name, how to start, the credit
 // line, the version — and, on a machine with a per-scanline hook, the
-// raster band and wobble behind the name. Each is an element of its own so
-// a skin that places one differently (the PET, the fluid web host) swaps
-// that one and keeps the rest. TITLE_WOBBLES is the skin's compile-time
-// answer, so the wobble is not in the image of a machine that cannot draw
-// it.
+// raster band and wobble behind the name. Each is an element of its own.
+// Whether a build takes the wobble is the facts' answer (the same terms
+// lib/wobble.8bs's step() checks — see there for why it is written out
+// twice): a raster, on the 40-column, 16-colour picture the band was
+// drawn for, never the fluid host. Every term folds, so the wobble is not
+// in the image of a machine that cannot draw it. The 4K PET's baked
+// screen codes are TitleScreen.pet.8bx.
 import { text, TextColor } from "@8bitscript/text";
+import { screen } from "@8bitscript/screen";
 import { Logo } from "./Logo.8bx";
 import { StartMessage } from "./StartMessage.8bx";
 import { Copyright } from "./Copyright.8bx";
 import { Version } from "./Version.8bx";
 import { TitleWobble } from "./TitleWobble.8bx";
-import { TITLE_WOBBLES } from "../lib/tile.8bs";
 
 export component TitleScreen() {
     text.setReverse(false);
@@ -22,7 +24,7 @@ export component TitleScreen() {
             <StartMessage />
             <Copyright />
             <Version />
-            {TITLE_WOBBLES && <TitleWobble />}
+            {#fact(video.raster) && !screen.RESIZABLE && text.COLUMNS == 40 && #fact(video.palette) == 16 && <TitleWobble />}
         </>
     );
 }

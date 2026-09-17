@@ -1,0 +1,40 @@
+// The block-digit font: 2×3-cell glyphs for 0–9, and the decimal digits of
+// every tile value packed to index them. One copy, read by every skin that
+// stamps a value as blocks — the fluid web host when its tile is wide
+// enough, and the web's PET replica always. The 4K PET reads
+// font.pet.8bs instead: the same glyphs as screen codes.
+//
+// Each digit is 3 half-cells of ink on a 4 half-cell pitch, so a run of
+// them is always an ODD number of half-cells inside an EVEN tile. Centring
+// it wants a half-cell offset and the character grid only places whole
+// cells, so the ink can land 2px either side of the tile's centre and
+// nowhere between. The gap rides behind the digits, which puts the ink on
+// the left of those two — the side with the smaller leftover margin. True
+// centre needs a digit whose ink is an EVEN number of half-cells wide: a
+// redesigned font, not a repositioning.
+
+// Decimal digits of 2^exponent, packed without the trailing zeros a
+// four-wide slot would carry, and a 13-entry offset table so count is
+// `TILE_DIGIT_AT[e+1] - TILE_DIGIT_AT[e]`.
+export const TILE_DIGIT_AT: array<utinyint, 13> = [0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26];
+export const TILE_DIGIT: array<utinyint, 26> = [
+    2, 4, 8,
+    1, 6, 3, 2, 6, 4,
+    1, 2, 8, 2, 5, 6, 5, 1, 2,
+    1, 0, 2, 4, 2, 0, 4, 8,
+];
+
+// Six glyph codes per digit, index digit×6, in the web host's own
+// ASCII-indexed font.
+export const DIGIT_TILES: array<utinyint, 60> = [
+    142, 138, 138, 138, 139, 138,
+    135, 128, 141, 128, 135, 130,
+    140, 138, 131, 138, 139, 130,
+    140, 138, 131, 138, 131, 138,
+    138, 138, 139, 138, 128, 138,
+    142, 136, 139, 130, 131, 138,
+    142, 136, 139, 130, 139, 138,
+    140, 138, 128, 138, 128, 138,
+    142, 138, 139, 138, 139, 138,
+    142, 138, 139, 138, 131, 138,
+];

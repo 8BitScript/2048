@@ -1,6 +1,7 @@
-// The port's own line, on the second-to-last row so the version keeps the
-// last one and the middle of the screen stays clear. The original game's
-// author and repo are credited in README.md rather than on screen.
+// The port's own line, centred on the second-to-last row so the version
+// keeps the last one and the middle of the screen stays clear. The
+// original game's author and repo are credited in README.md rather than
+// on screen. The 4K PET's baked screen codes are Copyright.pet.8bx.
 //
 // "(" and ")" are not in the portable character set, so the line is printed
 // with spaces where they go and the two glyphs poked in after — putChar
@@ -15,20 +16,38 @@
 // of the two. The placeholder is a space rather than a marker character for
 // the same reason: if a machine ever did drop the poke, the line degrades
 // to "C 2026 8BITSCRIPT" rather than showing punctuation nobody meant.
+//
+// On the fluid web host a NARROW window is not wide enough to keep this
+// line and the version apart — the version would sit under its tail —
+// so the lower-priority line goes, the same move the score bar makes,
+// rather than a cramped compromise of both.
 import { text } from "@8bitscript/text";
+import { screen } from "@8bitscript/screen";
 import { System, Video } from "@8bitscript/system";
+import { wide } from "../lib/layout.8bs";
 
+const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
 const CREDIT_PORT_LEN: utinyint = 19;      // "(C) 2026 8BITSCRIPT"
 const CREDIT_PORT_WORD_LEN: utinyint = 25; // "COPYRIGHT 2026 8BITSCRIPT"
 const PAREN_OPEN: utinyint = 40;
 const PAREN_CLOSE: utinyint = 41;
 
-// The address is a compile-time constant and is written out at each of
-// the three uses rather than hoisted into a local, for the reason
-// StartMessage.8bx gives.
+// On a fixed grid the address is a compile-time constant and is written
+// out at each of the three uses rather than hoisted into a local: a local
+// is a variable to the folder, and the add it saves in the source costs a
+// 16-bit add and a slot in the image (+35 bytes on the VIC-20).
 export component Copyright() {
-    if (#system() == System.NES) {
+    if (FLUID) {
+        if (wide) {
+            let cols: usmallint = text.columns();
+            let rows: usmallint = text.rows();
+            let at: usmallint = (rows - 2) * cols + ((cols - CREDIT_PORT_LEN) >> 1);
+            text.print(at, " C  2026 8BITSCRIPT");
+            text.putChar(at, PAREN_OPEN);
+            text.putChar(at + 2, PAREN_CLOSE);
+        }
+    } else if (#system() == System.NES) {
         text.print((Video.ROWS - 2) * ROW + ((text.COLUMNS - CREDIT_PORT_WORD_LEN) >> 1), "COPYRIGHT 2026 8BITSCRIPT");
     } else {
         text.print((Video.ROWS - 2) * ROW + ((text.COLUMNS - CREDIT_PORT_LEN) >> 1), " C  2026 8BITSCRIPT");
