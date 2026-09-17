@@ -1,0 +1,26 @@
+// The web's PET 2001 replica paints a tile the way the PET does — an 8x5
+// square and 2x3 block digits on its second row — through
+// @8bitscript/text instead of video RAM. The same arrangement as
+// Tile.pet.8bx over this skin's own fillTile() and drawDigit(); it goes
+// when the fixed web skins fold into the fluid host's layout.
+import { text } from "@8bitscript/text";
+import { tileCell, fillTile, drawDigit, TILE_DIGIT_AT, TILE_DIGIT } from "../lib/tile.8bs";
+
+const ROW: usmallint = text.COLUMNS; // 40
+
+export component Tile(row: utinyint, col: utinyint, exponent: utinyint) {
+    let origin: usmallint = tileCell(row, col);
+    fillTile(origin);
+    let base: utinyint = TILE_DIGIT_AT[exponent];
+    let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
+    if (count != 0) {
+        let at: usmallint = origin + ROW + (4 - count);
+        let i: utinyint = 0;
+        while (i < count) {
+            drawDigit(at, TILE_DIGIT[base + i]);
+            at = at + 2;
+            i++;
+        }
+    }
+    text.setReverse(false);
+}

@@ -145,9 +145,14 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   explicitly optional import (see either one's header).
 - **What is on the screen is composition, and it costs nothing.**
   `ui/App.8bx` is the arrangement — a `<Title />`, or a `<Board />` that is
-  the HUD over sixteen `<Tiles />` — written as 8BX elements over the
-  drawing calls `tile.8bs` and its twins provide, with none of the screen
-  addresses those files are made of. A component is a function and an
+  the HUD over sixteen `<Tile />`s — written as 8BX elements over the
+  drawing calls `lib/tile.8bs` and its twins provide, with none of the
+  screen addresses those files are made of. `ui/Tile.8bx` *is* the tile:
+  the element owns the painting and the skin owns the tables it paints
+  from, which is what keeps it free — a `<Tile />` that merely called a
+  `drawTile()` in `lib/` was measured at +36 bytes, and one built from
+  `paintTile()` and `stampValue()` primitives at +56, because a function
+  with parameters called from one place is not inlined yet. A component is a function and an
   element is a call, so this is the same program it was when `2048.8bs`
   wrote those calls out by hand: the same functions at the same sizes on
   every target, 2763 bytes on the 4K PET 2001 and 3490 on the unexpanded

@@ -81,7 +81,7 @@ const VERSION_LINE: string = "v0.2.0";
 // nine machines, applied here for the one target whose grid can also
 // change after the game has started (main.8bs calls this again whenever
 // screen.resized() says so).
-let rowWidth: usmallint = 0; // this frame's row width, so cell = y * rowWidth + x
+export let rowWidth: usmallint = 0; // this frame's row width, so cell = y * rowWidth + x
 let gridRows: usmallint = 0; // this frame's row count
 
 // Which arrangement this frame is in — see the header comment. A `let`,
@@ -141,12 +141,12 @@ const BLOCK_DIGIT_MIN: usmallint = WIDE_TILE_MIN;
 // computeLayout() below from the live grid, the chosen arrangement, and
 // the constants above. Every other position below is worked out from
 // these, the same way tile.8bs's own cellWidth/tileH are.
-let tileW: usmallint = 8;
-let tileH: usmallint = 5; // this skin's original WIDE tile, until computeLayout() runs
+export let tileW: usmallint = 8;
+export let tileH: usmallint = 5; // this skin's original WIDE tile, until computeLayout() runs
 let boardWidth: usmallint = 35;
 let boardHeight: usmallint = 23;
 
-const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 
 const TILE_COLOR: array<utinyint, 12> = [
     TextColor.WHITE,
@@ -174,8 +174,8 @@ const TILE_COLOR: array<utinyint, 12> = [
 // them (add 1 to the left column of every pair) puts it on the right instead.
 // True centre needs a digit whose ink is an EVEN number of half-cells wide:
 // a redesigned font, not a repositioning.
-const TILE_DIGIT_AT: array<utinyint, 13> = [0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26];
-const TILE_DIGIT: array<utinyint, 26> = [
+export const TILE_DIGIT_AT: array<utinyint, 13> = [0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26];
+export const TILE_DIGIT: array<utinyint, 26> = [
     2, 4, 8,
     1, 6, 3, 2, 6, 4,
     1, 2, 8, 2, 5, 6, 5, 1, 2,
@@ -198,7 +198,7 @@ const DIGIT_TILES: array<utinyint, 60> = [
 // many decimal digits 2^exponent has, so a plain printed number can be
 // centred in a NARROW_TILE_W-wide tile the same way tile.8bs centres it
 // in cellWidth.
-const NARROW_TILE_DIGITS: array<utinyint, 12> = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4];
+export const NARROW_TILE_DIGITS: array<utinyint, 12> = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4];
 
 // Lengths of every string a layout position below centres or right-aligns —
 // named once here rather than repeated as a magic number at each call site,
@@ -537,7 +537,7 @@ export function computeLayout(): void {
 // gridRows - 1 / rowWidth - 1, is what keeps the whole block in bounds,
 // not just its top-left corner; it stacks or overlaps the outermost tiles
 // instead of writing part of one past the grid.
-function tileCell(row: utinyint, col: utinyint): usmallint {
+export function tileCell(row: utinyint, col: utinyint): usmallint {
     let y: usmallint = boardTop + row * (tileH + 1);
     if (y + tileH > gridRows) {
         if (gridRows > tileH) {
@@ -646,7 +646,7 @@ export function drawHud(score: usmallint, over: bool, won: bool): void {
     return;
 }
 
-function fillTile(origin: usmallint, exponent: utinyint): void {
+export function fillTile(origin: usmallint, exponent: utinyint): void {
     text.setColor(TILE_COLOR[exponent]);
     text.setReverse(true);
     let rowCell: usmallint = origin;
@@ -661,7 +661,7 @@ function fillTile(origin: usmallint, exponent: utinyint): void {
 
 // The WIDE arrangement's digit: two block-digit glyphs per character,
 // three rows tall.
-function drawDigit(cell: usmallint, value: utinyint): void {
+export function drawDigit(cell: usmallint, value: utinyint): void {
     let base: utinyint = value * 6;
     let rowCell: usmallint = cell;
     let row: utinyint = 0;
@@ -675,47 +675,6 @@ function drawDigit(cell: usmallint, value: utinyint): void {
     return;
 }
 
-export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
-    let origin: usmallint = tileCell(row, col);
-    fillTile(origin, exponent);
-    if (tileW >= BLOCK_DIGIT_MIN) {
-        // Digits are 2 cells wide and 3 rows tall. Across tileW that is
-        // exact for every digit count, because both are even (tileW is
-        // kept even in both arrangements for exactly this). Down tileH it
-        // cannot be in general, so the 3-row glyph block is centred in
-        // whatever tileH this tile turned out to be — at WIDE's own 5 that
-        // centring is the same one row top, one bottom it always was;
-        // NARROW's taller square tiles get real centring instead of the
-        // glyphs sitting crammed against the top.
-        let base: utinyint = TILE_DIGIT_AT[exponent];
-        let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
-        if (count != 0) {
-            let vOffset: usmallint = (tileH - 3) >> 1;
-            let at: usmallint = origin + vOffset * rowWidth + ((tileW >> 1) - count);
-            let i: utinyint = 0;
-            while (i < count) {
-                drawDigit(at, TILE_DIGIT[base + i]);
-                at = at + 2;
-                i++;
-            }
-        }
-    } else {
-        // Too narrow for the block-digit font (BLOCK_DIGIT_MIN) — tile.8bs's
-        // own move instead: a plain printed number, right-aligned in a
-        // NARROW_TILE_DIGITS[exponent]-wide field centred in the tile's
-        // middle row.
-        let value: usmallint = POW2[exponent];
-        if (value != 0) {
-            let width: utinyint = NARROW_TILE_DIGITS[exponent];
-            let mid: usmallint = tileH >> 1;
-            let numRow: usmallint = origin + mid * rowWidth;
-            let offset: usmallint = (tileW - width) >> 1;
-            text.printNumber(numRow + offset, value, width);
-        }
-    }
-    text.setReverse(false);
-    return;
-}
 
 // The title wobble is tile.8bs's — the portable skin, read by the one
 // 6502 machine with a per-scanline hook (the C64). The web answers
@@ -725,4 +684,13 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
 // a no-op against a list that was never built.
 export function wobbleTitle(): void {
     return;
+}
+
+// Whether this frame's tile is wide enough for the block-digit font —
+// ui/Tile.web.8bx's one question. A function rather than an exported
+// BLOCK_DIGIT_MIN because an imported scalar const does not survive the
+// linker today (8bitscript: "no type on this IR node"); one compare, and
+// it inlines.
+export function blockDigitsFit(): bool {
+    return tileW >= BLOCK_DIGIT_MIN;
 }

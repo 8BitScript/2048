@@ -52,8 +52,8 @@ const SCREEN: usmallint = 0x8000;
 // four-wide slot would carry, and a 13-entry offset table so count is
 // `TILE_DIGIT_AT[e+1] - TILE_DIGIT_AT[e]`. Pad is 4 − count (TILE_W is 8,
 // a digit is 2 cells, leftover is always even).
-const TILE_DIGIT_AT: array<utinyint, 13> = [0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26];
-const TILE_DIGIT: array<utinyint, 26> = [
+export const TILE_DIGIT_AT: array<utinyint, 13> = [0, 0, 1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26];
+export const TILE_DIGIT: array<utinyint, 26> = [
     2, 4, 8,
     1, 6, 3, 2, 6, 4,
     1, 2, 8, 2, 5, 6, 5, 1, 2,
@@ -146,13 +146,13 @@ const SCORE_PLACES: array<usmallint, 5> = [10000, 1000, 100, 10, 1];
 // Top-left cell of each board square. Compile-time data: (1 + row×6)×
 // columns + leftMargin + col×9. The unused table is pruned, and an index
 // is smaller than the 16-bit multiply that would recompute it.
-const ORIGIN_40: array<usmallint, 16> = [
+export const ORIGIN_40: array<usmallint, 16> = [
     42, 51, 60, 69,
     282, 291, 300, 309,
     522, 531, 540, 549,
     762, 771, 780, 789,
 ];
-const ORIGIN_80: array<usmallint, 16> = [
+export const ORIGIN_80: array<usmallint, 16> = [
     102, 111, 120, 129,
     582, 591, 600, 609,
     1062, 1071, 1080, 1089,
@@ -261,7 +261,7 @@ export function drawHud(score: usmallint, over: bool, won: bool): void {
     return;
 }
 
-function fillTile(origin: usmallint): void {
+export function fillTile(origin: usmallint): void {
     let rowCell: usmallint = origin;
     let row: utinyint = 0;
     while (row < TILE_H) {
@@ -276,7 +276,7 @@ function fillTile(origin: usmallint): void {
     return;
 }
 
-function drawDigit(cell: usmallint, value: utinyint): void {
+export function drawDigit(cell: usmallint, value: utinyint): void {
     let base: utinyint = value * 6;
     let rowCell: usmallint = cell;
     let row: utinyint = 0;
@@ -290,26 +290,9 @@ function drawDigit(cell: usmallint, value: utinyint): void {
     return;
 }
 
-export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
-    let cell: utinyint = row * 4 + col;
-    let origin: usmallint = ORIGIN_40[cell];
-    if (Video.COLUMNS != 40) {
-        origin = ORIGIN_80[cell];
-    }
-    fillTile(origin);
-    let base: utinyint = TILE_DIGIT_AT[exponent];
-    let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
-    if (count != 0) {
-        let at: usmallint = origin + ROW + (4 - count);
-        let i: utinyint = 0;
-        while (i < count) {
-            drawDigit(at, TILE_DIGIT[base + i]);
-            at = at + 2;
-            i++;
-        }
-    }
-    return;
-}
+
+// The tile itself is ui/Tile.pet.8bx: fillTile() and drawDigit() above and
+// the ORIGIN and TILE_DIGIT tables are what it is made of.
 
 // The title wobble is tile.8bs's — the portable skin, read by the one
 // machine with a per-scanline hook (the C64). No PET answers

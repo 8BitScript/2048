@@ -18,7 +18,7 @@ const VERSION_LEN: utinyint = 6;
 // Exponent to face value — tile.8bs's own copy for drawing. The rules'
 // table lives in 2048.8bs (score); the two never share a module, and
 // the PET twin needs neither.
-const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 
 // Exponent to colour, on the six targets with per-cell colour — a
 // deliberately empty function on the other three (PET, Atari 8-bit, NES;
@@ -35,9 +35,9 @@ const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024,
 // of compares on the value that used to work it out: the compares cost the
 // unexpanded VIC-20 six times what the table does, and the exponent is
 // already in hand at every call site.
-const TILE_DIGITS: array<utinyint, 12> = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4];
+export const TILE_DIGITS: array<utinyint, 12> = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4];
 
-const TILE_COLOR: array<utinyint, 12> = [
+export const TILE_COLOR: array<utinyint, 12> = [
     TextColor.WHITE,  // 0: empty
     TextColor.WHITE,  // 2
     TextColor.CYAN,   // 4
@@ -121,8 +121,8 @@ const NARROW_BOARD_WIDTH: usmallint = 19; // 4 tiles * 4 + 3 gaps * 1
 // up to a Commander X16's 76x56 — has to happen at run time, not as a
 // const. It is still one-time arithmetic, run once before the game loop
 // starts, not repeated per frame or per tile.
-let cellWidth: usmallint = FULL_TILE_W;
-let tileH: utinyint = DEFAULT_TILE_H;
+export let cellWidth: usmallint = FULL_TILE_W;
+export let tileH: utinyint = DEFAULT_TILE_H;
 let leftMargin: usmallint = 0;
 let headerRow: usmallint = 0;
 let boardTop: usmallint = 0;
@@ -224,13 +224,17 @@ export function computeLayout(): void {
 }
 
 // The screen cell a tile's top-left corner starts at.
-function tileCell(row: utinyint, col: utinyint): usmallint {
+export function tileCell(row: utinyint, col: utinyint): usmallint {
     let y: usmallint = boardTop + row * (tileH + ROW_GAP);
     let x: usmallint = leftMargin + col * (cellWidth + COL_GAP);
     return y * ROW + x;
 }
 
 // ---- drawing --------------------------------------------------------------
+//
+// The tile itself is ui/Tile.8bx: it reads tileCell(), the layout above and
+// the tables at the top of this file, and paints with @8bitscript/text.
+// What follows is the rest of the skin — the HUD, the title, the wobble.
 //
 // A tile is a 4-character field, right-aligned, blanked first — never
 // zero-padded: `text.printNumber` always writes exactly the width it is
@@ -448,32 +452,3 @@ export function drawHud(score: usmallint, over: bool, won: bool): void {
     return;
 }
 
-export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
-    let origin: usmallint = tileCell(row, col);
-    let value: usmallint = POW2[exponent];
-    text.setColor(TILE_COLOR[exponent]);
-    text.setReverse(true);
-    // A row cursor rather than origin + line * ROW: the backend inlines a
-    // 16-bit multiply at every site, and this one is inside a loop. The web
-    // twin's fillRows() walks the same way.
-    let rowCell: usmallint = origin;
-    let numRow: usmallint = origin;
-    let mid: utinyint = tileH >> 1;
-    let line: utinyint = 0;
-    while (line < tileH) {
-        text.fill(rowCell, cellWidth, 32);
-        if (line == mid) {
-            numRow = rowCell; // the row the digits go in, kept as the cursor
-                              // passes it rather than multiplied for again
-        }
-        rowCell = rowCell + ROW;
-        line++;
-    }
-    if (value != 0) {
-        let width: utinyint = TILE_DIGITS[exponent];
-        let offset: utinyint = (cellWidth - width) >> 1;
-        text.printNumber(numRow + offset, value, width);
-    }
-    text.setReverse(false); // so the next print — this frame's or the next — is not inverted
-    return;
-}

@@ -9,11 +9,10 @@ const VERSION_LINE: string = "v0.2.0";
 const ROW: usmallint = text.COLUMNS; // 22
 const TILE_W: utinyint = 4;
 const TILE_H: utinyint = 3;
-const BLANK: string = "    ";
 
-const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 
-const TILE_COLOR: array<utinyint, 12> = [
+export const TILE_COLOR: array<utinyint, 12> = [
     TextColor.WHITE,
     TextColor.WHITE,
     TextColor.CYAN,
@@ -131,37 +130,7 @@ export function drawHud(score: usmallint, over: bool, won: bool): void {
     return;
 }
 
-function tileWidth(value: usmallint): utinyint {
-    if (value >= 1000) {
-        return 4;
-    }
-    if (value >= 100) {
-        return 3;
-    }
-    if (value >= 10) {
-        return 2;
-    }
-    return 1;
-}
 
-export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
-    let origin: usmallint = ORIGIN[row * 4 + col];
-    let value: usmallint = POW2[exponent];
-    text.setColor(TILE_COLOR[exponent]);
-    text.setReverse(true);
-    let line: utinyint = 0;
-    while (line < TILE_H) {
-        text.print(origin + line * ROW, BLANK);
-        line++;
-    }
-    if (value != 0) {
-        let width: utinyint = tileWidth(value);
-        let offset: utinyint = (TILE_W - width) >> 1;
-        text.printNumber(origin + (TILE_H >> 1) * ROW + offset, value, width);
-    }
-    text.setReverse(false);
-    return;
-}
 
 // The title wobble is tile.8bs's — the portable skin, read by the one
 // 6502 machine with a per-scanline hook (the C64). The web answers
@@ -171,4 +140,17 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
 // a no-op against a list that was never built.
 export function wobbleTitle(): void {
     return;
+}
+
+// The tile is ui/Tile.8bx, the portable one, so this skin exposes the same
+// names lib/tile.8bs does: where a tile is, its size, and how many digits
+// a value has. cellWidth and tileH are lets because Tile.8bx reads them as
+// the portable skin's lets — an imported scalar const does not survive the
+// linker today (8bitscript: "no type on this IR node").
+export const TILE_DIGITS: array<utinyint, 12> = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4];
+export let cellWidth: usmallint = TILE_W;
+export let tileH: utinyint = TILE_H;
+
+export function tileCell(row: utinyint, col: utinyint): usmallint {
+    return ORIGIN[row * 4 + col];
 }

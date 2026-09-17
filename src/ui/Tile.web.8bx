@@ -1,0 +1,47 @@
+// The fluid web host's tile. The square is tileW x tileH, whatever this
+// frame's grid made them (lib/tile.web.8bs's computeLayout() re-decides on
+// every resize); the value is the block-digit font when the tile is wide
+// enough for it, and a plain printed number — the portable tile's own
+// move — when it is not.
+import { text } from "@8bitscript/text";
+import { tileCell, fillTile, drawDigit, blockDigitsFit, tileW, tileH, rowWidth, POW2, TILE_DIGIT_AT, TILE_DIGIT, NARROW_TILE_DIGITS } from "../lib/tile.8bs";
+
+export component Tile(row: utinyint, col: utinyint, exponent: utinyint) {
+    let origin: usmallint = tileCell(row, col);
+    fillTile(origin, exponent);
+    if (blockDigitsFit()) {
+        // Digits are 2 cells wide and 3 rows tall. Across tileW that is
+        // exact for every digit count, because both are even (tileW is
+        // kept even in both arrangements for exactly this). Down tileH it
+        // cannot be in general, so the 3-row glyph block is centred in
+        // whatever tileH this tile turned out to be — at WIDE's own 5 that
+        // centring is the same one row top, one bottom it always was;
+        // NARROW's taller square tiles get real centring instead of the
+        // glyphs sitting crammed against the top.
+        let base: utinyint = TILE_DIGIT_AT[exponent];
+        let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
+        if (count != 0) {
+            let vOffset: usmallint = (tileH - 3) >> 1;
+            let at: usmallint = origin + vOffset * rowWidth + ((tileW >> 1) - count);
+            let i: utinyint = 0;
+            while (i < count) {
+                drawDigit(at, TILE_DIGIT[base + i]);
+                at = at + 2;
+                i++;
+            }
+        }
+    } else {
+        // Too narrow for the block-digit font — a plain printed number,
+        // right-aligned in a NARROW_TILE_DIGITS[exponent]-wide field
+        // centred in the tile's middle row.
+        let value: usmallint = POW2[exponent];
+        if (value != 0) {
+            let width: utinyint = NARROW_TILE_DIGITS[exponent];
+            let mid: usmallint = tileH >> 1;
+            let numRow: usmallint = origin + mid * rowWidth;
+            let offset: usmallint = (tileW - width) >> 1;
+            text.printNumber(numRow + offset, value, width);
+        }
+    }
+    text.setReverse(false);
+}
