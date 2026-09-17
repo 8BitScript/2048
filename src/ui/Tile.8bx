@@ -1,129 +1,21 @@
 // One tile of the board: a filled square in the tile's colour, its value
-// on the middle row. One element for every machine, in three arms, and a
-// build's image carries only the one it takes:
+// on the middle row. How that is painted is the machine's — screen codes
+// straight into the PET's video RAM (lib/petscii.8bs), or reverse-video
+// fills and block digits or a printed number through @8bitscript/text
+// (lib/draw.8bs) — and the arm a build cannot take folds away.
 //
-// - The PET: an 8×5 solid square of screen codes written straight into
-//   video RAM, and the value as 2×3 block digits stamped right-aligned on
-//   its second row — lib/petscii.8bs's fillSquare() and stampDigit(), its
-//   ORIGIN tables (compile-time data: an index is smaller than the 16-bit
-//   multiply that would recompute it) and lib/font.pet.8bs's digits. A
-//   quadrant-block digit is 2 cells wide, so the leftover is always even
-//   and every digit count from "2" to "2048" centres exactly.
-// - A grid with room for block digits (lib/layout.8bs's BLOCK_DIGITS: the
-//   fluid web host when its tile is wide enough, the web's PET replica
-//   always): the same arrangement through @8bitscript/text, from
-//   lib/font.8bs, or a printed number when the tile is too narrow.
-// - Every other fixed grid: a printed number, right-aligned in a field
-//   centred on the middle row.
-//
-// The element is the drawing, not a call to a drawTile() somewhere else,
-// because that is what makes it free: measured 2763 / 3490 / 4599 bytes on
-// the PET 2001 / VIC-20 / C64, the same as the function it replaced. The
-// other way — a Tile that calls paintTile() and stampValue() in lib — is
-// +56 bytes here and +84 on the PET, because a function with parameters
-// called from one place is not inlined today.
-import { text } from "@8bitscript/text";
-import { System, Video } from "@8bitscript/system";
-import { tileCell, tileW, tileH, rowWidth, BLOCK_DIGITS, blockDigitsFit } from "../lib/layout.8bs";
-import { POW2, TILE_COLOR, TILE_DIGITS } from "../lib/palette.8bs";
-import { TILE_DIGIT_AT, TILE_DIGIT } from "../lib/font.8bs";
-import { fillTile, drawDigit } from "../lib/draw.8bs";
-import { fillSquare, stampDigit, ORIGIN_40, ORIGIN_80 } from "../lib/petscii.8bs";
-
-// This machine's row width on a fixed grid, so cell = y * ROW + x.
-// Declared here rather than imported: an imported scalar const does not
-// survive the linker today, and this one folds either way.
-const ROW: usmallint = text.COLUMNS;
+// The element is a call into lib/, and it costs what the inline drawing
+// did: a function with one caller is written into it (8bitscript #184).
+// Before that rule this form measured +56 bytes on every 6502 and +84 on
+// the PET (2048 #51), which is why the drawing used to live here.
+import { System } from "@8bitscript/system";
+import { paintTile } from "../lib/draw.8bs";
+import { stampTile } from "../lib/petscii.8bs";
 
 export component Tile(row: utinyint, col: utinyint, exponent: utinyint) {
     if (#system() == System.PET) {
-        let cell: utinyint = row * 4 + col;
-        let origin: usmallint = ORIGIN_40[cell];
-        if (Video.COLUMNS != 40) {
-            origin = ORIGIN_80[cell];
-        }
-        fillSquare(origin);
-        let base: utinyint = TILE_DIGIT_AT[exponent];
-        let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
-        if (count != 0) {
-            let at: usmallint = origin + ROW + (4 - count);
-            let i: utinyint = 0;
-            while (i < count) {
-                stampDigit(at, TILE_DIGIT[base + i]);
-                at = at + 2;
-                i++;
-            }
-        }
-    } else if (BLOCK_DIGITS) {
-        let origin: usmallint = tileCell(row, col);
-        fillTile(origin, exponent);
-        if (blockDigitsFit()) {
-            // Digits are 2 cells wide and 3 rows tall. Across tileW that
-            // is exact for every digit count, because both are even (the
-            // layout keeps tileW even for exactly this). Down tileH it
-            // cannot be in general, so the 3-row glyph block is centred in
-            // whatever tileH this tile turned out to be.
-            let base: utinyint = TILE_DIGIT_AT[exponent];
-            let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
-            if (count != 0) {
-                let vOffset: usmallint = (tileH - 3) >> 1;
-                let at: usmallint = origin + vOffset * rowWidth + ((tileW >> 1) - count);
-                let i: utinyint = 0;
-                while (i < count) {
-                    drawDigit(at, TILE_DIGIT[base + i]);
-                    at = at + 2;
-                    i++;
-                }
-            }
-        } else {
-            // Too narrow for the block-digit font — a plain printed
-            // number, right-aligned in a TILE_DIGITS[exponent]-wide field
-            // centred in the tile's middle row.
-            let value: usmallint = POW2[exponent];
-            if (value != 0) {
-                let width: utinyint = TILE_DIGITS[exponent];
-                let mid: usmallint = tileH >> 1;
-                let numRow: usmallint = origin + mid * rowWidth;
-                let offset: usmallint = (tileW - width) >> 1;
-                text.printNumber(numRow + offset, value, width);
-            }
-        }
-        text.setReverse(false); // so the next print — this frame's or the next — is not inverted
+        stampTile(row, col, exponent);
     } else {
-        // Every tile — empty or not — is a filled tileW x tileH block of
-        // reverse video: `text.setReverse(true)` turns a printed space into
-        // a solid block in the current colour on every target (a plain
-        // inverted block, no colour, on the machines with none), so the
-        // same three calls draw a coloured square on a C64 and a monochrome
-        // one on an Atari. The middle row's fill doubles as the field
-        // `printNumber` then centres digits into (an odd leftover space,
-        // when tileW - width is odd, falls to the right — `>> 1`
-        // truncates, never rounds up); the top and bottom rows are blank on
-        // purpose — they are the rest of the square, not wasted space.
-        let origin: usmallint = tileCell(row, col);
-        let value: usmallint = POW2[exponent];
-        text.setColor(TILE_COLOR[exponent]);
-        text.setReverse(true);
-        // A row cursor rather than origin + line * ROW: the backend inlines
-        // a 16-bit multiply at every site, and this one is inside a loop.
-        let rowCell: usmallint = origin;
-        let numRow: usmallint = origin;
-        let mid: utinyint = tileH >> 1;
-        let line: utinyint = 0;
-        while (line < tileH) {
-            text.fill(rowCell, tileW, 32);
-            if (line == mid) {
-                numRow = rowCell; // the row the digits go in, kept as the
-                                  // cursor passes it rather than multiplied for
-            }
-            rowCell = rowCell + ROW;
-            line++;
-        }
-        if (value != 0) {
-            let width: utinyint = TILE_DIGITS[exponent];
-            let offset: utinyint = (tileW - width) >> 1;
-            text.printNumber(numRow + offset, value, width);
-        }
-        text.setReverse(false); // so the next print — this frame's or the next — is not inverted
+        paintTile(row, col, exponent);
     }
 }

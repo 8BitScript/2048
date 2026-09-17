@@ -5,9 +5,12 @@
 // ui/Tile.8bx: on a fixed grid that is the cheapest form, and these two
 // are never linked there.
 import { text } from "@8bitscript/text";
-import { TILE_COLOR } from "./palette.8bs";
-import { DIGIT_TILES } from "./font.8bs";
-import { tileW, tileH, rowWidth } from "./layout.8bs";
+import { POW2, TILE_COLOR, TILE_DIGITS } from "./palette.8bs";
+import { DIGIT_TILES, TILE_DIGIT_AT, TILE_DIGIT } from "./font.8bs";
+import { tileCell, tileW, tileH, rowWidth, BLOCK_DIGITS, blockDigitsFit } from "./layout.8bs";
+
+// This machine's row width on a fixed grid, so cell = y * ROW + x.
+const ROW: usmallint = text.COLUMNS;
 
 // A tileW × tileH square of reverse video in the tile's colour, at origin.
 export function fillTile(origin: usmallint, exponent: utinyint): void {
@@ -36,4 +39,83 @@ export function drawDigit(cell: usmallint, value: utinyint): void {
         row++;
     }
     return;
+}
+
+// One tile, through @8bitscript/text: a filled tileW × tileH square in the
+// tile's colour, its value on the middle row. Two shapes, and BLOCK_DIGITS
+// (a build fact) says which is in the image:
+//
+// - A grid with room for block digits (the fluid web host when its tile is
+//   wide enough, the web's PET replica always): the square from
+//   fillTile(), then 2×3 glyphs from lib/font.8bs centred in it — or a
+//   printed number when the tile is too narrow this frame.
+// - Every other fixed grid: `text.setReverse(true)` turns a printed space
+//   into a solid block in the current colour on every target (a plain
+//   inverted block, no colour, on the machines with none), so the same
+//   three calls draw a coloured square on a C64 and a monochrome one on an
+//   Atari. The middle row's fill doubles as the field `printNumber` then
+//   centres digits into (an odd leftover space, when tileW - width is odd,
+//   falls to the right — `>> 1` truncates, never rounds up); the top and
+//   bottom rows are blank on purpose — they are the rest of the square.
+//
+// ui/Tile.8bx is this call. A function with one caller is written into it
+// (8bitscript #184), so the element costs what the inline drawing did.
+export function paintTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    let origin: usmallint = tileCell(row, col);
+    if (BLOCK_DIGITS) {
+        fillTile(origin, exponent);
+        if (blockDigitsFit()) {
+            // Digits are 2 cells wide and 3 rows tall. Across tileW that
+            // is exact for every digit count, because both are even (the
+            // layout keeps tileW even for exactly this). Down tileH it
+            // cannot be in general, so the 3-row glyph block is centred in
+            // whatever tileH this tile turned out to be.
+            let base: utinyint = TILE_DIGIT_AT[exponent];
+            let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
+            if (count != 0) {
+                let vOffset: usmallint = (tileH - 3) >> 1;
+                let at: usmallint = origin + vOffset * rowWidth + ((tileW >> 1) - count);
+                let i: utinyint = 0;
+                while (i < count) {
+                    drawDigit(at, TILE_DIGIT[base + i]);
+                    at = at + 2;
+                    i++;
+                }
+            }
+        } else {
+            let value: usmallint = POW2[exponent];
+            if (value != 0) {
+                let width: utinyint = TILE_DIGITS[exponent];
+                let mid: usmallint = tileH >> 1;
+                let numRow: usmallint = origin + mid * rowWidth;
+                let offset: usmallint = (tileW - width) >> 1;
+                text.printNumber(numRow + offset, value, width);
+            }
+        }
+    } else {
+        let value: usmallint = POW2[exponent];
+        text.setColor(TILE_COLOR[exponent]);
+        text.setReverse(true);
+        // A row cursor rather than origin + line * ROW: the backend inlines
+        // a 16-bit multiply at every site, and this one is inside a loop.
+        let rowCell: usmallint = origin;
+        let numRow: usmallint = origin;
+        let mid: utinyint = tileH >> 1;
+        let line: utinyint = 0;
+        while (line < tileH) {
+            text.fill(rowCell, tileW, 32);
+            if (line == mid) {
+                numRow = rowCell; // the row the digits go in, kept as the
+                                  // cursor passes it rather than multiplied for
+            }
+            rowCell = rowCell + ROW;
+            line++;
+        }
+        if (value != 0) {
+            let width: utinyint = TILE_DIGITS[exponent];
+            let offset: utinyint = (tileW - width) >> 1;
+            text.printNumber(numRow + offset, value, width);
+        }
+    }
+    text.setReverse(false); // so the next print — this frame's or the next — is not inverted
 }

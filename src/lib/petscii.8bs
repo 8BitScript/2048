@@ -34,7 +34,7 @@
 // over baked codes is smaller than linking the converter, and it is
 // what lets a stock 4K 2001's ~3K of usable RAM hold the game.
 import { Video } from "@8bitscript/system";
-import { DIGIT_TILES } from "./font.8bs";
+import { DIGIT_TILES, TILE_DIGIT_AT, TILE_DIGIT } from "./font.8bs";
 
 const ROW: usmallint = Video.COLUMNS; // 40, or 80 on an 8032 build
 
@@ -223,3 +223,28 @@ export function stampDigit(cell: usmallint, value: utinyint): void {
 // above, the ORIGIN tables and lib/font.pet.8bs are what it is made of.
 
 // No PET has a raster; the title screen never takes the wobble.
+
+// One tile, the PET's way: an 8×5 solid square at the board square's
+// origin (compile-time data, above), and the value as 2×3 block digits
+// stamped right-aligned on its second row. A quadrant-block digit is 2
+// cells wide, so the leftover is always even and every digit count from
+// "2" to "2048" centres exactly. ui/Tile.8bx's PET arm is this call.
+export function stampTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    let cell: utinyint = row * 4 + col;
+    let origin: usmallint = ORIGIN_40[cell];
+    if (Video.COLUMNS != 40) {
+        origin = ORIGIN_80[cell];
+    }
+    fillSquare(origin);
+    let base: utinyint = TILE_DIGIT_AT[exponent];
+    let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
+    if (count != 0) {
+        let at: usmallint = origin + ROW + (4 - count);
+        let i: utinyint = 0;
+        while (i < count) {
+            stampDigit(at, TILE_DIGIT[base + i]);
+            at = at + 2;
+            i++;
+        }
+    }
+}
