@@ -16,7 +16,7 @@ import { text, TextColor } from "@8bitscript/text";
 import { System, Video } from "@8bitscript/system";
 import { headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "../lib/layout.8bs";
 import { host } from "../lib/host.8bs";
-import { graphicsSet, writeCells, blankCells, printScore5, hud } from "../lib/petscii.8bs";
+import { graphicsSet, writeCells, blankCells, printScore5, hud, at } from "../lib/petscii.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const SCORE_HEADER_LEN: utinyint = 11; // "SCORE " plus a five-digit score field
@@ -24,11 +24,11 @@ const SCORE_HEADER_LEN: utinyint = 11; // "SCORE " plus a five-digit score field
 export component ScoreBar(score: usmallint, over: bool, won: bool) {
     if (#system() == System.PET) {
         graphicsSet();
-        let header: usmallint = 2;
-        let status: usmallint = 962;
+        let header: usmallint = at.HEADER_40;
+        let status: usmallint = at.STATUS_40;
         if (Video.COLUMNS != 40) {
-            header = 22;
-            status = 1942;
+            header = at.HEADER_80;
+            status = at.STATUS_80;
         }
         writeCells(header, hud.TITLE_AT, hud.TITLE_LEN);
         writeCells(

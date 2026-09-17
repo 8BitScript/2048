@@ -16,7 +16,7 @@ import { screen } from "@8bitscript/screen";
 import { Input, System, Video } from "@8bitscript/system";
 import { START_KEY, len } from "../lib/layout.8bs";
 import { host } from "../lib/host.8bs";
-import { writeCells, hud } from "../lib/petscii.8bs";
+import { writeCells, hud, at } from "../lib/petscii.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
@@ -29,9 +29,9 @@ const TOUCH_LEN: utinyint = 14; // "TOUCH TO START"
 // The fluid host asks the live grid instead.
 export component StartMessage() {
     if (#system() == System.PET) {
-        let cell: usmallint = 534;
+        let cell: usmallint = at.PROMPT_40;
         if (Video.COLUMNS != 40) {
-            cell = 1074;
+            cell = at.PROMPT_80;
         }
         writeCells(cell, hud.TITLE_PRESS_RETURN, hud.TITLE_PRESS_RETURN_LEN);
     } else if (FLUID) {

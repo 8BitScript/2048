@@ -114,16 +114,30 @@ export namespace hud {
 //
 // Nothing erases them: main.8bs blanks the screen when the next game
 // starts, which is the only way out of a finished game.
-// The port's own copyright line, on the second-to-last row so the version
-// keeps the last one. The original game's author and repo are credited in
-// README.md rather than on screen.
+// Where the PET's lines go, as this build's cells (40 columns, or 80 on
+// an 8032 build) — every one is row × COLUMNS + (COLUMNS − length) >> 1,
+// the same centring every other machine writes out, worked out here once
+// as data because a const cannot be initialized by arithmetic yet
+// (8BS3001) and a helper that computes it is inlined but not folded
+// (+156 bytes on the PET for three sites, measured on 0.12.0). The
+// copyright keeps the second-to-last row so the version keeps the last.
 export namespace at {
-    const COPYRIGHT_40: usmallint = 930;  // row 23, col 10
-    const COPYRIGHT_80: usmallint = 1870; // row 23, col 30
-    const OVER_TITLE_40: usmallint = 255;   // row 6, col 15
-    const OVER_PROMPT_40: usmallint = 727;  // row 18, col 7
-    const OVER_TITLE_80: usmallint = 515;   // row 6, col 35
-    const OVER_PROMPT_80: usmallint = 1467; // row 18, col 27
+    const HEADER_40: usmallint = 2;         // row 0: the name, at the board's left
+    const HEADER_80: usmallint = 22;
+    const STATUS_40: usmallint = 962;       // row 24: the line under the board
+    const STATUS_80: usmallint = 1942;
+    const TITLE_40: usmallint = 458;        // row 11: "2048", 4 wide
+    const TITLE_80: usmallint = 918;
+    const PROMPT_40: usmallint = 534;       // row 13: "PRESS RETURN", 12 wide
+    const PROMPT_80: usmallint = 1074;
+    const VERSION_40: usmallint = 994;      // row 24: the version, right-aligned, 6 wide
+    const VERSION_80: usmallint = 1994;
+    const COPYRIGHT_40: usmallint = 930;    // row 23: the copyright, 19 wide
+    const COPYRIGHT_80: usmallint = 1870;
+    const OVER_TITLE_40: usmallint = 255;   // row 6: "GAME OVER", 9 wide
+    const OVER_TITLE_80: usmallint = 515;
+    const OVER_PROMPT_40: usmallint = 727;  // row 18: "PRESS RETURN TO TRY AGAIN", 25 wide
+    const OVER_PROMPT_80: usmallint = 1467;
 }
 
 const SCORE_PLACES: array<usmallint, 5> = [10000, 1000, 100, 10, 1];
