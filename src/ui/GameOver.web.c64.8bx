@@ -1,0 +1,18 @@
+// The web's fixed c64 skin's GAME OVER: the two gap-row lines at the
+// skin's own cells, the key prompt in the skin's own words
+// (lib/tile.web.c64.8bs's TRY_AGAIN_KEY). Identical on the three fixed
+// skins; a twin each because the resolver would otherwise hand them the
+// fluid host's GameOver.web.8bx. Nothing erases the lines but the next
+// game's blank.
+import { text } from "@8bitscript/text";
+import { input } from "@8bitscript/input";
+import { at, TRY_AGAIN_KEY } from "../lib/tile.8bs";
+
+export component GameOver() {
+    text.print(at.OVER, "GAME OVER");
+    if (input.touch()) {
+        text.print(at.OVER_TOUCH, "TOUCH TO TRY AGAIN");
+    } else {
+        text.print(at.OVER_KEY, TRY_AGAIN_KEY);
+    }
+}

@@ -1,0 +1,37 @@
+// The line above the board and the line below it: the game's name and the
+// score in the header row, and a status line that says how to move, that
+// the player made 2048, or — once the game is over and the board itself
+// says so — nothing. This is the portable one; the PET (ScoreBar.pet.8bx)
+// writes its baked screen codes, and the fluid web host (ScoreBar.web.8bx)
+// has a second arrangement with the score in the margins.
+import { text, TextColor } from "@8bitscript/text";
+import { headerRow, statusRow, leftMargin } from "../lib/tile.8bs";
+
+const ROW: usmallint = text.COLUMNS;
+const SCORE_HEADER_LEN: utinyint = 11; // "SCORE " plus a five-digit score field
+
+export component ScoreBar(score: usmallint, over: bool, won: bool) {
+    let headerAt: usmallint = headerRow * ROW;
+    // The status row's address joins it as a local rather than being written
+    // out in each arm below: the 6502 backend inlines a 16-bit multiply at
+    // every site, so three copies of statusRow * ROW is three multiplies.
+    // Hoisting it is most of what paid for the game-over message, on the
+    // unexpanded VIC-20 that had under a hundred bytes spare.
+    let statusAt: usmallint = statusRow * ROW + leftMargin;
+    text.setColor(TextColor.WHITE);
+    text.print(headerAt + leftMargin, "2048");
+    text.print(headerAt + text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
+    // The status line does not announce the end of the game — <GameOver />
+    // does — so it goes blank rather than keeping ARROWS TO MOVE up under a
+    // board that cannot move. Always write it, never just leave it: the
+    // branch that printed nothing is what strands a message across a
+    // restart. All three are 14 wide, the length of the longest, so a
+    // shorter one never leaves a leftover glyph.
+    if (won) {
+        text.print(statusAt, "YOU MADE 2048 ");
+    } else if (!over) {
+        text.print(statusAt, "ARROWS TO MOVE");
+    } else {
+        text.print(statusAt, "              ");
+    }
+}

@@ -167,7 +167,7 @@ export function main(): void {
                 // Clear the screen first, the same way starting the first
                 // game does. The game-over message every skin draws sits in
                 // the board's own gap rows, and a gap row is the one thing
-                // drawTile() never paints over — so without this the message
+                // <Tile /> never paints over — so without this the message
                 // would survive into the next game. One blank here costs
                 // every target less than an erase in every skin, and it is
                 // what lets the narrowest of them carry the message at all.

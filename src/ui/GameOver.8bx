@@ -1,0 +1,27 @@
+// GAME OVER, and how to try again, in the two gap rows inside the board —
+// the rows <Tile /> never touches — so the position the player lost on
+// stays in full view. The prompt names this machine's confirm control:
+// RETURN on a keyboard (without the PRESS on a screen too narrow for it),
+// START on a pad, FIRE on a stick. Each is a compile-time fact, so one
+// print survives per build.
+//
+// Nothing here erases these lines: 2048.8bs blanks the screen when the
+// next game starts, which is the only way out of a finished game.
+import { text } from "@8bitscript/text";
+import { Input } from "@8bitscript/system";
+import { overTitleAt, overPromptAt, board } from "../lib/tile.8bs";
+
+export component GameOver() {
+    text.print(overTitleAt, "GAME OVER");
+    if (Input.KEYBOARD) {
+        if (text.COLUMNS < board.FULL_WIDTH) {
+            text.print(overPromptAt, "RETURN TO TRY AGAIN");
+        } else {
+            text.print(overPromptAt, "PRESS RETURN TO TRY AGAIN");
+        }
+    } else if (Input.PADS > 0) {
+        text.print(overPromptAt, "PRESS START TO TRY AGAIN");
+    } else {
+        text.print(overPromptAt, "PRESS FIRE TO TRY AGAIN");
+    }
+}

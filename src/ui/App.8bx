@@ -1,7 +1,8 @@
 // What 2048 puts on the screen, as composition. The rules and the board
-// are lib/game.8bs's; how the HUD or the title is actually painted is
-// lib/tile.8bs's (and its per-machine twins'), and a tile is Tile.8bx's;
-// this file is the arrangement —
+// are lib/game.8bs's; how the title is actually painted is lib/tile.8bs's
+// (and its per-machine twins'); a tile, the score bar and the end of the
+// game are elements of their own beside this one; this file is the
+// arrangement —
 // which of those goes on the screen, and when — and nothing else, so a
 // reader can see the whole picture without a single screen address.
 //
@@ -14,8 +15,10 @@
 // animate are 60 bytes smaller, because <Tiles /> is one function where
 // the hand-written program kept a second copy of the loop.
 import { board, shown, score, over, won, started } from "../lib/game.8bs";
-import { drawHud, drawTitleScreen } from "../lib/tile.8bs";
+import { drawTitleScreen } from "../lib/tile.8bs";
 import { Tile } from "./Tile.8bx";
+import { ScoreBar } from "./ScoreBar.8bx";
+import { GameOver } from "./GameOver.8bx";
 
 // The title screen, up until confirm starts a game.
 export component Title() {
@@ -36,12 +39,19 @@ export component Tiles() {
     }
 }
 
-// The board as the player sees it: the HUD, then the tiles. The HUD comes
-// first so the score a merge just banked appears with the board that
-// earned it.
+// The board as the player sees it: the score bar, the end of the game if
+// it has come, then the tiles. The score bar comes first so the score a
+// merge just banked appears with the board that earned it; the message
+// before the tiles so it is printed in the score bar's colour, not the
+// last tile's.
 export component Board() {
-    drawHud(score, over, won);
-    <Tiles />;
+    return (
+        <>
+            <ScoreBar score={score} over={over} won={won} />
+            {over && <GameOver />}
+            <Tiles />
+        </>
+    );
 }
 
 // Whatever is on the screen right now — for putting it back after the

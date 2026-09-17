@@ -26,7 +26,7 @@ export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512
 // never has to ask `video.colorPerCell` itself: it draws the same calls
 // everywhere, and the three machines that cannot colour a cell simply do
 // not. Index 0 is the empty square's own colour now (every cell is a
-// filled block — see drawTile()), not an unused slot — and it shares WHITE
+// filled block — see ui/Tile.8bx), not an unused slot — and it shares WHITE
 // with the "2" tile rather than using BLACK, since the screen behind the
 // board is black on every target: a black reverse block on a black
 // background is invisible, which would leave the sixteen-square grid
@@ -111,7 +111,14 @@ const CX16_TILE_W: utinyint = 12;
 const CX16_TILE_H: utinyint = 8;
 const COL_GAP: utinyint = 1; // between tile columns — always on, see above
 const ROW_GAP: utinyint = 1; // between tile rows — never contended for room
-const FULL_BOARD_WIDTH: usmallint = 23;   // 4 tiles * 5 + 3 gaps * 1
+// The board's width in cells — the number that decides whether a machine
+// is too narrow for the full tile and the long form of the try-again
+// prompt (the VIC-20's 22 columns). A namespace so ui/GameOver.8bx can
+// import it: an imported bare number const does not survive the linker
+// today, a namespace member does.
+export namespace board {
+    const FULL_WIDTH: usmallint = 23; // 4 tiles * 5 + 3 gaps * 1
+}
 const NARROW_BOARD_WIDTH: usmallint = 19; // 4 tiles * 4 + 3 gaps * 1
 
 // Where the board lands, and how wide one tile is — both worked out once
@@ -123,17 +130,17 @@ const NARROW_BOARD_WIDTH: usmallint = 19; // 4 tiles * 4 + 3 gaps * 1
 // starts, not repeated per frame or per tile.
 export let cellWidth: usmallint = FULL_TILE_W;
 export let tileH: utinyint = DEFAULT_TILE_H;
-let leftMargin: usmallint = 0;
-let headerRow: usmallint = 0;
+export let leftMargin: usmallint = 0;
+export let headerRow: usmallint = 0;
 let boardTop: usmallint = 0;
-let statusRow: usmallint = 0;
+export let statusRow: usmallint = 0;
 
 // ---- the game-over message ----------------------------------------------
 //
 // "GAME OVER" goes in the blank row between the first and second rows of
 // tiles and how to play again in the row between the third and fourth,
 // instead of one line under the board. Those two gap rows are already empty
-// on every target — they are the rows drawTile() never touches — so the
+// on every target — they are the rows <Tile /> never touches — so the
 // message costs the board nothing and does not cover the position the
 // player just lost on, which is the thing worth looking at when the game
 // ends. They also sit symmetrically about the board's middle, so the pair
@@ -163,8 +170,8 @@ const OVER_STICK_LEN: utinyint = 23;        // "PRESS FIRE TO TRY AGAIN"
 // Worked out once in computeLayout(), like the board itself: the gap rows
 // move with tileH and the centring needs text.COLUMNS, neither of which is
 // known until a target is linked in.
-let overTitleAt: usmallint = 0;
-let overPromptAt: usmallint = 0;
+export let overTitleAt: usmallint = 0;
+export let overPromptAt: usmallint = 0;
 
 export function computeLayout(): void {
     // One arm per machine, each setting the tile size, rather than a
@@ -175,7 +182,7 @@ export function computeLayout(): void {
     // stores because of it. The narrow test comes first because the C64
     // arm is 40 columns and could never reach it anyway.
     let boardWidth: usmallint = NARROW_BOARD_WIDTH;
-    if (text.COLUMNS < FULL_BOARD_WIDTH) {
+    if (text.COLUMNS < board.FULL_WIDTH) {
         cellWidth = NARROW_TILE_W;
         tileH = DEFAULT_TILE_H;
     } else if (#system() == System.C64) {
@@ -189,7 +196,7 @@ export function computeLayout(): void {
     } else {
         cellWidth = FULL_TILE_W;
         tileH = DEFAULT_TILE_H;
-        boardWidth = FULL_BOARD_WIDTH;
+        boardWidth = board.FULL_WIDTH;
     }
     let boardHeight: usmallint = 4 * tileH + 3 * ROW_GAP;
     leftMargin = (text.COLUMNS - boardWidth) >> 1;
@@ -210,7 +217,7 @@ export function computeLayout(): void {
     // per machine costs the image exactly one prompt.
     overTitleAt = tileCell(1, 0) - ROW - leftMargin + ((text.COLUMNS - OVER_TITLE_LEN) >> 1);
     if (Input.KEYBOARD) {
-        if (text.COLUMNS < FULL_BOARD_WIDTH) {
+        if (text.COLUMNS < board.FULL_WIDTH) {
             overPromptAt = tileCell(3, 0) - ROW - leftMargin + ((text.COLUMNS - OVER_KEY_NARROW_LEN) >> 1);
         } else {
             overPromptAt = tileCell(3, 0) - ROW - leftMargin + ((text.COLUMNS - OVER_KEY_LEN) >> 1);
@@ -406,49 +413,5 @@ export function drawTitleScreen(): void {
     return;
 }
 
-const SCORE_HEADER_LEN: utinyint = 11; // "SCORE " plus a five-digit score field
 
-export function drawHud(score: usmallint, over: bool, won: bool): void {
-    let headerAt: usmallint = headerRow * ROW;
-    // The status row's address joins it as a local rather than being written
-    // out in each arm below: the 6502 backend inlines a 16-bit multiply at
-    // every site, so three copies of statusRow * ROW is three multiplies.
-    // Hoisting it is most of what paid for the message this function now
-    // draws, on the unexpanded VIC-20 that had under a hundred bytes spare.
-    let statusAt: usmallint = statusRow * ROW + leftMargin;
-    text.setColor(TextColor.WHITE);
-    text.print(headerAt + leftMargin, "2048");
-    text.print(headerAt + text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
-    // The status line no longer announces the end of the game — the board
-    // does — so it goes blank rather than keeping ARROWS TO MOVE up under a
-    // board that cannot move. Always write it, never just leave it: the
-    // branch that printed nothing is what strands a message across a
-    // restart. All three are 14 wide, the length of the longest, so a
-    // shorter one never leaves a leftover glyph — that width was 19 while
-    // GAME OVER - RESTART still lived here.
-    if (won) {
-        text.print(statusAt, "YOU MADE 2048 ");
-    } else if (!over) {
-        text.print(statusAt, "ARROWS TO MOVE");
-    } else {
-        text.print(statusAt, "              ");
-    }
-    // Nothing erases these two lines: 2048.8bs blanks the screen when the
-    // next game starts, which is the only way out of a finished game.
-    if (over) {
-        text.print(overTitleAt, "GAME OVER");
-        if (Input.KEYBOARD) {
-            if (text.COLUMNS < FULL_BOARD_WIDTH) {
-                text.print(overPromptAt, "RETURN TO TRY AGAIN");
-            } else {
-                text.print(overPromptAt, "PRESS RETURN TO TRY AGAIN");
-            }
-        } else if (Input.PADS > 0) {
-            text.print(overPromptAt, "PRESS START TO TRY AGAIN");
-        } else {
-            text.print(overPromptAt, "PRESS FIRE TO TRY AGAIN");
-        }
-    }
-    return;
-}
 

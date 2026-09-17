@@ -1,0 +1,60 @@
+// The fluid web host's score bar, in whichever of its two arrangements
+// this frame's grid is in (lib/tile.web.8bs's computeLayout() decides on
+// every resize): WIDE keeps the name, the score and a two-line hint in
+// the margins beside the board; NARROW is the portable layout, a header
+// row above and a status row below. Both input methods are real
+// possibilities on this target (a touchscreen laptop has both), so the
+// hint names both rather than picking one from input.touch().
+import { screen, BorderColor } from "@8bitscript/screen";
+import { text, TextColor } from "@8bitscript/text";
+import { wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt, headerAt, statusAt, boardLeft, boardWidth } from "../lib/tile.8bs";
+
+const SCORE_HEADER_LEN: utinyint = 11;  // "SCORE " plus a five-digit score field
+const HINT_BLANK: string = "     ";              // one WIDE margin line
+const STATUS_BLANK: string = "               ";  // one NARROW status line (15)
+const SWIPE_OR_ARROWS: string = "SWIPE OR ARROWS"; // 15
+const YOU_WIN: string = "YOU WIN!       ";         // 15 — padded to STATUS_BLANK's
+                                                    // width so a shorter message
+                                                    // never leaves a stale glyph
+
+export component ScoreBar(score: usmallint, over: bool, won: bool) {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    if (wide) {
+        text.print(titleNameAt, "2048");
+        text.print(scoreLabelAt, "SCORE");
+        text.print(scoreValueAt, `${score:5}`);
+        // Always write both hint lines, never just leave them: the branch
+        // that printed nothing is what used to strand "YOU MADE 2048" on
+        // screen across a restart, and would now strand the move hint
+        // through a game over.
+        if (won) {
+            text.print(hintTopAt, "SWIPE");
+            text.print(hintBottomAt, "WIN! ");
+        } else if (!over) {
+            text.print(hintTopAt, "SWIPE");
+            text.print(hintBottomAt, "ARROW");
+        } else {
+            text.print(hintTopAt, HINT_BLANK);
+            text.print(hintBottomAt, HINT_BLANK);
+        }
+    } else {
+        text.print(headerAt + boardLeft, "2048");
+        // Right-aligned on the board's own right edge, not the screen's:
+        // boardLeft + boardWidth is one past the last tile column, so the
+        // score's last digit lands directly above it instead of running
+        // out to whatever margin a wide window happens to have.
+        text.print(headerAt + boardLeft + boardWidth - SCORE_HEADER_LEN, `SCORE ${score:5}`);
+        if (won) {
+            text.print(statusAt, YOU_WIN);
+        } else if (!over) {
+            text.print(statusAt, SWIPE_OR_ARROWS);
+        } else {
+            text.print(statusAt, STATUS_BLANK);
+        }
+    }
+    // The border 2048.8bs blanks to at start-up — the playing border.
+    // <GameOver /> turns it red right after this, on the one frame a game
+    // ends, and the next game's first <ScoreBar /> turns it back.
+    screen.setBorder(BorderColor.BLUE);
+}

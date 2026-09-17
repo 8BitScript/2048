@@ -35,15 +35,21 @@ const ORIGIN: array<usmallint, 16> = [
     353, 358, 363, 368,
 ];
 
-const HEADER_AT: usmallint = 45;
-const SCORE_HEADER_LEN: utinyint = 11;
-const STATUS_AT: usmallint = 441;
-const TITLE_AT: usmallint = 229;
-const PROMPT_AT: usmallint = 269;
-const TOUCH_PROMPT_AT: usmallint = 268;  // "TOUCH TO START" is two
-                                          // characters longer, so it
-                                          // centres two columns left
-const VERSION_AT: usmallint = 500;
+// Every screen address this skin draws at, as one namespace so the
+// elements in ui/ can import them: an imported bare number const does
+// not survive the linker today, a namespace member does.
+export namespace at {
+    const HEADER: usmallint = 45;
+    const STATUS: usmallint = 441;
+    const TITLE: usmallint = 229;
+    const PROMPT: usmallint = 269;
+    const TOUCH_PROMPT: usmallint = 268;  // "TOUCH TO START" is two characters longer, so it centres two columns left
+    const VERSION: usmallint = 500;
+    const OVER: usmallint = 160;         // row 7, col 6 — "GAME OVER"
+    const OVER_TOUCH: usmallint = 332;   // row 15, col 2 — both prompts are 18,
+    const OVER_KEY: usmallint = 332;     // so both go at the same cell
+    const CREDIT_PORT: usmallint = 463;
+}
 
 // ---- the game-over message ------------------------------------------------
 //
@@ -51,7 +57,7 @@ const VERSION_AT: usmallint = 500;
 // (row 7), how to play again in the row between the third and fourth (row
 // 15), instead of one line under the board — the same two lines every other
 // skin draws, at this skin's own numbers. Both rows are already empty (a
-// gap row is the one thing drawTile() never touches), so the message costs
+// gap row is the one thing <Tile /> never touches), so the message costs
 // the board nothing and leaves the position that ended the game in view.
 // Each line is centred on the screen: (22 - length) / 2, which is what
 // decides the wording. PRESS ENTER TO TRY AGAIN, which the 40- and
@@ -60,13 +66,10 @@ const VERSION_AT: usmallint = 500;
 // of the row, reading as a bar across the board rather than a line inside
 // it (2026-09-13, screenshot). So this skin drops the PRESS, and both
 // prompts are 18 characters at the same column.
-const OVER_AT: usmallint = 160;         // row 7, col 6 — "GAME OVER"
-const OVER_PROMPT_AT: usmallint = 332;  // row 15, col 2 — both prompts are 18
 // One blank as wide as the longest line, from the column that line starts
 // in: it covers either gap row, and the 19-column status line as well.
 // The status line is the only thing this skin erases: the game-over
 // lines are cleared by main.8bs blanking the screen for the next game.
-const STATUS_BLANK: string = "                   "; // 19 spaces
 
 // ---- the copyright line ---------------------------------------------------
 //
@@ -79,7 +82,6 @@ const STATUS_BLANK: string = "                   "; // 19 spaces
 // glyph and nothing else, and the print is what put the colour on those
 // cells. The web host's font is indexed by ASCII outright, so these are the
 // two ASCII codes.
-const CREDIT_PORT_AT: usmallint = 463;
 const PAREN_OPEN: utinyint = 40;
 const PAREN_CLOSE: utinyint = 41;
 
@@ -89,46 +91,19 @@ export function computeLayout(): void {
 export function drawTitleScreen(): void {
     text.setReverse(false);
     text.setColor(TextColor.WHITE);
-    text.print(TITLE_AT, "2048");
+    text.print(at.TITLE, "2048");
     if (input.touch()) {
-        text.print(TOUCH_PROMPT_AT, "TOUCH TO START");
+        text.print(at.TOUCH_PROMPT, "TOUCH TO START");
     } else {
-        text.print(PROMPT_AT, "PRESS ENTER");
+        text.print(at.PROMPT, "PRESS ENTER");
     }
-    text.print(CREDIT_PORT_AT, " C  2026 8BITSCRIPT");
-    text.putChar(CREDIT_PORT_AT, PAREN_OPEN);
-    text.putChar(CREDIT_PORT_AT + 2, PAREN_CLOSE);
-    text.print(VERSION_AT, VERSION_LINE);
+    text.print(at.CREDIT_PORT, " C  2026 8BITSCRIPT");
+    text.putChar(at.CREDIT_PORT, PAREN_OPEN);
+    text.putChar(at.CREDIT_PORT + 2, PAREN_CLOSE);
+    text.print(at.VERSION, VERSION_LINE);
     return;
 }
 
-export function drawHud(score: usmallint, over: bool, won: bool): void {
-    text.setReverse(false);
-    text.setColor(TextColor.WHITE);
-    text.print(HEADER_AT, "2048");
-    text.print(text.COLUMNS - SCORE_HEADER_LEN, `SCORE ${score:5}`);
-    // Always write the status line, never just leave it: the branch that
-    // printed nothing is what used to strand a message across a restart on
-    // a touch host, where ARROWS TO MOVE is suppressed.
-    if (won) {
-        text.print(STATUS_AT, "YOU MADE 2048      ");
-    } else if (!over && !input.touch()) {
-        text.print(STATUS_AT, "ARROWS TO MOVE     ");
-    } else {
-        text.print(STATUS_AT, STATUS_BLANK);
-    }
-    // Nothing erases these two lines: main.8bs blanks the screen when the
-    // next game starts, which is the only way out of a finished game.
-    if (over) {
-        text.print(OVER_AT, "GAME OVER");
-        if (input.touch()) {
-            text.print(OVER_PROMPT_AT, "TOUCH TO TRY AGAIN");
-        } else {
-            text.print(OVER_PROMPT_AT, "ENTER TO TRY AGAIN");
-        }
-    }
-    return;
-}
 
 
 
@@ -154,3 +129,8 @@ export let tileH: utinyint = TILE_H;
 export function tileCell(row: utinyint, col: utinyint): usmallint {
     return ORIGIN[row * 4 + col];
 }
+
+// The try-again prompt is this skin's wording — see the game-over note
+// above — read by ui/GameOver.web.vic20.8bx; TRY_AGAIN_TOUCH is the
+// same on every web skin and lives there.
+export const TRY_AGAIN_KEY: string = "ENTER TO TRY AGAIN";

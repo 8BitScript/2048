@@ -44,7 +44,7 @@
 // already followed from a fixed pair.
 //
 // Both arrangements answer computeLayout()/tileCell() the same way, so
-// drawTile()'s caller in 2048.8bs never needs to know which one a frame
+// <Tile />'s caller never needs to know which one a frame
 // is in; `wide` below picks the arrangement once each time the grid
 // changes shape, and every drawing function branches on it exactly once.
 //
@@ -87,7 +87,7 @@ let gridRows: usmallint = 0; // this frame's row count
 // Which arrangement this frame is in — see the header comment. A `let`,
 // not a `const`: it depends on the live rowWidth, which can change after
 // the game has started.
-let wide: bool = true;
+export let wide: bool = true;
 
 // Below this many columns the WIDE arrangement's margins have nowhere
 // near enough room: this is this skin's own historical baseline (48×27),
@@ -126,7 +126,7 @@ const NARROW_TILE_MIN: usmallint = 4;
 const NARROW_TILE_MAX: usmallint = 16;
 
 // The block-digit font needs 2 cells per digit, 4 digits wide for "2048" —
-// the same 8 WIDE_TILE_MIN already guarantees there. drawTile() reads this
+// the same 8 WIDE_TILE_MIN already guarantees there. Tile.web.8bx reads this
 // directly, not `wide`: WIDE's own tileW floor already clears it every
 // time, and NARROW's continuous square tile clears it whenever the live
 // grid has the room, which is most shapes wider than a true phone
@@ -134,7 +134,7 @@ const NARROW_TILE_MAX: usmallint = 16;
 // fit it should use it regardless of which arrangement chose that size.
 // Only where NARROW's own floor (4) is still binding — a live grid too
 // narrow for both a bigger square tile and this — does a tile fall back
-// to the plain printed digit drawTile()'s narrow branch below draws.
+// to the plain printed digit Tile.web.8bx's narrow branch draws.
 const BLOCK_DIGIT_MIN: usmallint = WIDE_TILE_MIN;
 
 // This frame's tile size and board footprint, worked out by
@@ -143,7 +143,7 @@ const BLOCK_DIGIT_MIN: usmallint = WIDE_TILE_MIN;
 // these, the same way tile.8bs's own cellWidth/tileH are.
 export let tileW: usmallint = 8;
 export let tileH: usmallint = 5; // this skin's original WIDE tile, until computeLayout() runs
-let boardWidth: usmallint = 35;
+export let boardWidth: usmallint = 35;
 let boardHeight: usmallint = 23;
 
 export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
@@ -211,7 +211,6 @@ const OVER_TITLE_LEN: utinyint = 9;     // "GAME OVER"
 const OVER_TOUCH_LEN: utinyint = 18;    // "TOUCH TO TRY AGAIN"
 const OVER_KEY_LEN: utinyint = 24;      // "PRESS ENTER TO TRY AGAIN"
 const RIGHT_HUD_WIDTH: utinyint = 6;    // "v0.2.0" — the widest field rightAt anchors
-const SCORE_HEADER_LEN: utinyint = 11;  // "SCORE " plus a five-digit score field — tile.8bs's own
 
 // Where the board sits, and every HUD position around it — all worked out
 // once in computeLayout() below, the same way tile.8bs's own leftMargin/
@@ -220,19 +219,19 @@ const SCORE_HEADER_LEN: utinyint = 11;  // "SCORE " plus a five-digit score fiel
 // the nine machines, computeLayout() here can run more than once a
 // session — main.8bs calls it again whenever screen.resized() reports the
 // window changed shape.
-let boardLeft: usmallint = 0;
+export let boardLeft: usmallint = 0;
 let boardTop: usmallint = 0;
 
 // ---- WIDE-only HUD positions (the side margins) ----------------------------
-let titleNameAt: usmallint = 0;   // level with the board's top, left of it
-let scoreLabelAt: usmallint = 0;  // level with the board's top, right of it
-let scoreValueAt: usmallint = 0;  // one row under the score label
-let hintTopAt: usmallint = 0;     // two 5-column lines against the board's
-let hintBottomAt: usmallint = 0;  // last two rows, on the right
+export let titleNameAt: usmallint = 0;   // level with the board's top, left of it
+export let scoreLabelAt: usmallint = 0;  // level with the board's top, right of it
+export let scoreValueAt: usmallint = 0;  // one row under the score label
+export let hintTopAt: usmallint = 0;     // two 5-column lines against the board's
+export let hintBottomAt: usmallint = 0;  // last two rows, on the right
 
 // ---- NARROW-only HUD positions (header row above, status row below) -------
-let headerAt: usmallint = 0;   // the header row's own start-of-row cell
-let statusAt: usmallint = 0;   // the status row, left-aligned on the board
+export let headerAt: usmallint = 0;   // the header row's own start-of-row cell
+export let statusAt: usmallint = 0;   // the status row, left-aligned on the board
 
 // ---- title screen positions (both arrangements) ----------------------------
 let titleAt: usmallint = 0;       // "2048" on the title screen
@@ -260,29 +259,18 @@ let versionAt: usmallint = 0;
 // (2026-09-13, screenshot) and came out dimmer than the white prompt
 // under it — the wrong way round for the line that matters more. The red
 // the panel used to carry survives as the screen border.
-let overAt: usmallint = 0;       // "GAME OVER"
-let overTouchAt: usmallint = 0;  // "TOUCH TO TRY AGAIN"
-let overKeyAt: usmallint = 0;    // "PRESS ENTER TO TRY AGAIN"
+export let overAt: usmallint = 0;       // "GAME OVER"
+export let overTouchAt: usmallint = 0;  // "TOUCH TO TRY AGAIN"
+export let overKeyAt: usmallint = 0;    // "PRESS ENTER TO TRY AGAIN"
 
-const HINT_BLANK: string = "     ";              // one WIDE margin line
-const STATUS_BLANK: string = "               ";  // one NARROW status line (15)
-const SWIPE_OR_ARROWS: string = "SWIPE OR ARROWS"; // 15 — both input methods
-                                                    // are real possibilities
-                                                    // on this target, so
-                                                    // both get named
-const YOU_WIN: string = "YOU WIN!       ";         // 15 — padded to STATUS_BLANK's
-                                                    // width so a shorter message
-                                                    // never leaves a stale glyph
-
-// Nothing here erases the message. Both lines sit in the 1-row gaps between
-// tiles — the rows drawTile() never touches — so the panel's trick of
-// letting the tiles paint back over it would not have worked; main.8bs
-// blanks the screen when the next game starts instead, which is the only
-// way out of a finished game and clears every skin's message at once.
-
-// The border main.8bs blanks to at start-up. Named here rather than written
-// twice, so restoring it after a game over cannot drift from setting it.
-const PLAYING_BORDER: utinyint = BorderColor.BLUE;
+// The strings themselves — the hints, the status line, the message — are
+// ui/ScoreBar.web.8bx's and ui/GameOver.web.8bx's, beside the prints that
+// use them. Nothing here erases the message: both lines sit in the 1-row
+// gaps between tiles — the rows <Tile /> never touches — so the panel's
+// trick of letting the tiles paint back over it would not have worked;
+// main.8bs blanks the screen when the next game starts instead, which is
+// the only way out of a finished game and clears every skin's message at
+// once.
 
 // ---- the copyright line ---------------------------------------------------
 //
@@ -394,7 +382,7 @@ export function computeLayout(): void {
         }
         // Even, the same reason the WIDE tile is kept even (see "why the
         // HUD is in the margins" above): whenever this reaches
-        // BLOCK_DIGIT_MIN below, drawTile() switches this arrangement to
+        // BLOCK_DIGIT_MIN below, Tile.web.8bx switches this arrangement to
         // the same block-digit font WIDE uses, and that font's centring
         // is only exact on an even width. tileH carries no such
         // requirement — the glyph rows centre under any height >= 3.
@@ -583,68 +571,7 @@ export function drawTitleScreen(): void {
     return;
 }
 
-function drawOver(): void {
-    text.setReverse(false);
-    text.setColor(TextColor.WHITE);
-    text.print(overAt, "GAME OVER");
-    if (input.touch()) {
-        text.print(overTouchAt, "TOUCH TO TRY AGAIN");
-    } else {
-        text.print(overKeyAt, "PRESS ENTER TO TRY AGAIN");
-    }
-    return;
-}
 
-export function drawHud(score: usmallint, over: bool, won: bool): void {
-    text.setReverse(false);
-    text.setColor(TextColor.WHITE);
-    if (wide) {
-        text.print(titleNameAt, "2048");
-        text.print(scoreLabelAt, "SCORE");
-        text.print(scoreValueAt, `${score:5}`);
-        // Always write both hint lines, never just leave them: the branch
-        // that printed nothing is what used to strand "YOU MADE 2048" on
-        // screen across a restart, and would now strand the move hint
-        // through a game over. Both input methods are real possibilities
-        // on this target (a touchscreen laptop has both), so the hint
-        // names both rather than picking one from input.touch().
-        if (won) {
-            text.print(hintTopAt, "SWIPE");
-            text.print(hintBottomAt, "WIN! ");
-        } else if (!over) {
-            text.print(hintTopAt, "SWIPE");
-            text.print(hintBottomAt, "ARROW");
-        } else {
-            text.print(hintTopAt, HINT_BLANK);
-            text.print(hintBottomAt, HINT_BLANK);
-        }
-    } else {
-        text.print(headerAt + boardLeft, "2048");
-        // Right-aligned on the board's own right edge, not the screen's:
-        // boardLeft + boardWidth is one past the last tile column, so the
-        // score's last digit lands directly above it instead of running
-        // out to whatever margin a wide window happens to have.
-        text.print(headerAt + boardLeft + boardWidth - SCORE_HEADER_LEN, `SCORE ${score:5}`);
-        if (won) {
-            text.print(statusAt, YOU_WIN);
-        } else if (!over) {
-            text.print(statusAt, SWIPE_OR_ARROWS);
-        } else {
-            text.print(statusAt, STATUS_BLANK);
-        }
-    }
-    // Two lines inside the board are a quiet thing to say; the border turning
-    // red is the rest of the screen saying it too, which is why the host
-    // always draws a border, however thin. drawHud() runs once per move, and
-    // exactly once with over set, so neither arm needs a flag to not repeat.
-    if (over) {
-        screen.setBorder(BorderColor.RED);
-        drawOver();
-    } else {
-        screen.setBorder(PLAYING_BORDER);
-    }
-    return;
-}
 
 export function fillTile(origin: usmallint, exponent: utinyint): void {
     text.setColor(TILE_COLOR[exponent]);

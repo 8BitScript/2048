@@ -31,7 +31,7 @@
     "build:cx16": "8bs build --target cx16",
     "build:mega65": "8bs build --target mega65",
     "deploy:web": "pnpm run build:web && wrangler deploy",
-    "check": "8bs check src/2048.8bs src/lib/game.8bs src/ui/App.8bx src/ui/Tile.8bx",
+    "check": "8bs check src/2048.8bs src/lib/game.8bs src/ui/App.8bx src/ui/Tile.8bx src/ui/ScoreBar.8bx src/ui/GameOver.8bx",
     "changeset": "changeset",
     "changeset:version": "changeset version && pnpm install --no-frozen-lockfile"
   },
