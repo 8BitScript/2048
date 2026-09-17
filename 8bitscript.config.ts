@@ -1,13 +1,13 @@
 export default {
   // One program for every target — see README.md. The entry is the .8bs
-  // that drives the game; Screen.8bx and game.8bs reach it by import.
+  // that drives the game; ui/App.8bx and lib/game.8bs reach it by import.
   entry: 'src/2048.8bs',
   targets: {
     vic20: {},
     c64: {},
     // The game is 2763 bytes of program on a 2001/4K, measured 2026-09-16
     // against the 0.11.0 toolchain — the same 2763 before and after the
-    // screen moved into Screen.8bx (the same functions at the same sizes,
+    // screen moved into ui/App.8bx (the same functions at the same sizes,
     // laid out in module order), and before and after the title screen's
     // raster wobble, which folds away entirely here and on the unexpanded
     // VIC-20 (3490 bytes, also unchanged): #fact(video.raster) is false on

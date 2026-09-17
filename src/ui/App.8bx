@@ -1,6 +1,6 @@
 // What 2048 puts on the screen, as composition. The rules and the board
-// are game.8bs's; how a tile, the HUD or the title is actually painted is
-// tile.8bs's (and its per-machine twins'); this file is the arrangement —
+// are lib/game.8bs's; how a tile, the HUD or the title is actually painted
+// is lib/tile.8bs's (and its per-machine twins'); this file is the arrangement —
 // which of those goes on the screen, and when — and nothing else, so a
 // reader can see the whole picture without a single screen address.
 //
@@ -12,8 +12,8 @@
 // order (2026-09-16, against the 0.11.0 toolchain). The builds that
 // animate are 60 bytes smaller, because <Tiles /> is one function where
 // the hand-written program kept a second copy of the loop.
-import { board, shown, score, over, won, started } from "./game.8bs";
-import { drawHud, drawTile, drawTitleScreen } from "./tile.8bs";
+import { board, shown, score, over, won, started } from "../lib/game.8bs";
+import { drawHud, drawTile, drawTitleScreen } from "../lib/tile.8bs";
 
 // The title screen, up until confirm starts a game.
 export component Title() {
@@ -45,6 +45,6 @@ export component Board() {
 // Whatever is on the screen right now — for putting it back after the
 // grid changes shape under it (the web's fluid host, on a resize or a
 // rotated phone).
-export component Screen() {
+export component App() {
     return (<>{started ? <Board /> : <Title />}</>);
 }

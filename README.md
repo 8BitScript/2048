@@ -8,11 +8,12 @@ from scratch in [8BitScript](https://github.com/8BitScript/8bitscript) — one
 program, running on the VIC-20, C64, PET, C128, Atari 8-bit, NES, Commander
 X16, MEGA65, *and* the web, the way 8BitScript's own `examples/borders` and
 `examples/menubar` do. [`src/2048.8bs`](src/2048.8bs) is the program (the
-loop that reads the player), [`src/game.8bs`](src/game.8bs) the rules and
-the board, [`src/Screen.8bx`](src/Screen.8bx) what goes on the screen —
-the first [8BX](https://github.com/8BitScript/8bitscript/blob/trunk/docs/project/8bx.md)
-file in a real program — and `src/tile.8bs` (with a twin per machine that
-needs one) how each of those is painted.
+loop that reads the player); [`src/ui/`](src/ui) is what goes on the screen,
+as [8BX](https://github.com/8BitScript/8bitscript/blob/trunk/docs/project/8bx.md)
+elements — `App.8bx` is the root; and [`src/lib/`](src/lib) is the `.8bs`
+underneath: `game.8bs` the rules and the board, `tile.8bs` (with a twin per
+machine that needs one) how a tile is painted, `rng.8bs` where the numbers
+come from.
 
 ```
 2048  SCORE 00042
@@ -143,7 +144,7 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   screenshot, which is exactly why both packages sit behind their own
   explicitly optional import (see either one's header).
 - **What is on the screen is composition, and it costs nothing.**
-  `Screen.8bx` is the arrangement — a `<Title />`, or a `<Board />` that is
+  `ui/App.8bx` is the arrangement — a `<Title />`, or a `<Board />` that is
   the HUD over sixteen `<Tiles />` — written as 8BX elements over the
   drawing calls `tile.8bs` and its twins provide, with none of the screen
   addresses those files are made of. A component is a function and an
