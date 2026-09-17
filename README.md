@@ -15,10 +15,10 @@ elements — `App.8bx` is the root, one file per element; and
 the board, `layout.8bs` where everything goes, `petscii.8bs` the PET's
 own screen (its positions and its screen codes), `palette.8bs` and
 `font.8bs` the tables, `draw.8bs` the shared primitives, `host.8bs` what
-the machine is like, `rng.8bs` where the numbers come from. Machine twins
-live in `lib/` and nowhere else, and there are four: the PET's font, the
-web's PET replica, the web's host, and the two machines with hardware
-random numbers.
+the machine is like. Machine twins live in `lib/` and nowhere else, and
+there are three: the PET's font, the web's PET replica, and the web's
+host. Where the random numbers come from is the platform's choice, not
+the game's — see below.
 
 ```
 2048  SCORE 00042
@@ -141,13 +141,17 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   deterministic generator added to 8BitScript itself for this, stepped once
   every frame regardless of input so the sequence a game sees depends on how
   long the player took between moves and not just how many they made.
-  `rng.8bs` is the one place that picks, with `rng.c64.8bs` and
-  `rng.atari8.8bs` as its per-machine twins; the seven software builds are
-  byte-for-byte what they were before the split, the 4K PET included. The
-  price on the two hardware builds is replay — every spawn reads a register,
-  so those games cannot be replayed from a start state or reproduced from a
-  screenshot, which is exactly why both packages sit behind their own
-  explicitly optional import (see either one's header).
+  [`@8bitscript/random/entropy`](../8bitscript/packages/random) is the one
+  place that picks: one import, and the compiler takes the C64's or the
+  Atari's file for those two builds and the software generator's for the
+  rest, the same twin rule that gives the NES its own `screen.8bs`. The
+  game carried that choice itself until 0.12.0 — an `rng.8bs` with two
+  machine twins — and moving it into the platform changed no build by a
+  byte. The price on the two hardware builds is replay — every spawn reads
+  a register, so those games cannot be replayed from a start state or
+  reproduced from a screenshot, which is exactly why `/entropy` is an
+  explicitly optional import and the bare `@8bitscript/random` stays
+  deterministic (see the package's README).
 - **What is on the screen is composition, and it costs nothing.**
   `ui/App.8bx` is the arrangement — a `<TitleScreen />` (a `<Logo />`, a
   `<StartMessage />` in the words of this machine's controls, the
