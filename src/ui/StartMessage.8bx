@@ -14,13 +14,14 @@
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { Input, System, Video } from "@8bitscript/system";
-import { START_KEY, len } from "../lib/layout.8bs";
+import { ENTER_KEY } from "../lib/layout.8bs";
+import { PRESS_RETURN, PRESS_START, PRESS_FIRE, PRESS_RETURN_OR_START, PRESS_RETURN_OR_FIRE, PRESS_ENTER, TOUCH_TO_START } from "../lib/strings.8bs";
 import { host } from "../lib/host.8bs";
-import { writeCells, hud } from "../lib/petscii.8bs";
+import { writeCells } from "../lib/petscii.8bs";
+import { hud, at } from "../lib/codes.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
-const TOUCH_LEN: utinyint = 14; // "TOUCH TO START"
 
 // Every address below is a compile-time constant on a fixed grid, and is
 // written out in full at each print rather than hoisted into a local: a
@@ -29,38 +30,40 @@ const TOUCH_LEN: utinyint = 14; // "TOUCH TO START"
 // The fluid host asks the live grid instead.
 export component StartMessage() {
     if (#system() == System.PET) {
-        let cell: usmallint = 534;
+        let cell: usmallint = at.PROMPT_40;
         if (Video.COLUMNS != 40) {
-            cell = 1074;
+            cell = at.PROMPT_80;
         }
         writeCells(cell, hud.TITLE_PRESS_RETURN, hud.TITLE_PRESS_RETURN_LEN);
     } else if (FLUID) {
         let cols: usmallint = text.columns();
         let rows: usmallint = text.rows();
         if (host.touch()) {
-            text.print(((rows >> 1) + 1) * cols + ((cols - TOUCH_LEN) >> 1), "TOUCH TO START");
+            text.print(((rows >> 1) + 1) * cols + ((cols - TOUCH_TO_START.length) >> 1), TOUCH_TO_START);
         } else {
-            text.print(((rows >> 1) + 1) * cols + ((cols - len.START_KEY) >> 1), START_KEY);
+            text.print(((rows >> 1) + 1) * cols + ((cols - PRESS_ENTER.length) >> 1), PRESS_ENTER);
         }
     } else if (#system() == System.WEB) {
         if (host.touch()) {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - TOUCH_LEN) >> 1), "TOUCH TO START");
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - TOUCH_TO_START.length) >> 1), TOUCH_TO_START);
+        } else if (ENTER_KEY) {
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_ENTER.length) >> 1), PRESS_ENTER);
         } else {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - len.START_KEY) >> 1), START_KEY);
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_RETURN.length) >> 1), PRESS_RETURN);
         }
     } else if (Input.PADS > 0) {
         if (Input.KEYBOARD) {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 21) >> 1), "PRESS RETURN OR START");
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_RETURN_OR_START.length) >> 1), PRESS_RETURN_OR_START);
         } else {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 11) >> 1), "PRESS START");
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_START.length) >> 1), PRESS_START);
         }
     } else if (Input.JOYSTICKS > 0) {
         if (Input.KEYBOARD) {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 20) >> 1), "PRESS RETURN OR FIRE");
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_RETURN_OR_FIRE.length) >> 1), PRESS_RETURN_OR_FIRE);
         } else {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 10) >> 1), "PRESS FIRE");
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_FIRE.length) >> 1), PRESS_FIRE);
         }
     } else {
-        text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 12) >> 1), "PRESS RETURN");
+        text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_RETURN.length) >> 1), PRESS_RETURN);
     }
 }

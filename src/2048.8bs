@@ -8,7 +8,7 @@
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
 import { raster } from "@8bitscript/raster";
-import { rng } from "./lib/rng.8bs";
+import { entropy } from "@8bitscript/random/entropy";
 import { Memory } from "@8bitscript/system";
 import { computeLayout } from "./lib/layout.8bs";
 import { wobble } from "./lib/wobble.8bs";
@@ -90,8 +90,10 @@ export function main(): void {
     // First, before anything else touches the hardware: on the C64 this
     // claims SID voice 3 and writes $D418 whole, and it has no way to know
     // if something else got there first. Empty on the seven targets with no
-    // entropy source, and on the Atari, whose counter is already running.
-    rng.begin();
+    // entropy source, and on the Atari, whose counter is already running —
+    // @8bitscript/random/entropy picks the machine's file, so nothing here
+    // names a machine.
+    entropy.begin();
     screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
     computeLayout();
     if (HAS_RESIZE) {
@@ -118,7 +120,7 @@ export function main(): void {
     while (true) {
         waitFrame();
         input.poll();
-        rng.tick(); // keep the generator moving between moves — see spawnTile()
+        entropy.tick(); // keep the generator moving between moves — see spawnTile()
 
         // The window resized or the phone rotated: every position lib/layout.8bs
         // computed depends on the grid computeLayout() read, so

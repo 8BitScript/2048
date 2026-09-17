@@ -11,7 +11,7 @@
 // byte where the real value would need two, and "two equal tiles merge"
 // becomes "two equal exponents merge into exponent + 1" — one add instead
 // of a double and a compare.
-import { rng } from "./rng.8bs";
+import { entropy } from "@8bitscript/random/entropy";
 
 const SIZE: utinyint = 4; // 4x4 — 2048's own board, on every target
 const MAX_EXPONENT: utinyint = 11; // 2^11 = 2048, the tile that wins
@@ -179,13 +179,15 @@ export function stepLines(start: utinyint, step: utinyint, stride: utinyint): vo
 // ---- spawning, and knowing when to stop ---------------------------------
 
 // One new tile in a random empty cell: a 2 nine times in ten, a 4 the
-// tenth. Where those numbers come from depends on the machine, and rng.8bs
-// is the one place that decides: seven targets get 8BitScript's own
-// deterministic generator, stepped once a frame in 2048.8bs's loop so the
-// sequence follows how long the player actually took between moves rather
-// than repeating the same game every run; the C64 and the Atari 8-bit read
-// their own hardware entropy instead, which on those two is both smaller
-// than computing it and genuinely unpredictable.
+// tenth. Where those numbers come from depends on the machine, and
+// @8bitscript/random/entropy is the one place that decides: seven targets
+// get 8BitScript's own deterministic generator, stepped once a frame in
+// 2048.8bs's loop so the sequence follows how long the player actually
+// took between moves rather than repeating the same game every run; the
+// C64 and the Atari 8-bit read their own hardware entropy instead, which
+// on those two is both smaller than computing it and genuinely
+// unpredictable. The game used to carry that choice itself, as three
+// files; the platform carries it now.
 export function spawnTile(): void {
     let empties: utinyint = 0;
     for (let i: utinyint = 0; i < 16; i++) {
@@ -196,9 +198,9 @@ export function spawnTile(): void {
     if (empties == 0) {
         return;
     }
-    let target: utinyint = rng.range(empties);
+    let target: utinyint = entropy.range(empties);
     let exponent: utinyint = 1;
-    if (rng.range(10) == 0) {
+    if (entropy.range(10) == 0) {
         exponent = 2;
     }
     let seenEmpty: utinyint = 0;

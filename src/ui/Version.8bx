@@ -5,7 +5,8 @@ import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { System, Video } from "@8bitscript/system";
 import { VERSION_LINE } from "../lib/version.8bs";
-import { writeCells, hud } from "../lib/petscii.8bs";
+import { writeCells } from "../lib/petscii.8bs";
+import { hud, at } from "../lib/codes.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
@@ -13,9 +14,9 @@ const VERSION_LEN: utinyint = 6; // "v0.2.0"
 
 export component Version() {
     if (#system() == System.PET) {
-        let cell: usmallint = 994;
+        let cell: usmallint = at.VERSION_40;
         if (Video.COLUMNS != 40) {
-            cell = 1994;
+            cell = at.VERSION_80;
         }
         writeCells(cell, hud.TITLE_VERSION, hud.TITLE_VERSION_LEN);
     } else if (FLUID) {

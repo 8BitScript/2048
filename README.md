@@ -15,10 +15,10 @@ elements — `App.8bx` is the root, one file per element; and
 the board, `layout.8bs` where everything goes, `petscii.8bs` the PET's
 own screen (its positions and its screen codes), `palette.8bs` and
 `font.8bs` the tables, `draw.8bs` the shared primitives, `host.8bs` what
-the machine is like, `rng.8bs` where the numbers come from. Machine twins
-live in `lib/` and nowhere else, and there are four: the PET's font, the
-web's PET replica, the web's host, and the two machines with hardware
-random numbers.
+the machine is like. Machine twins live in `lib/` and nowhere else, and
+there are three: the PET's font, the web's PET replica, and the web's
+host. Where the random numbers come from is the platform's choice, not
+the game's — see below.
 
 ```
 2048  SCORE 00042
@@ -102,6 +102,19 @@ builds that directory and deploys it to [2048.8bitscript.com](https://2048.8bits
 once the `8bitscript.com` zone is in Cloudflare and `CLOUDFLARE_API_TOKEN` is
 set. Every other target reads a real keyboard, joystick, or pad the same way.
 
+Every line the game prints is in [`src/lib/strings.8bs`](src/lib/strings.8bs),
+and `src/lib/strings.de.8bs` beside it is the German one: `pnpm exec 8bs
+build --target vic20 --locale de` (or `8bs run c64 --locale de`) builds a
+German game, `dist/2048-vic20-de-ntsc.prg` beside the English one, and the
+release ships the German web build and the German 4K PET. A locale is a
+build input, not a menu — a 4K PET has no room for a switch — and with no
+locale named no locale's file is read, so the English builds are the
+bytes they were. The PET does not print strings at all (its lines are
+baked screen codes, `src/lib/codes.8bs` and `codes.de.8bs`); the version
+line is the one string not yet in `strings.8bs` — it waits on 8bitscript
+0.13.0's `#package("version")`, which reads it out of `package.json` at
+compile time.
+
 ## How it's built
 
 - **The board is sixteen exponents, not sixteen numbers.** `board[i]` is 0
@@ -141,13 +154,17 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   deterministic generator added to 8BitScript itself for this, stepped once
   every frame regardless of input so the sequence a game sees depends on how
   long the player took between moves and not just how many they made.
-  `rng.8bs` is the one place that picks, with `rng.c64.8bs` and
-  `rng.atari8.8bs` as its per-machine twins; the seven software builds are
-  byte-for-byte what they were before the split, the 4K PET included. The
-  price on the two hardware builds is replay — every spawn reads a register,
-  so those games cannot be replayed from a start state or reproduced from a
-  screenshot, which is exactly why both packages sit behind their own
-  explicitly optional import (see either one's header).
+  [`@8bitscript/random/entropy`](../8bitscript/packages/random) is the one
+  place that picks: one import, and the compiler takes the C64's or the
+  Atari's file for those two builds and the software generator's for the
+  rest, the same twin rule that gives the NES its own `screen.8bs`. The
+  game carried that choice itself until 0.12.0 — an `rng.8bs` with two
+  machine twins — and moving it into the platform changed no build by a
+  byte. The price on the two hardware builds is replay — every spawn reads
+  a register, so those games cannot be replayed from a start state or
+  reproduced from a screenshot, which is exactly why `/entropy` is an
+  explicitly optional import and the bare `@8bitscript/random` stays
+  deterministic (see the package's README).
 - **What is on the screen is composition, and it costs nothing.**
   `ui/App.8bx` is the arrangement — a `<TitleScreen />` (a `<Logo />`, a
   `<StartMessage />` in the words of this machine's controls, the
@@ -161,13 +178,14 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   what differs between them is a fact (`screen.RESIZABLE`, `#system()`,
   `Input.*`), and the arm a build cannot take folds away — measured, one
   element at a time, at exactly the bytes the per-machine twins cost.
-  `ui/Tile.8bx` *is* the tile:
-  the element owns the painting and the skin owns the tables it paints
-  from, which is what keeps it free — a `<Tile />` that merely called a
-  `drawTile()` in `lib/` was measured at +36 bytes, and one built from
-  `paintTile()` and `stampValue()` primitives at +56, because a function
-  with parameters called from one place is not inlined on 0.11.0
-  (8bitscript #184 inlines it, and measures that form at zero). A component is a function and an
+  `ui/Tile.8bx` says which of two calls paints the tile — `stampTile()`
+  in `lib/petscii.8bs` or `paintTile()` in `lib/draw.8bs` — and each
+  element's words are `lib/strings.8bs`'s; the elements are the
+  arrangement, and `lib/` is the how. That is free because a function
+  with one caller is written into it (8bitscript #184): on 0.11.0 the
+  same `Tile` measured +56 bytes on every 6502 and +84 on the PET, and a
+  `<Tile />` that merely forwarded to a `drawTile()` +36, which is why the
+  painting used to live in the element. A component is a function and an
   element is a call, so this is the same program it was when `2048.8bs`
   wrote those calls out by hand: the same functions at the same sizes on
   every target — 2759 bytes on the 4K PET 2001 and 3482 on the unexpanded
