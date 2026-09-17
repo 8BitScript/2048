@@ -1,16 +1,17 @@
-// The version, flush right on the last row. On the PET it is six screen
-// codes out of lib/petscii.8bs's table (V is 22 there, not ASCII 118),
-// on row 24 for the build's width.
+// The version, flush right on the last row: a "v" and then package.json's
+// number, on row 24 for the build's width. On the PET the V is screen
+// code 22 (ASCII 118 is a graphics block there) and the number is copied
+// byte for byte — lib/petscii.8bs's stampVersion — so no conversion is
+// linked into the 4K build.
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { System, Video } from "@8bitscript/system";
-import { VERSION_LINE } from "../lib/version.8bs";
-import { writeCells } from "../lib/petscii.8bs";
-import { hud, at } from "../lib/codes.8bs";
+import { VERSION } from "../lib/version.8bs";
+import { stampVersion } from "../lib/petscii.8bs";
+import { at } from "../lib/codes.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
-const VERSION_LEN: utinyint = 6; // "v0.2.0"
 
 export component Version() {
     if (#system() == System.PET) {
@@ -18,12 +19,16 @@ export component Version() {
         if (Video.COLUMNS != 40) {
             cell = at.VERSION_80;
         }
-        writeCells(cell, hud.TITLE_VERSION, hud.TITLE_VERSION_LEN);
+        stampVersion(cell);
     } else if (FLUID) {
         let cols: usmallint = text.columns();
         let rows: usmallint = text.rows();
-        text.print((rows - 1) * cols + cols - VERSION_LEN, VERSION_LINE);
+        let cell: usmallint = (rows - 1) * cols + cols - VERSION.length - 1;
+        text.print(cell, "v");
+        text.print(cell + 1, VERSION);
     } else {
-        text.print((Video.ROWS - 1) * ROW + text.COLUMNS - VERSION_LEN, VERSION_LINE);
+        let cell: usmallint = (Video.ROWS - 1) * ROW + text.COLUMNS - VERSION.length - 1;
+        text.print(cell, "v");
+        text.print(cell + 1, VERSION);
     }
 }

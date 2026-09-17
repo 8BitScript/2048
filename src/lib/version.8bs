@@ -1,5 +1,8 @@
-// The version the title screen shows, in one place for every skin that
-// prints it as text (the PET stamps its own screen codes for it, in
-// lib/petscii.8bs's HUD table). Not read from package.json: a string const
-// is program data, and the build knows nothing about the package.
-export const VERSION_LINE: string = "v0.2.0";
+// The version the title screen shows: package.json's, read at compile
+// time by #package("version") (8bitscript 0.13.0), so it is one number in
+// one file — bump the package and every build follows. The "v" the screen
+// puts in front is the element's; the string is bare "0.5.0". The PET
+// stamps it too (lib/petscii.8bs's stampVersion): a digit and "." are the
+// same code in ASCII and in both PET character sets, so the bytes copy
+// straight into video RAM after a baked V.
+export const VERSION: string = #package("version");

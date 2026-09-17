@@ -12,8 +12,8 @@
 // padded so a shorter one never leaves a leftover glyph), then GAME OVER
 // (9), the retry prompt (25) — whose own first twelve codes are the title
 // screen's PRESS RETURN, rather than a second copy of them — the port's
-// copyright line, and the version; keep those last six bytes in sync with
-// package.json "version". A status line is 14 rather than 19 now that
+// copyright line. (The version is not here: package.json's number is
+// stamped byte for byte after a baked V — see petscii.8bs.) A status line is 14 rather than 19 now that
 // GAME OVER - RESTART no longer lives among them. Writing screen codes
 // direct is also why "(C)" needs no special handling here: 40 and 41 are
 // "(" and ")" in the graphics set like any other code.
@@ -21,14 +21,13 @@
 // block in this set (codes 96-127); the version prefix is V, same as the
 // rest of the HUD. The PET has a keyboard and no joystick ports, so this
 // table never carries FIRE/START/ENTER variants.
-export const HUD: array<utinyint, 99> = [
+export const HUD: array<utinyint, 93> = [
     50, 48, 52, 56, 32, 32, 19, 3, 15, 18, 5, 32,  // "2048  SCORE " (12)
     1, 18, 18, 15, 23, 19, 32, 20, 15, 32, 13, 15, 22, 5,  // "ARROWS TO MOVE" (14)
     25, 15, 21, 32, 13, 1, 4, 5, 32, 50, 48, 52, 56, 32,  // "YOU MADE 2048 " (14)
     7, 1, 13, 5, 32, 15, 22, 5, 18,  // "GAME OVER" (9)
     16, 18, 5, 19, 19, 32, 18, 5, 20, 21, 18, 14, 32, 20, 15, 32, 20, 18, 25, 32, 1, 7, 1, 9, 14,  // "PRESS RETURN TO TRY AGAIN" (25)
     40, 3, 41, 32, 50, 48, 50, 54, 32, 56, 2, 9, 20, 19, 3, 18, 9, 16, 20,  // "(C) 2026 8BITSCRIPT" (19)
-    22, 48, 46, 49, 46, 52,  // "V0.1.4" (6) — V is screen code 22, not ASCII 118
 ];
 // Where each run of codes starts in HUD, and how long it is. A namespace
 // so the elements' PET arms can import them: an imported bare
@@ -50,8 +49,6 @@ export namespace hud {
     const SCORE_DIGITS_LEN: utinyint = 5;
     const TITLE_PRESS_RETURN: utinyint = 49; // the prompt's own first twelve codes
     const TITLE_PRESS_RETURN_LEN: utinyint = 12;
-    const TITLE_VERSION: utinyint = 93;
-    const TITLE_VERSION_LEN: utinyint = 6;
 }
 
 // ---- where the game-over message goes -------------------------------------
