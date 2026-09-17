@@ -37,6 +37,7 @@
 import { Video } from "@8bitscript/system";
 import { DIGIT_TILES, TILE_DIGIT_AT, TILE_DIGIT } from "./font.8bs";
 import { HUD } from "./codes.8bs";
+import { VERSION } from "./version.8bs";
 
 const ROW: usmallint = Video.COLUMNS; // 40, or 80 on an 8032 build
 
@@ -76,6 +77,19 @@ export function writeCells(cell: usmallint, base: utinyint, count: utinyint): vo
     let i: utinyint = 0;
     while (i < count) {
         memory.write(SCREEN + cell + i, HUD[base + i]);
+        i++;
+    }
+    return;
+}
+
+// The version: a baked V (screen code 22), then package.json's number byte
+// for byte — "0", ".", "5" are the same code in ASCII and in both PET
+// character sets, so nothing is converted and nothing is linked for it.
+export function stampVersion(cell: usmallint): void {
+    memory.write(SCREEN + cell, 22);
+    let i: utinyint = 0;
+    while (i < VERSION.length) {
+        memory.write(SCREEN + cell + 1 + i, VERSION[i]);
         i++;
     }
     return;

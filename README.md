@@ -110,10 +110,12 @@ release ships the German web build and the German 4K PET. A locale is a
 build input, not a menu — a 4K PET has no room for a switch — and with no
 locale named no locale's file is read, so the English builds are the
 bytes they were. The PET does not print strings at all (its lines are
-baked screen codes, `src/lib/codes.8bs` and `codes.de.8bs`); the version
-line is the one string not yet in `strings.8bs` — it waits on 8bitscript
-0.13.0's `#package("version")`, which reads it out of `package.json` at
-compile time.
+baked screen codes, `src/lib/codes.8bs` and `codes.de.8bs`). The version
+is `package.json`'s, read at compile time by `#package("version")`
+(`src/lib/version.8bs`): the text machines print a `v` and then the
+number, and the PET stamps a baked V and copies the number's bytes into
+video RAM — a digit and a `.` are the same code in ASCII and in both PET
+character sets, so the 4K build links no conversion for it.
 
 ## How it's built
 
