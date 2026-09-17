@@ -1,5 +1,105 @@
 # 2048
 
+## 0.6.0
+
+### Minor Changes
+
+- 4a70539: One element, every machine that draws through `@8bitscript/text`. The
+  eight `*.web.8bx` twins and the nine `*.web.{c64,pet-2001,vic20}.8bx`
+  copies are gone: `ui/Tile.8bx`, `ui/ScoreBar.8bx`, `ui/GameOver.8bx` and
+  the title's five are each one file, fixed grid or fluid — what differs is
+  a fact (`screen.RESIZABLE`, `#system()`, `Input.*`) and the arm a build
+  cannot take folds away. Underneath, `lib/` exposes one surface from every
+  skin: `layout.8bs` (the fixed grids and the fluid host in one file, the
+  PET and the web's replicas as twins of it), the tables written once in
+  `palette.8bs` and `font.8bs` instead of three to five times, the shared
+  primitives in `draw.8bs`, and `host.8bs` for what only the web can ask.
+  The 4K PET 2001 and the unexpanded VIC-20 are the size they were (2759 and
+  3486); the C64, C128, Atari and MEGA65 are 26 to 34 bytes smaller. The
+  web's C64 and VIC-20 replicas now print the score on the same row as the
+  name, as the machines they replicate do.
+- 45f96c4: Where the random numbers come from is the platform's decision now:
+  `@8bitscript/random/entropy` (8bitscript 0.12.0) is one import that the
+  compiler resolves to SID voice 3 on the C64, POKEY's counter on the Atari
+  8-bit, and the seeded generator on the other seven. The game's own
+  `rng.8bs` and its two machine twins go. Every build is byte-for-byte the
+  size it was: 2687 on the 4K PET 2001, 3396 on the unexpanded VIC-20, and
+  the C64 and Atari still link the register read and not the generator.
+- 60552de: No element has a machine twin. The PET's eight `*.pet.8bx` files — the
+  screen codes it writes straight into video RAM — are each an arm of the
+  one element now, behind `#system() == System.PET`, over `lib/petscii.8bs`
+  (its positions, its tables, its primitives; not a twin, so every machine
+  can name it and the arm folds away on the eight that are not a PET).
+  Measured one element at a time on the 4K PET 2001: every one at exactly
+  the bytes its twin cost, 2759 before and after, and 6 bytes less RAM.
+  `src/ui/` is ten files, one per element; the twins left in `src/lib/`
+  are the PET's font, the web's PET replica, the web's host, and the
+  hardware random numbers.
+- f5b3d8a: `ui/Tile.8bx` is a call: `stampTile()` in `lib/petscii.8bs` (screen codes
+  into the PET's video RAM) and `paintTile()` in `lib/draw.8bs` (reverse-video
+  fills, block digits or a printed number through `@8bitscript/text`) own the
+  painting, and the element says which. A function with one caller is
+  written into it on 0.12.0, so this costs nothing — the form that measured
+  +56 / +84 bytes on 0.11.0 is byte-identical now. The PET's cells have names
+  in `lib/petscii.8bs`. Every build is the size it was.
+- a91e8cf: Every line the game prints is in `lib/strings.8bs`, and `strings.de.8bs`
+  beside it is the German one: `8bs build --locale de` (or the release's
+  `{ locale: 'de' }` entries, for the web and the 4K PET) builds a German
+  game, and with no locale named no locale's file is read. The PET's lines
+  are baked screen codes in `lib/codes.8bs` and `codes.de.8bs`. The elements
+  read the strings and their `.length`, so the centring moves with the words.
+  The score header is two prints instead of a template, which is 14 bytes
+  smaller on every 6502 but the PET (unchanged at 2687); the VIC-20 is 3382.
+  The version line is not yet a string here — it waits on 8bitscript 0.13.0's
+  `#package("version")`.
+- d7bd0df: The source is now two directories under the program: `src/ui/` holds the
+  `.8bx` — what is on the screen, one element per file, starting with
+  `App.8bx` (the root that was `Screen.8bx`) — and `src/lib/` holds the
+  `.8bs` underneath it: the rules (`game.8bs`), the skins (`tile.8bs` and
+  its machine twins) and the random numbers (`rng.8bs` and its twins).
+  `src/2048.8bs` stays the program. Nothing moved but files: every one of
+  the thirteen release builds is the same size it was — 2763 bytes on the 4K
+  PET 2001, 3490 on the unexpanded VIC-20.
+- c8acf79: The score bar and the end of the game are elements: `ui/ScoreBar.8bx` is
+  the name, the score and the status line; `ui/GameOver.8bx` is GAME OVER
+  and how to try again, and the board composes it only when the game has
+  ended — `{over && <GameOver />}`. `drawHud()` leaves every skin. The
+  PET and the fluid web host keep their own of each. Every native build is
+  the size it was — 2763 bytes on the 4K PET 2001, 3490 on the unexpanded
+  VIC-20.
+- d6ea161: A tile is an element: `src/ui/Tile.8bx` is the filled square and the
+  value on it, and `<Tile row={…} col={…} exponent={…} />` is how the board
+  places sixteen of them. The element owns the painting; `lib/tile.8bs` and
+  its twins own the layout and the tables it paints from. The PET and the
+  fluid web host paint a tile differently enough to have their own
+  (`Tile.pet.8bx`, `Tile.web.8bx`). Every native build is the size it was —
+  2763 bytes on the 4K PET 2001, 3490 on the unexpanded VIC-20.
+- 1739019: The title screen is composition: `ui/TitleScreen.8bx` is a `<Logo />`, a
+  `<StartMessage />` that names this machine's controls, the
+  `<Copyright />`, the `<Version />` and — on the real C64 and the web's C64
+  skin — a `<TitleWobble />`, the raster band and wobble behind the name,
+  whose sine table and per-frame step now live once in `lib/wobble.8bs`
+  instead of twice. `drawTitleScreen()` and `wobbleTitle()` leave every
+  skin. Every native build is four bytes smaller than before — 2759 bytes
+  on the 4K PET 2001, 3486 on the unexpanded VIC-20 — because the
+  one-line `Title` that used to forward to `drawTitleScreen()` is gone.
+- f4f6713: The web's C64 and VIC-20 replicas read `lib/layout.8bs` — the machine's
+  own layout, at the replica's columns — instead of a twin each of baked
+  cell numbers. The C64's picture is named by its facts (40 columns, sixteen
+  colours, a raster) rather than by `#system()`, which is what lets the web
+  replica take the C64's arm; the title screen's raster band comes with it.
+  Both replicas replay frame for frame. Nine native builds unchanged.
+
+### Patch Changes
+
+- fb2a474: The title screen's version is `package.json`'s, read at compile time by
+  `#package("version")` — one number in one place, where it used to be
+  three (the PET's baked table said V0.1.4, `version.8bs` said v0.2.0, and
+  the package was at 0.5.0). The text machines print a `v` and the number;
+  the PET stamps a baked V and copies the number's bytes straight into
+  video RAM, since a digit and a `.` are the same code in ASCII and in both
+  of its character sets. 4K PET 2001 2687 → 2779, VIC-20 3382 → 3415.
+
 ## 0.5.0
 
 ### Minor Changes
