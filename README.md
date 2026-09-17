@@ -166,11 +166,14 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   from, which is what keeps it free — a `<Tile />` that merely called a
   `drawTile()` in `lib/` was measured at +36 bytes, and one built from
   `paintTile()` and `stampValue()` primitives at +56, because a function
-  with parameters called from one place is not inlined yet. A component is a function and an
+  with parameters called from one place is not inlined on 0.11.0
+  (8bitscript #184 inlines it, and measures that form at zero). A component is a function and an
   element is a call, so this is the same program it was when `2048.8bs`
   wrote those calls out by hand: the same functions at the same sizes on
-  every target, 2763 bytes on the 4K PET 2001 and 3490 on the unexpanded
-  VIC-20 exactly as before (2026-09-16, against the 0.11.0 toolchain), and
+  every target — 2759 bytes on the 4K PET 2001 and 3482 on the unexpanded
+  VIC-20 (2026-09-17, against the 0.11.0 toolchain; 2763 and 3490 before
+  the screen became elements, the four bytes a title trampoline that
+  went) — and
   60 bytes *less* on every build that animates, because the between-steps
   repaint and the settled board now share one `<Tiles />` where the
   hand-written version kept a second copy of the loop. It also drew two

@@ -5,13 +5,15 @@ export default {
   targets: {
     vic20: {},
     c64: {},
-    // The game is 2763 bytes of program on a 2001/4K, measured 2026-09-16
-    // against the 0.11.0 toolchain — the same 2763 before and after the
-    // screen moved into ui/App.8bx (the same functions at the same sizes,
-    // laid out in module order), and before and after the title screen's
-    // raster wobble, which folds away entirely here and on the unexpanded
-    // VIC-20 (3490 bytes, also unchanged): #fact(video.raster) is false on
-    // both, and the PET's arms read lib/petscii.8bs anyway.
+    // The game is 2759 bytes of program on a 2001/4K, measured 2026-09-17
+    // against the 0.11.0 toolchain, with the screen as ui/ elements over
+    // lib/ (#50–#56): 2763 before the restructure, and the same functions
+    // at the same sizes at every step of it but the last four bytes, a
+    // title trampoline that went. The title screen's raster wobble folds
+    // away entirely here and on the unexpanded VIC-20 (3482 bytes, 3490
+    // before): #fact(video.raster) is false on both, and the PET's arms
+    // read lib/petscii.8bs anyway. 8bitscript #184's inliner takes these
+    // to 2687 and 3396 when it ships.
     // (2581 at 0.9.0; 2420 at 0.6.1 before
     // the title screen, right-aligned HUD, and 0.6.2; 2624 before the
     // 0.6.1 linker stopped writing input.poll() out once per call site;
