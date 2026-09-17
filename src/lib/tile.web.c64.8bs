@@ -4,10 +4,7 @@
 // or write $0400.
 import { text, TextColor } from "@8bitscript/text";
 import { input } from "@8bitscript/input";
-import { raster, Slot } from "@8bitscript/raster";
-import { BorderColor, BackgroundColor } from "@8bitscript/screen";
 
-const VERSION_LINE: string = "v0.2.0";
 
 const ROW: usmallint = text.COLUMNS; // 40
 const TILE_W: utinyint = 6;
@@ -77,90 +74,13 @@ export namespace at {
 // glyph and nothing else, and the print is what put the colour on those
 // cells. The web host's font is indexed by ASCII outright, so these are the
 // two ASCII codes.
-const PAREN_OPEN: utinyint = 40;
-const PAREN_CLOSE: utinyint = 41;
 
 export function computeLayout(): void {
 }
 
-export function drawTitleScreen(): void {
-    text.setReverse(false);
-    text.setColor(TextColor.WHITE);
-    text.print(at.TITLE, "2048");
-    if (input.touch()) {
-        text.print(at.TOUCH_PROMPT, "TOUCH TO START");
-    } else {
-        text.print(at.PROMPT, "PRESS ENTER");
-    }
-    text.print(at.CREDIT_PORT, " C  2026 8BITSCRIPT");
-    text.putChar(at.CREDIT_PORT, PAREN_OPEN);
-    text.putChar(at.CREDIT_PORT + 2, PAREN_CLOSE);
-    text.print(at.VERSION, VERSION_LINE);
-    // The list, built once, in ascending line order — tile.8bs's shape at
-    // this skin's numbers: the band opens a text row above the title,
-    // the wobble rides the title's own eight scanlines, straightens out
-    // on the band's last line, and the band closes a row below.
-    raster.clear();
-    raster.at(BAND_TOP - 8, Slot.BACKGROUND, BAND_BACKGROUND);
-    raster.at(BAND_TOP - 8, Slot.BORDER, BAND_BORDER);
-    for (let i: utinyint = 0; i < WOBBLE_ENTRIES; i++) {
-        raster.at(BAND_TOP + i * 2, Slot.SCROLL_X, SINE[i]);
-    }
-    raster.at(BAND_TOP + 8, Slot.SCROLL_X, 0);
-    raster.at(BAND_TOP + 16, Slot.BACKGROUND, BackgroundColor.BLACK);
-    raster.at(BAND_TOP + 16, Slot.BORDER, BorderColor.BLUE);
-    raster.enable();
-    return;
-}
 
 
 
-
-// ---- the title wobble -----------------------------------------------------
-//
-// The same treatment tile.8bs gives the real C64, at this skin's own
-// numbers: the web answers #fact(video.raster) true, so the title screen
-// gets the raster showpiece too — background and border switch colour a
-// text row above "2048" and back a row below it, and the title row itself
-// rides a sine-driven SCROLL_X wobble, one entry per two scanlines
-// (fancy's measured pitch, kept so the two skins show the same picture).
-// drawTitleScreen() builds the list; 2048.8bs's loop animates it
-// (wobbleTitle) and tears it down (raster.disable) the moment the game
-// starts, the same as on the real machine.
-//
-// XSCROLL 0-7 over 32 steps — fancy's own table, the one tile.8bs carries.
-const SINE: array<utinyint, 32> = [
-    4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 7, 6, 6, 5, 5, 4,
-    3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3,
-];
-
-// The wobble covers the title's one text row: eight scanlines, four
-// SCROLL_X entries at the two-line pitch. The colour band opens one text
-// row above it and closes one below.
-const WOBBLE_ENTRIES: utinyint = 4;
-const BAND_BACKGROUND: utinyint = 2; // red behind the title
-const BAND_BORDER: utinyint = 7;     // yellow beside it
-const BAND_TOP: usmallint = 88;      // at.TITLE's row (11) * 8 — "2048"'s first scanline
-
-// Where the four SCROLL_X value bytes live in the list. No stride probe
-// here, unlike tile.8bs: this skin only ever reads the web rasterline,
-// whose entries are documented as three bytes with `entry` the byte
-// offset (index * 3). The first SCROLL_X entry is index 2 — the two
-// opening colour splits come first.
-const WOBBLE_STRIDE: utinyint = 3;
-const WOBBLE_FIRST: utinyint = 6;
-let wobblePhase: utinyint = 0;
-
-// One step of the wobble, called once per title-screen frame from
-// 2048.8bs's loop: rewrite only the four SCROLL_X value bytes, right
-// after waitFrame(), before the next paint reads the list.
-export function wobbleTitle(): void {
-    wobblePhase = (wobblePhase + 1) & 31;
-    for (let i: utinyint = 0; i < WOBBLE_ENTRIES; i++) {
-        raster.setValue(WOBBLE_FIRST + i * WOBBLE_STRIDE, SINE[(i + wobblePhase) & 31]);
-    }
-    return;
-}
 
 // The tile is ui/Tile.8bx, the portable one, so this skin exposes the same
 // names lib/tile.8bs does: where a tile is, its size, and how many digits
@@ -179,3 +99,22 @@ export function tileCell(row: utinyint, col: utinyint): usmallint {
 // above — read by ui/GameOver.web.c64.8bx; TRY_AGAIN_TOUCH is the
 // same on every web skin and lives there.
 export const TRY_AGAIN_KEY: string = "PRESS ENTER TO TRY AGAIN";
+
+// The title screen is the fluid host's ui/TitleScreen.web.8bx and the
+// elements it composes, which print at these positions — the fluid skin
+// works them out per resize, this one has them as its own numbers — so
+// this skin exposes the same names. wide is always true here: the credit
+// line is never dropped on a fixed grid.
+export let titleAt: usmallint = at.TITLE;
+export let promptAt: usmallint = at.PROMPT;
+export let touchPromptAt: usmallint = at.TOUCH_PROMPT;
+export let versionAt: usmallint = at.VERSION;
+export let creditPortAt: usmallint = at.CREDIT_PORT;
+export let wide: bool = true;
+export const START_KEY: string = "PRESS ENTER";
+
+// The same treatment the real C64 gives its title (lib/wobble.8bs and
+// ui/TitleWobble.8bx): the web answers #fact(video.raster) true, so the
+// title screen gets the raster showpiece too, the same picture at this
+// skin's numbers.
+export const TITLE_WOBBLES: bool = true;

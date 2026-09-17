@@ -1,0 +1,11 @@
+// The version, flush right on the last row.
+import { text } from "@8bitscript/text";
+import { Video } from "@8bitscript/system";
+import { VERSION_LINE } from "../lib/version.8bs";
+
+const ROW: usmallint = text.COLUMNS;
+const VERSION_LEN: utinyint = 6; // "v0.2.0"
+
+export component Version() {
+    text.print((Video.ROWS - 1) * ROW + text.COLUMNS - VERSION_LEN, VERSION_LINE);
+}

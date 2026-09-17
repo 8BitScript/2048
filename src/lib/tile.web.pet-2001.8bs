@@ -5,7 +5,6 @@
 import { text, TextColor } from "@8bitscript/text";
 import { input } from "@8bitscript/input";
 
-const VERSION_LINE: string = "v0.2.0";
 
 const ROW: usmallint = text.COLUMNS; // 40
 const TILE_H: utinyint = 5;
@@ -83,27 +82,10 @@ export namespace at {
 // glyph and nothing else, and the print is what put the colour on those
 // cells. The web host's font is indexed by ASCII outright, so these are the
 // two ASCII codes.
-const PAREN_OPEN: utinyint = 40;
-const PAREN_CLOSE: utinyint = 41;
 
 export function computeLayout(): void {
 }
 
-export function drawTitleScreen(): void {
-    text.setReverse(false);
-    text.setColor(TextColor.WHITE);
-    text.print(at.TITLE, "2048");
-    if (input.touch()) {
-        text.print(at.TOUCH_PROMPT, "TOUCH TO START");
-    } else {
-        text.print(at.PROMPT, "PRESS RETURN");
-    }
-    text.print(at.CREDIT_PORT, " C  2026 8BITSCRIPT");
-    text.putChar(at.CREDIT_PORT, PAREN_OPEN);
-    text.putChar(at.CREDIT_PORT + 2, PAREN_CLOSE);
-    text.print(at.VERSION, VERSION_LINE);
-    return;
-}
 
 
 export function fillTile(origin: usmallint): void {
@@ -140,9 +122,6 @@ export function drawDigit(cell: usmallint, value: utinyint): void {
 // does not take the effect up yet; an empty function here means the
 // compiler deletes the call, and the game's raster.disable() at start is
 // a no-op against a list that was never built.
-export function wobbleTitle(): void {
-    return;
-}
 
 // The tile is ui/Tile.web.pet-2001.8bx — the PET's own arrangement, over
 // this skin's fillTile() and drawDigit().
@@ -154,3 +133,18 @@ export function tileCell(row: utinyint, col: utinyint): usmallint {
 // above — read by ui/GameOver.web.pet-2001.8bx; TRY_AGAIN_TOUCH is the
 // same on every web skin and lives there.
 export const TRY_AGAIN_KEY: string = "PRESS RETURN TO TRY AGAIN";
+
+// The title screen is the fluid host's ui/TitleScreen.web.8bx and the
+// elements it composes, which print at these positions — the fluid skin
+// works them out per resize, this one has them as its own numbers — so
+// this skin exposes the same names. wide is always true here: the credit
+// line is never dropped on a fixed grid.
+export let titleAt: usmallint = at.TITLE;
+export let promptAt: usmallint = at.PROMPT;
+export let touchPromptAt: usmallint = at.TOUCH_PROMPT;
+export let versionAt: usmallint = at.VERSION;
+export let creditPortAt: usmallint = at.CREDIT_PORT;
+export let wide: bool = true;
+export const START_KEY: string = "PRESS RETURN";
+
+export const TITLE_WOBBLES: bool = false; // this skin draws its title without the raster effect

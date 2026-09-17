@@ -1,0 +1,41 @@
+// The raster band and wobble behind the title: the list, built once, in
+// ascending line order — the title's text row (one above the middle of the
+// screen, where <Logo /> puts it) starts at picture line bandTop, the band
+// opens a row above and closes a row below, and the wobble straightens out
+// on the band's last line. 2048.8bs's loop animates
+// it (wobble.step() in lib/wobble.8bs) and tears it down (raster.disable)
+// the moment the game starts. Only composed where #fact(video.raster) is
+// true — the real C64, and the web's C64 skin.
+import { raster, Slot } from "@8bitscript/raster";
+import { Video } from "@8bitscript/system";
+import { BorderColor, BackgroundColor } from "@8bitscript/screen";
+import { SINE, band, wobbleStride, wobbleFirst } from "../lib/wobble.8bs";
+
+// Not a prop: the two skins that compose this both put the title one row
+// above the middle, and a prop would make this a function with an
+// argument to pass (+35 bytes on the C64) where a local folds.
+export component TitleWobble() {
+    let bandTop: utinyint = ((Video.ROWS >> 1) - 1) * 8;
+    raster.clear();
+    raster.at(bandTop - 8, Slot.BACKGROUND, band.BACKGROUND);
+    raster.at(bandTop - 8, Slot.BORDER, band.BORDER);
+    for (let i: utinyint = 0; i < band.ENTRIES; i++) {
+        raster.at(bandTop + i * 2, Slot.SCROLL_X, SINE[i]);
+    }
+    raster.at(bandTop + 8, Slot.SCROLL_X, 0);
+    raster.at(bandTop + 16, Slot.BACKGROUND, BackgroundColor.BLACK);
+    raster.at(bandTop + 16, Slot.BORDER, BorderColor.BLUE);
+
+    // The stride probe, exactly as fancy runs it: offset 3 is entry 1
+    // (the band.BORDER split) where entries are three bytes, and
+    // misaligned — refused untouched — where they are four. The value
+    // written is the value entry 1 already holds, so the list is the
+    // same afterwards either way; only the returned bool differs.
+    wobbleStride = 4;
+    if (raster.setValue(3, band.BORDER)) {
+        wobbleStride = 3;
+    }
+    wobbleFirst = wobbleStride * 2;
+
+    raster.enable();
+}

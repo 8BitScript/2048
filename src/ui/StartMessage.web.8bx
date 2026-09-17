@@ -1,0 +1,13 @@
+// TOUCH TO START on a touchscreen, else the skin's own key — touch() is a
+// property of the host, written once at start-up, not a press.
+import { text } from "@8bitscript/text";
+import { input } from "@8bitscript/input";
+import { promptAt, touchPromptAt, START_KEY } from "../lib/tile.8bs";
+
+export component StartMessage() {
+    if (input.touch()) {
+        text.print(touchPromptAt, "TOUCH TO START");
+    } else {
+        text.print(promptAt, START_KEY);
+    }
+}

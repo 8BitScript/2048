@@ -1,7 +1,7 @@
 // What 2048 puts on the screen, as composition. The rules and the board
-// are lib/game.8bs's; how the title is actually painted is lib/tile.8bs's
-// (and its per-machine twins'); a tile, the score bar and the end of the
-// game are elements of their own beside this one; this file is the
+// are lib/game.8bs's; the tile, the score bar, the end of the game and
+// the title screen are elements of their own beside this one, over the
+// tables lib/tile.8bs (and its per-machine twins) keeps; this file is the
 // arrangement —
 // which of those goes on the screen, and when — and nothing else, so a
 // reader can see the whole picture without a single screen address.
@@ -15,15 +15,10 @@
 // animate are 60 bytes smaller, because <Tiles /> is one function where
 // the hand-written program kept a second copy of the loop.
 import { board, shown, score, over, won, started } from "../lib/game.8bs";
-import { drawTitleScreen } from "../lib/tile.8bs";
+import { TitleScreen } from "./TitleScreen.8bx";
 import { Tile } from "./Tile.8bx";
 import { ScoreBar } from "./ScoreBar.8bx";
 import { GameOver } from "./GameOver.8bx";
-
-// The title screen, up until confirm starts a game.
-export component Title() {
-    drawTitleScreen();
-}
 
 // The sixteen tiles — only the ones whose exponent changed since they were
 // last stamped. Sixteen filled squares with a background-coloured gap
@@ -58,5 +53,5 @@ export component Board() {
 // grid changes shape under it (the web's fluid host, on a resize or a
 // rotated phone).
 export component App() {
-    return (<>{started ? <Board /> : <Title />}</>);
+    return (<>{started ? <Board /> : <TitleScreen />}</>);
 }

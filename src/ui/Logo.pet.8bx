@@ -1,0 +1,11 @@
+// "2048" on row 11, centred for the build's width.
+import { Video } from "@8bitscript/system";
+import { writeCells, hud } from "../lib/tile.8bs";
+
+export component Logo() {
+    let titleAt: usmallint = 458;
+    if (Video.COLUMNS != 40) {
+        titleAt = 918;
+    }
+    writeCells(titleAt, hud.TITLE_AT, hud.TITLE_LEN);
+}

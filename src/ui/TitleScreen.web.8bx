@@ -1,0 +1,22 @@
+// The web's title screen, at the positions the skin worked out —
+// lib/tile.web.8bs per resize, the fixed skins once. The fixed C64 skin
+// adds the raster wobble in its own twin; this one does not take the
+// effect up yet.
+import { text, TextColor } from "@8bitscript/text";
+import { Logo } from "./Logo.8bx";
+import { StartMessage } from "./StartMessage.8bx";
+import { Copyright } from "./Copyright.8bx";
+import { Version } from "./Version.8bx";
+
+export component TitleScreen() {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    return (
+        <>
+            <Logo />
+            <StartMessage />
+            <Copyright />
+            <Version />
+        </>
+    );
+}

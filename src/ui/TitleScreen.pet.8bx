@@ -1,0 +1,22 @@
+// The PET's title screen: the same four elements, each a run of baked
+// screen codes out of lib/tile.pet.8bs's HUD table. 25-row grid: title on
+// 11, prompt on 13, version on 24. The 80-column arm of each folds away on
+// a 4032/2001 build (and the 40-column literals on an 8032), so neither
+// multiply nor the unused cells reach the image. No PET has a raster.
+import { graphicsSet } from "../lib/tile.8bs";
+import { Logo } from "./Logo.8bx";
+import { StartMessage } from "./StartMessage.8bx";
+import { Copyright } from "./Copyright.8bx";
+import { Version } from "./Version.8bx";
+
+export component TitleScreen() {
+    graphicsSet();
+    return (
+        <>
+            <Logo />
+            <StartMessage />
+            <Copyright />
+            <Version />
+        </>
+    );
+}

@@ -1,0 +1,8 @@
+// The version, where the skin put it (flush right on the last row).
+import { text } from "@8bitscript/text";
+import { versionAt } from "../lib/tile.8bs";
+import { VERSION_LINE } from "../lib/version.8bs";
+
+export component Version() {
+    text.print(versionAt, VERSION_LINE);
+}

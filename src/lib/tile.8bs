@@ -7,13 +7,16 @@
 // 2048.8bs so those two can differ without duplicating the game's rules,
 // board state, or input handling.
 import { text, TextColor } from "@8bitscript/text";
-import { raster, Slot } from "@8bitscript/raster";
-import { BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { Input, System, Video } from "@8bitscript/system";
 
+// Whether the title screen takes the raster showpiece (lib/wobble.8bs): on
+// the one machine reading this file with a per-scanline hook, the C64.
+// Everywhere else the fact is false, every branch on this folds away, and
+// the wobble costs the image nothing — the 4K PET and the unexpanded
+// VIC-20 are byte-identical with and without it.
+export const TITLE_WOBBLES: bool = #fact(video.raster);
+
 // Keep in sync with package.json "version".
-const VERSION_LINE: string = "v0.2.0";
-const VERSION_LEN: utinyint = 6;
 
 // Exponent to face value — tile.8bs's own copy for drawing. The rules'
 // table lives in 2048.8bs (score); the two never share a module, and
@@ -237,181 +240,19 @@ export function tileCell(row: utinyint, col: utinyint): usmallint {
     return y * ROW + x;
 }
 
-// ---- drawing --------------------------------------------------------------
+// ---- what the elements draw with ----------------------------------------
 //
-// The tile itself is ui/Tile.8bx: it reads tileCell(), the layout above and
-// the tables at the top of this file, and paints with @8bitscript/text.
-// What follows is the rest of the skin — the HUD, the title, the wobble.
+// Everything on the screen is an element in ui/ — Tile.8bx, ScoreBar.8bx,
+// GameOver.8bx, TitleScreen.8bx and the four it composes — and each reads
+// tileCell(), the layout above and the tables at the top of this file, and
+// paints with @8bitscript/text. This skin keeps what they share: where
+// things are, and how big.
 //
 // A tile is a 4-character field, right-aligned, blanked first — never
 // zero-padded: `text.printNumber` always writes exactly the width it is
-// given, so a 3-digit "128" printed at width 4 would come out "0128". This
-// clears the field to spaces and then asks for exactly as many digits as
-// the value has, positioned at the field's right edge.
-
-// Every tile — empty or not — is a filled cellWidth x TILE_H block of
-// reverse video: `text.setReverse(true)` turns a printed space into a
-// solid block in the current colour on all nine targets (a plain inverted
-// block, no colour, on the three with none), so the same three calls draw
-// a coloured square on a C64 and a monochrome one on a PET. `text.fill`
-// writes `cellWidth` spaces — computeLayout() picked the width — so the
-// same call fills the tile on a five-wide machine, the VIC-20's four, or
-// the X16's twelve. The middle row's fill doubles as the field
-// `printNumber` then centres digits into (an odd leftover space, when
-// cellWidth - width is odd, falls to the right — `>> 1` truncates, never
-// rounds up); the top and bottom rows are blank on purpose — they are the
-// rest of the square, not wasted space.
-
-// ---- the copyright line ---------------------------------------------------
-//
-// The port's own line, on the second-to-last row so the version keeps the
-// last one and the middle of the screen stays clear. The original game's
-// author and repo are credited in README.md rather than here.
-//
-// "(" and ")" are not in the portable character set, so the line is printed
-// with spaces where they go and the two glyphs poked in after — putChar
-// writes a glyph and nothing else, and the print is what put the colour on
-// those cells. Every machine's putChar takes the character in ASCII (the
-// web host's font is ASCII-indexed outright), so 40 and 41 are the same two
-// numbers everywhere.
-//
-// Everywhere except the NES, whose font draws both as blank tiles
-// (packages/nes/native/6502/font.s: "$22-$2B ... 10 blank tiles"), so it
-// spells COPYRIGHT out instead. #system() folds, so each image carries one
-// of the two. The placeholder is a space rather than a marker character for
-// the same reason: if a machine ever did drop the poke, the line degrades
-// to "C 2026 8BITSCRIPT" rather than showing punctuation nobody meant.
-const CREDIT_PORT_LEN: utinyint = 19;      // "(C) 2026 8BITSCRIPT"
-const CREDIT_PORT_WORD_LEN: utinyint = 25; // "COPYRIGHT 2026 8BITSCRIPT"
-const PAREN_OPEN: utinyint = 40;
-const PAREN_CLOSE: utinyint = 41;
-
-// ---- the title wobble -----------------------------------------------------
-//
-// On a machine with a per-scanline hook — #fact(video.raster), true only
-// for the C64 among the targets that read this file — the title screen
-// gets the raster showpiece the fancy example established
-// (packages/examples/fancy in the 8bitscript repository): background and
-// border switch colour a text row above "2048" and back a row below it,
-// and the title row itself rides a sine-driven SCROLL_X wobble, one entry
-// per TWO scanlines. That pitch is fancy's measured C64 constraint (a
-// per-line cascade collapses the effect — see that example's header), not
-// a choice made here. Everywhere the fact answers false, every branch on
-// HAS_RASTER folds away and this whole section costs the image nothing —
-// the 4K PET and the unexpanded VIC-20 are byte-identical with and
-// without it (and the PET reads tile.pet.8bs anyway).
-const HAS_RASTER: bool = #fact(video.raster);
-
-// XSCROLL 0-7 over 32 steps — fancy's own table, verified on screen by
-// packages/c64/test/wobble-probe.8bs, so the wave is a known-good shape.
-const SINE: array<utinyint, 32> = [
-    4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 7, 6, 6, 5, 5, 4,
-    3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3,
-];
-
-// The wobble covers the title's one text row: eight scanlines, four
-// SCROLL_X entries at the two-line pitch. The colour band opens one text
-// row above it and closes one below, fancy's shape scaled to one row.
-const WOBBLE_ENTRIES: utinyint = 4;
-const BAND_BACKGROUND: utinyint = 2; // red behind the title
-const BAND_BORDER: utinyint = 7;     // yellow beside it — also the stride probe's known value
-
-// The wobble's walk through the sine table, and the two numbers the
-// per-frame rewrite needs: bytes per entry in setValue's unit (probed the
-// way fancy probes it — offset 3 names entry 1 where entries are three
-// bytes and is refused untouched where they are four), and the byte
-// offset of the first SCROLL_X entry (index 2 — the two opening colour
-// splits come first). Only ever touched inside `if (HAS_RASTER)`.
-let wobblePhase: utinyint = 0;
-let wobbleStride: utinyint = 0;
-let wobbleFirst: utinyint = 0;
-
-// One step of the wobble, called once per title-screen frame from
-// 2048.8bs's loop: rewrite only the four SCROLL_X value bytes, right
-// after waitFrame(), before the raster reaches the band. On a machine
-// with no raster this folds to an empty function and the compiler
-// deletes the call — the same way text.setColor costs the PET nothing.
-// The twins (tile.pet.8bs, tile.web.*.8bs) export their own empty copy:
-// the PET has no raster, and the web skins draw their own title and do
-// not take the effect up yet.
-export function wobbleTitle(): void {
-    if (HAS_RASTER) {
-        wobblePhase = (wobblePhase + 1) & 31;
-        for (let i: utinyint = 0; i < WOBBLE_ENTRIES; i++) {
-            raster.setValue(wobbleFirst + i * wobbleStride, SINE[(i + wobblePhase) & 31]);
-        }
-    }
-    return;
-}
-
-// Front door before the first deal. Prompt text is picked from Input.*
-// facts, so unused strings never reach the image (optimizeReachable folds
-// the other arms and the 6502 backend only emits referenced literals).
-//
-// A stick or pad cannot be probed the way a 1351 can (`mouse.present()`):
-// an idle CIA/PIA port reads the same with nothing plugged in as with a
-// stick at rest. So a keyboard machine that *has* joystick or pad ports
-// always names both confirm inputs; FIRE or START alone is only for a
-// build with no keyboard (the NES).
-export function drawTitleScreen(): void {
-    text.setReverse(false);
-    text.setColor(TextColor.WHITE);
-    text.print(((Video.ROWS >> 1) - 1) * ROW + ((text.COLUMNS - 4) >> 1), "2048");
-    if (Input.PADS > 0) {
-        if (Input.KEYBOARD) {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 21) >> 1), "PRESS RETURN OR START");
-        } else {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 11) >> 1), "PRESS START");
-        }
-    } else if (Input.JOYSTICKS > 0) {
-        if (Input.KEYBOARD) {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 20) >> 1), "PRESS RETURN OR FIRE");
-        } else {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 10) >> 1), "PRESS FIRE");
-        }
-    } else {
-        text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 12) >> 1), "PRESS RETURN");
-    }
-    if (#system() == System.NES) {
-        text.print((Video.ROWS - 2) * ROW + ((text.COLUMNS - CREDIT_PORT_WORD_LEN) >> 1), "COPYRIGHT 2026 8BITSCRIPT");
-    } else {
-        text.print((Video.ROWS - 2) * ROW + ((text.COLUMNS - CREDIT_PORT_LEN) >> 1), " C  2026 8BITSCRIPT");
-        text.putChar((Video.ROWS - 2) * ROW + ((text.COLUMNS - CREDIT_PORT_LEN) >> 1), PAREN_OPEN);
-        text.putChar((Video.ROWS - 2) * ROW + ((text.COLUMNS - CREDIT_PORT_LEN) >> 1) + 2, PAREN_CLOSE);
-    }
-    text.print((Video.ROWS - 1) * ROW + text.COLUMNS - VERSION_LEN, VERSION_LINE);
-    if (HAS_RASTER) {
-        // The list, built once, in ascending line order: the title's text
-        // row starts at picture line row * 8, the band opens a row above
-        // and closes a row below, and the wobble straightens out on the
-        // band's last line. 2048.8bs's loop animates it (wobbleTitle) and
-        // tears it down (raster.disable) the moment the game starts.
-        let bandTop: utinyint = ((Video.ROWS >> 1) - 1) * 8;
-        raster.clear();
-        raster.at(bandTop - 8, Slot.BACKGROUND, BAND_BACKGROUND);
-        raster.at(bandTop - 8, Slot.BORDER, BAND_BORDER);
-        for (let i: utinyint = 0; i < WOBBLE_ENTRIES; i++) {
-            raster.at(bandTop + i * 2, Slot.SCROLL_X, SINE[i]);
-        }
-        raster.at(bandTop + 8, Slot.SCROLL_X, 0);
-        raster.at(bandTop + 16, Slot.BACKGROUND, BackgroundColor.BLACK);
-        raster.at(bandTop + 16, Slot.BORDER, BorderColor.BLUE);
-
-        // The stride probe, exactly as fancy runs it: offset 3 is entry 1
-        // (the BAND_BORDER split) where entries are three bytes, and
-        // misaligned — refused untouched — where they are four. The value
-        // written is the value entry 1 already holds, so the list is the
-        // same afterwards either way; only the returned bool differs.
-        wobbleStride = 4;
-        if (raster.setValue(3, BAND_BORDER)) {
-            wobbleStride = 3;
-        }
-        wobbleFirst = wobbleStride * 2;
-
-        raster.enable();
-    }
-    return;
-}
-
-
-
+// given, so a 3-digit "128" printed at width 4 would come out "0128".
+// Tile.8bx clears the field to spaces and then asks for exactly as many
+// digits as the value has, positioned at the field's right edge; every
+// tile — empty or not — is a filled cellWidth x tileH block of reverse
+// video, the same three calls drawing a coloured square on a C64 and a
+// monochrome one on a machine with no colour.

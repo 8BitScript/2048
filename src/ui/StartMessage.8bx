@@ -1,0 +1,36 @@
+// How to start, one row below the middle of the screen, in the words of
+// this machine's controls. Picked from Input.* facts, so unused strings
+// never reach the image (optimizeReachable folds the other arms and the
+// 6502 backend only emits referenced literals).
+//
+// A stick or pad cannot be probed the way a 1351 can (`mouse.present()`):
+// an idle CIA/PIA port reads the same with nothing plugged in as with a
+// stick at rest. So a keyboard machine that *has* joystick or pad ports
+// always names both confirm inputs; FIRE or START alone is only for a
+// build with no keyboard (the NES).
+import { text } from "@8bitscript/text";
+import { Input, Video } from "@8bitscript/system";
+
+const ROW: usmallint = text.COLUMNS;
+
+// Every address below is a compile-time constant on a fixed grid, and is
+// written out in full at each print rather than hoisted into a local: a
+// local is a variable to the folder, and the add it saves in the source
+// costs a 16-bit add and a slot in the image (+35 bytes on the VIC-20).
+export component StartMessage() {
+    if (Input.PADS > 0) {
+        if (Input.KEYBOARD) {
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 21) >> 1), "PRESS RETURN OR START");
+        } else {
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 11) >> 1), "PRESS START");
+        }
+    } else if (Input.JOYSTICKS > 0) {
+        if (Input.KEYBOARD) {
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 20) >> 1), "PRESS RETURN OR FIRE");
+        } else {
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 10) >> 1), "PRESS FIRE");
+        }
+    } else {
+        text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - 12) >> 1), "PRESS RETURN");
+    }
+}

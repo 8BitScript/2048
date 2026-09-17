@@ -144,11 +144,14 @@ set. Every other target reads a real keyboard, joystick, or pad the same way.
   screenshot, which is exactly why both packages sit behind their own
   explicitly optional import (see either one's header).
 - **What is on the screen is composition, and it costs nothing.**
-  `ui/App.8bx` is the arrangement — a `<Title />`, or a `<Board />` that is
-  a `<ScoreBar />`, a `<GameOver />` once the game has ended, and sixteen
-  `<Tile />`s — written as 8BX elements over the tables and primitives
-  `lib/tile.8bs` and its twins provide, with none of the screen addresses
-  those files are made of. `ui/Tile.8bx` *is* the tile:
+  `ui/App.8bx` is the arrangement — a `<TitleScreen />` (a `<Logo />`, a
+  `<StartMessage />` in the words of this machine's controls, the
+  `<Copyright />`, the `<Version />`, and a `<TitleWobble />` where there
+  is a raster to ride), or a `<Board />` that is a `<ScoreBar />`, a
+  `<GameOver />` once the game has ended, and sixteen `<Tile />`s —
+  written as 8BX elements over the tables and primitives `lib/tile.8bs`
+  and its twins provide, with none of the screen addresses those files
+  are made of. `ui/Tile.8bx` *is* the tile:
   the element owns the painting and the skin owns the tables it paints
   from, which is what keeps it free — a `<Tile />` that merely called a
   `drawTile()` in `lib/` was measured at +36 bytes, and one built from

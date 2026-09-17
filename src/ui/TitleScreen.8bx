@@ -1,0 +1,28 @@
+// The front door before the first deal: the name, how to start, the credit
+// line, the version — and, on a machine with a per-scanline hook, the
+// raster band and wobble behind the name. Each is an element of its own so
+// a skin that places one differently (the PET, the fluid web host) swaps
+// that one and keeps the rest. TITLE_WOBBLES is the skin's compile-time
+// answer, so the wobble is not in the image of a machine that cannot draw
+// it.
+import { text, TextColor } from "@8bitscript/text";
+import { Logo } from "./Logo.8bx";
+import { StartMessage } from "./StartMessage.8bx";
+import { Copyright } from "./Copyright.8bx";
+import { Version } from "./Version.8bx";
+import { TitleWobble } from "./TitleWobble.8bx";
+import { TITLE_WOBBLES } from "../lib/tile.8bs";
+
+export component TitleScreen() {
+    text.setReverse(false);
+    text.setColor(TextColor.WHITE);
+    return (
+        <>
+            <Logo />
+            <StartMessage />
+            <Copyright />
+            <Version />
+            {TITLE_WOBBLES && <TitleWobble />}
+        </>
+    );
+}

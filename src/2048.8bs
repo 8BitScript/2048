@@ -1,17 +1,19 @@
 // 2048 — for every 8BitScript target: VIC-20, C64, PET, C128, Atari 8-bit,
 // NES, Commander X16, MEGA65, and the web. This is the program: the loop
 // that reads the player and drives the game. The rules and the board are
-// lib/game.8bs's, what goes on the screen is ui/App.8bx's, and how a tile
-// is painted on each machine is lib/tile.8bs's (and its twins'). Rules
-// follow https://github.com/gabrielecirulli/2048 (MIT) — see lib/game.8bs.
+// lib/game.8bs's, what goes on the screen is ui/'s — App.8bx is the root —
+// and what each machine paints it with is lib/tile.8bs's (and its twins').
+// Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see lib/game.8bs.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
 import { raster } from "@8bitscript/raster";
 import { rng } from "./lib/rng.8bs";
 import { Memory } from "@8bitscript/system";
-import { computeLayout, wobbleTitle } from "./lib/tile.8bs";
+import { computeLayout } from "./lib/tile.8bs";
+import { wobble } from "./lib/wobble.8bs";
 import { shown, merged, stepped, moved, over, started, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "./lib/game.8bs";
-import { App, Board, Tiles, Title } from "./ui/App.8bx";
+import { App, Board, Tiles } from "./ui/App.8bx";
+import { TitleScreen } from "./ui/TitleScreen.8bx";
 
 // Whether this machine can change the picture part-way down a frame — the
 // guard on the title screen's raster effect. A compile-time fact: the
@@ -110,7 +112,7 @@ export function main(): void {
     // and every other target treats it as one idle frame at start-up.
     waitFrame();
     input.poll();
-    Title();
+    TitleScreen();
 
     while (true) {
         waitFrame();
@@ -143,9 +145,9 @@ export function main(): void {
 
         if (!started) {
             // One step of the title's raster wobble — an empty call,
-            // deleted by the compiler, everywhere tile.8bs (or a twin)
-            // makes it an empty function.
-            wobbleTitle();
+            // deleted by the compiler, everywhere #fact(video.raster) is
+            // false (see lib/wobble.8bs).
+            wobble.step();
             if (input.confirm()) {
                 started = true;
                 if (HAS_RASTER) {

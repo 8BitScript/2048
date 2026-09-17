@@ -214,27 +214,6 @@ export function graphicsSet(): void {
     memory.write(VIA_PCR, GRAPHICS_SET);
 }
 
-export function drawTitleScreen(): void {
-    graphicsSet();
-    // 25-row grid: title on 11, prompt on 13, version on 24. The 80-column
-    // arm folds away on a 4032/2001 build (and the 40-column literals on
-    // an 8032), so neither multiply nor the unused cells reach the image.
-    let titleAt: usmallint = 458;
-    let promptAt: usmallint = 534;
-    let versionAt: usmallint = 994;
-    let portAt: usmallint = at.COPYRIGHT_40;
-    if (Video.COLUMNS != 40) {
-        titleAt = 918;
-        promptAt = 1074;
-        versionAt = 1994;
-        portAt = at.COPYRIGHT_80;
-    }
-    writeCells(titleAt, hud.TITLE_AT, hud.TITLE_LEN);
-    writeCells(promptAt, hud.TITLE_PRESS_RETURN, hud.TITLE_PRESS_RETURN_LEN);
-    writeCells(portAt, hud.COPYRIGHT, hud.COPYRIGHT_LEN);
-    writeCells(versionAt, hud.TITLE_VERSION, hud.TITLE_VERSION_LEN);
-    return;
-}
 
 
 export function fillTile(origin: usmallint): void {
@@ -270,11 +249,5 @@ export function drawDigit(cell: usmallint, value: utinyint): void {
 // The tile itself is ui/Tile.pet.8bx: fillTile() and drawDigit() above and
 // the ORIGIN and TILE_DIGIT tables are what it is made of.
 
-// The title wobble is tile.8bs's — the portable skin, read by the one
-// machine with a per-scanline hook (the C64). No PET answers
-// #fact(video.raster), so this skin's copy is deliberately empty and the
-// compiler deletes the call, the same way an empty text.setColor costs
-// the PET nothing.
-export function wobbleTitle(): void {
-    return;
-}
+// No PET has a raster; the title screen never takes the wobble.
+export const TITLE_WOBBLES: bool = false;

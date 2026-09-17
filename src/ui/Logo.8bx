@@ -1,0 +1,9 @@
+// "2048", centred, one row above the middle of the screen.
+import { text } from "@8bitscript/text";
+import { Video } from "@8bitscript/system";
+
+const ROW: usmallint = text.COLUMNS;
+
+export component Logo() {
+    text.print(((Video.ROWS >> 1) - 1) * ROW + ((text.COLUMNS - 4) >> 1), "2048");
+}

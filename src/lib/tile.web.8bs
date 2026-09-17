@@ -71,7 +71,6 @@ import { text, TextColor } from "@8bitscript/text";
 import { input } from "@8bitscript/input";
 
 // Keep in sync with package.json "version".
-const VERSION_LINE: string = "v0.2.0";
 
 // The live grid, not a fixed 48: this skin runs on the Modern host's
 // resizable preset, so a rotated phone or a resized window hands the
@@ -234,12 +233,12 @@ export let headerAt: usmallint = 0;   // the header row's own start-of-row cell
 export let statusAt: usmallint = 0;   // the status row, left-aligned on the board
 
 // ---- title screen positions (both arrangements) ----------------------------
-let titleAt: usmallint = 0;       // "2048" on the title screen
-let promptAt: usmallint = 0;
-let touchPromptAt: usmallint = 0; // "TOUCH TO START" is longer than
+export let titleAt: usmallint = 0;       // "2048" on the title screen
+export let promptAt: usmallint = 0;
+export let touchPromptAt: usmallint = 0; // "TOUCH TO START" is longer than
                                    // promptAt's text, so it centres
                                    // differently
-let versionAt: usmallint = 0;
+export let versionAt: usmallint = 0;
 
 // ---- the game-over message ------------------------------------------------
 //
@@ -283,9 +282,7 @@ export let overKeyAt: usmallint = 0;    // "PRESS ENTER TO TRY AGAIN"
 // glyph and nothing else, and the print is what put the colour on those
 // cells. The web host's font is indexed by ASCII outright, so these are the
 // two ASCII codes.
-let creditPortAt: usmallint = 0;
-const PAREN_OPEN: utinyint = 40;
-const PAREN_CLOSE: utinyint = 41;
+export let creditPortAt: usmallint = 0;
 
 export function computeLayout(): void {
     rowWidth = text.columns();
@@ -545,31 +542,6 @@ export function tileCell(row: utinyint, col: utinyint): usmallint {
     return y * rowWidth + x;
 }
 
-export function drawTitleScreen(): void {
-    text.setReverse(false);
-    text.setColor(TextColor.WHITE);
-    text.print(titleAt, "2048");
-    if (input.touch()) {
-        text.print(touchPromptAt, "TOUCH TO START");
-    } else {
-        text.print(promptAt, "PRESS ENTER");
-    }
-    // The credit line is 19 columns centred on the full row, one row above
-    // the version, which is flush to the right edge — on a WIDE row those
-    // two land nowhere near each other, but a NARROW row is not wide
-    // enough to keep them apart: the version would sit directly under the
-    // credit line's own tail end. Dropping the credit line (never the
-    // title, prompt, or version — all three earn their place) is the same
-    // move the HUD makes elsewhere in this file: the lower-priority field
-    // goes, not a cramped compromise of both.
-    if (wide) {
-        text.print(creditPortAt, " C  2026 8BITSCRIPT");
-        text.putChar(creditPortAt, PAREN_OPEN);
-        text.putChar(creditPortAt + 2, PAREN_CLOSE);
-    }
-    text.print(versionAt, VERSION_LINE);
-    return;
-}
 
 
 
@@ -609,9 +581,6 @@ export function drawDigit(cell: usmallint, value: utinyint): void {
 // does not take the effect up yet; an empty function here means the
 // compiler deletes the call, and the game's raster.disable() at start is
 // a no-op against a list that was never built.
-export function wobbleTitle(): void {
-    return;
-}
 
 // Whether this frame's tile is wide enough for the block-digit font —
 // ui/Tile.web.8bx's one question. A function rather than an exported
@@ -621,3 +590,11 @@ export function wobbleTitle(): void {
 export function blockDigitsFit(): bool {
     return tileW >= BLOCK_DIGIT_MIN;
 }
+
+// What the start prompt says when this is not a touch host; the three fixed
+// web skins say it in their own words. ui/StartMessage.web.8bx reads it.
+export const START_KEY: string = "PRESS ENTER";
+
+// The web answers #fact(video.raster) true, but this skin draws its own
+// title and does not take the wobble up yet; the fixed C64 skin does.
+export const TITLE_WOBBLES: bool = false;
