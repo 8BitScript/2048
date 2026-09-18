@@ -2,11 +2,10 @@
 // strings.de.8bs beside this file is the German one, and a build takes it
 // with `8bs build --locale de`, a `locale: 'de'` on a target, or a
 // `{ locale: 'de' }` release entry (8bitscript.config.ts); with no locale
-// named, no locale's file is read and this one is the game. The PET does
-// not read these: its lines are baked screen codes in lib/codes.8bs (and
-// codes.de.8bs), because converting at run time is what a 4K 2001 cannot
-// afford. Only the machine's own wording is ever in an image — the arm an
-// element takes is a fact, and the rest fold away with their strings.
+// named, no locale's file is read and this one is the game, on every
+// machine including the PET. Only the machine's own wording is ever in
+// an image — the arm an element takes is a fact, and the rest fold away
+// with their strings.
 //
 // A string's `.length` folds at compile time, so the centring reads it
 // here rather than carrying a second number that could drift. Lines that
@@ -15,7 +14,7 @@
 //
 // The portable character set is space, 0-9, A-Z, a-z, and ! , - . : ? —
 // no parentheses, which is why the copyright's "(C)" is put in by
-// ui/Copyright.8bx as two codes after the print.
+// ui/title/Copyright.8bx as two codes after the print.
 
 export const NAME: string = "2048";
 export const SCORE_LABEL: string = "SCORE"; // followed by a space and five digits

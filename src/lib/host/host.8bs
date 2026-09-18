@@ -1,5 +1,5 @@
 // What the machine running the game is like, asked the same way on every
-// target. The portable answers: no touchscreen. lib/host.web.8bs is the
+// target. The portable answers: no touchscreen. lib/host/host.web.8bs is the
 // web's twin, where a phone may be holding the game. An answer that is a
 // literal folds, so a branch on it costs the eight machines nothing.
 export namespace host {

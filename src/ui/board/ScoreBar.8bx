@@ -1,11 +1,10 @@
 // The game's name, the score, and a line that says how to move, that the
 // player made 2048, or — once the game is over and the board itself says
-// so — nothing. One element for every machine; the PET's lines are runs
-// of pre-converted screen codes out of lib/petscii.8bs's table — no
-// character-set lookup at run time, which is what a 4K 2001 can afford —
-// at cells that are the build's own (40 or 80 columns).
+// so — nothing. One element for every machine, through @8bitscript/text;
+// where the lines land is the layout's (lib/layout/, and its PET and
+// PET-replica twins).
 //
-// Two arrangements, and lib/layout.8bs says which: a header row above the
+// Two arrangements, and lib/layout/layout.8bs says which: a header row above the
 // board and a status row below it — every fixed grid, and the fluid web
 // host when its window is narrow — or, when the fluid host is WIDE, the
 // name, the score and a two-line hint in the margins beside the board,
@@ -13,39 +12,15 @@
 // grid's image carries only the header/status arm.
 import { screen, BorderColor } from "@8bitscript/screen";
 import { text, TextColor } from "@8bitscript/text";
-import { System, Video } from "@8bitscript/system";
-import { headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "../lib/layout.8bs";
-import { host } from "../lib/host.8bs";
-import { NAME, SCORE_LABEL, HINT_SWIPE, HINT_ARROW, HINT_WIN, HINT_CLEAR, STATUS_WON, STATUS_MOVE, STATUS_CLEAR, FLUID_STATUS_WON, FLUID_STATUS_MOVE, FLUID_STATUS_CLEAR, REPLICA_STATUS_WON, REPLICA_STATUS_MOVE, REPLICA_STATUS_CLEAR } from "../lib/strings.8bs";
-import { graphicsSet, writeCells, blankCells, printScore5 } from "../lib/petscii.8bs";
-import { hud, at } from "../lib/codes.8bs";
+import { System } from "@8bitscript/system";
+import { headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "../../lib/layout/layout.8bs";
+import { host } from "../../lib/host/host.8bs";
+import { NAME, SCORE_LABEL, HINT_SWIPE, HINT_ARROW, HINT_WIN, HINT_CLEAR, STATUS_WON, STATUS_MOVE, STATUS_CLEAR, FLUID_STATUS_WON, FLUID_STATUS_MOVE, FLUID_STATUS_CLEAR, REPLICA_STATUS_WON, REPLICA_STATUS_MOVE, REPLICA_STATUS_CLEAR } from "../../lib/text/strings.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 
 export component ScoreBar(score: usmallint, over: bool, won: bool) {
-    if (#system() == System.PET) {
-        graphicsSet();
-        let header: usmallint = at.HEADER_40;
-        let status: usmallint = at.STATUS_40;
-        if (Video.COLUMNS != 40) {
-            header = at.HEADER_80;
-            status = at.STATUS_80;
-        }
-        writeCells(header, hud.TITLE_AT, hud.TITLE_LEN);
-        writeCells(
-            Video.COLUMNS - hud.SCORE_DIGITS_LEN - hud.SCORE_LABEL_LEN,
-            hud.SCORE_LABEL_AT,
-            hud.SCORE_LABEL_LEN,
-        );
-        printScore5(Video.COLUMNS - hud.SCORE_DIGITS_LEN, score);
-        if (won) {
-            writeCells(status, hud.WON, hud.STATUS_LEN);
-        } else if (!over) {
-            writeCells(status, hud.ARROWS, hud.STATUS_LEN);
-        } else {
-            blankCells(status, hud.STATUS_LEN);
-        }
-    } else if (FLUID && wide) {
+    if (FLUID && wide) {
         text.setReverse(false);
         text.setColor(TextColor.WHITE);
         text.print(titleNameAt, NAME);

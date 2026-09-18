@@ -7,7 +7,7 @@
 // cascade collapses the effect — see that example's header), not a choice
 // made here.
 //
-// ui/TitleWobble.8bx builds the list from these tables; wobble.step()
+// ui/title/TitleWobble.8bx builds the list from these tables; wobble.step()
 // below animates it, once per title-screen frame from 2048.8bs's loop.
 // Whether a build takes the effect is TAKES_WOBBLE below: a per-scanline
 // hook, on the 40-column, 16-colour picture the band was drawn for — the
@@ -16,7 +16,7 @@
 // fact, and a resize would leave it behind. Every term is a fact, so
 // every branch on it folds: where it is false this file costs the image
 // nothing — the 4K PET and the unexpanded VIC-20 are byte-identical with
-// and without it. (Written out again in ui/TitleScreen.8bx: a const may
+// and without it. (Written out again in ui/title/TitleScreen.8bx: a const may
 // not be initialized by an expression, and a function called from two
 // places is not folded into either today.)
 import { raster } from "@8bitscript/raster";
@@ -32,7 +32,7 @@ export const SINE: array<utinyint, 32> = [
 
 // The wobble covers the title's one text row: eight scanlines, four
 // SCROLL_X entries at the two-line pitch. The colour band opens one text
-// row above it and closes one below. A namespace so ui/TitleWobble.8bx can
+// row above it and closes one below. A namespace so ui/title/TitleWobble.8bx can
 // import them: an imported bare number const does not survive the linker
 // today, a namespace member does.
 export namespace band {

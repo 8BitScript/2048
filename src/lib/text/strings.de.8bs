@@ -1,5 +1,5 @@
 // The German lines: strings.8bs's twin for `--locale de`. Same names, so
-// every element and lib/layout.8bs read it unchanged; each status line
+// every element and lib/layout/layout.8bs read it unchanged; each status line
 // keeps its arrangement's width, and nothing is wider than the 22-column
 // VIC-20 can centre. No umlauts: the machines' character sets have none,
 // so it is DRUECKEN, the way a German typewriter without them spells it.

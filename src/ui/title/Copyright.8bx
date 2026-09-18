@@ -1,9 +1,7 @@
 // The port's own line, centred on the second-to-last row so the version
 // keeps the last one and the middle of the screen stays clear. The
 // original game's author and repo are credited in README.md rather than
-// on screen. The PET writes it as nineteen screen codes (lib/petscii.8bs)
-// on row 23 — "(" and ")" are codes 40 and 41 in its graphics set like
-// any other, so it needs none of the poking below.
+// on screen.
 //
 // "(" and ")" are not in the portable character set, so the line is printed
 // with spaces where they go and the two glyphs poked in after — putChar
@@ -26,10 +24,8 @@
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { System, Video } from "@8bitscript/system";
-import { wide } from "../lib/layout.8bs";
-import { COPYRIGHT, COPYRIGHT_WORD } from "../lib/strings.8bs";
-import { writeCells } from "../lib/petscii.8bs";
-import { hud, at } from "../lib/codes.8bs";
+import { wide } from "../../lib/layout/layout.8bs";
+import { COPYRIGHT, COPYRIGHT_WORD } from "../../lib/text/strings.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
@@ -41,13 +37,7 @@ const PAREN_CLOSE: utinyint = 41;
 // is a variable to the folder, and the add it saves in the source costs a
 // 16-bit add and a slot in the image (+35 bytes on the VIC-20).
 export component Copyright() {
-    if (#system() == System.PET) {
-        let cell: usmallint = at.COPYRIGHT_40;
-        if (Video.COLUMNS != 40) {
-            cell = at.COPYRIGHT_80;
-        }
-        writeCells(cell, hud.COPYRIGHT, hud.COPYRIGHT_LEN);
-    } else if (FLUID) {
+    if (FLUID) {
         if (wide) {
             let cols: usmallint = text.columns();
             let rows: usmallint = text.rows();

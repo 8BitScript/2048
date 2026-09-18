@@ -1,0 +1,94 @@
+// The PET's tile: screen codes straight into video RAM at $8000 — a solid
+// 8×5 block for the square, the value cut into its second row as inverted
+// 2×3 block digits (lib/draw/font.pet.8bs). The one file in the game the
+// PET has that the other eight do not, and why: @8bitscript/text's
+// putChar takes ASCII, and two of the quadrant-block glyphs a digit is
+// made of (screen codes 98 and 108) sit where that contract remaps 'a'–'z'
+// — so a block digit cannot go through text.putChar on this machine, and
+// there is no portable `blocks` capability yet to carry it. Everything
+// else the PET draws — the HUD, the title, the game-over lines — goes
+// through @8bitscript/text like every other machine's, since 2048 0.7.0;
+// before that every element carried a `#system() == System.PET` arm of
+// baked screen codes (lib/petscii.8bs, lib/codes.8bs), which was 97
+// bytes smaller on the 4K 2001 (2779 against 2876, measured 2026-09-17)
+// and eight switches in eight files.
+//
+// Why the PET keeps block digits at all: text.printNumber's centring is
+// exact only when tileW − digitWidth is even, and a 1-cell digit makes
+// that parity flip between 1-, 2-, 3- and 4-digit tiles. A quadrant-block
+// digit is 2 cells wide, so the leftover is always even, and every count
+// from "2" to "2048" centres exactly — and the 5×3 printed-number tile
+// the other fixed grids use does not fit a 4K 2001 in any case (3370
+// bytes, 299 past the 3071-byte ceiling; measured 2026-09-17).
+//
+// The font is the inverted form of @8bitscript/pet/blocks's own
+// DIGIT_TILES (bit 7 flipped): drawn over a solid reverse-video tile,
+// that is dark ink cut into the tile rather than a fresh glyph punching
+// a black rectangle through it. Kept as data in font.pet.8bs so the game
+// never links digits.print / printCentered / patternIndex — 2048 only
+// ever stamps the eleven face values. The quadrant-block codes are
+// identical in both PET character sets, so the tile draws the same
+// whichever set @8bitscript/pet/text has selected for the HUD.
+import { Video } from "@8bitscript/system";
+import { DIGIT_TILES, TILE_DIGIT_AT, TILE_DIGIT } from "./font.8bs";
+import { tileCell } from "../layout/layout.8bs";
+
+const ROW: usmallint = Video.COLUMNS; // 40, or 80 on an 8032 build
+const SCREEN: usmallint = 0x8000;
+
+const TILE_W: utinyint = 8;
+const TILE_H: utinyint = 5;
+
+// Screen code 160 is all four quadrants on — the same reverse-space a
+// filled tile is. Written directly so fillSquare is a store, not a call
+// into text.print (five prints of eight spaces cost more than this loop).
+const SOLID: utinyint = 160;
+
+function fillSquare(origin: usmallint): void {
+    let rowCell: usmallint = origin;
+    let row: utinyint = 0;
+    while (row < TILE_H) {
+        let col: utinyint = 0;
+        while (col < TILE_W) {
+            memory.write(SCREEN + rowCell + col, SOLID);
+            col++;
+        }
+        rowCell = rowCell + ROW;
+        row++;
+    }
+    return;
+}
+
+function stampDigit(cell: usmallint, value: utinyint): void {
+    let base: utinyint = value * 6;
+    let rowCell: usmallint = cell;
+    let row: utinyint = 0;
+    while (row < 3) {
+        memory.write(SCREEN + rowCell, DIGIT_TILES[base]);
+        memory.write(SCREEN + rowCell + 1, DIGIT_TILES[base + 1]);
+        base = base + 2;
+        rowCell = rowCell + ROW;
+        row++;
+    }
+    return;
+}
+
+// One tile: the 8×5 solid square at the board square's origin
+// (lib/layout/layout.pet.8bs's table), and the value as 2×3 block digits
+// stamped right-aligned on its second row. ui/board/Tile.8bx is this call
+// on the PET, and lib/draw/tile.8bs's on every other machine.
+export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+    let origin: usmallint = tileCell(row, col);
+    fillSquare(origin);
+    let base: utinyint = TILE_DIGIT_AT[exponent];
+    let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
+    if (count != 0) {
+        let at: usmallint = origin + ROW + (4 - count);
+        let i: utinyint = 0;
+        while (i < count) {
+            stampDigit(at, TILE_DIGIT[base + i]);
+            at = at + 2;
+            i++;
+        }
+    }
+}

@@ -1,20 +1,21 @@
 // 2048 — for every 8BitScript target: VIC-20, C64, PET, C128, Atari 8-bit,
 // NES, Commander X16, MEGA65, and the web. This is the program: the loop
 // that reads the player and drives the game. The rules and the board are
-// lib/game.8bs's, what goes on the screen is ui/'s — App.8bx is the root —
-// and where each machine puts it is lib/layout.8bs's (the PET's,
-// lib/petscii.8bs's).
-// Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see lib/game.8bs.
+// lib/game/rules.8bs's, what goes on the screen is ui/'s — Game.8bx is
+// the root — and where each machine puts it is lib/layout/'s.
+// Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see lib/game/rules.8bs.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
 import { raster } from "@8bitscript/raster";
 import { entropy } from "@8bitscript/random/entropy";
 import { Memory } from "@8bitscript/system";
-import { computeLayout } from "./lib/layout.8bs";
-import { wobble } from "./lib/wobble.8bs";
-import { shown, merged, stepped, moved, over, started, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "./lib/game.8bs";
-import { App, Board, Tiles } from "./ui/App.8bx";
-import { TitleScreen } from "./ui/TitleScreen.8bx";
+import { computeLayout } from "./lib/layout/layout.8bs";
+import { wobble } from "./lib/raster/wobble.8bs";
+import { shown, merged, stepped, moved, over, started, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "./lib/game/rules.8bs";
+import { Game } from "./ui/Game.8bx";
+import { Board } from "./ui/board/Board.8bx";
+import { Tiles } from "./ui/board/Tiles.8bx";
+import { TitleScreen } from "./ui/title/TitleScreen.8bx";
 
 // Whether this machine can change the picture part-way down a frame — the
 // guard on the title screen's raster effect. A compile-time fact: the
@@ -48,7 +49,7 @@ const ANIM_STEP_FRAMES: utinyint = 1;
 
 // ---- the animated move --------------------------------------------------
 //
-// game.8bs's stepLines() takes the move one cell at a time; this repaints
+// rules.8bs's stepLines() takes the move one cell at a time; this repaints
 // the board after each step that moved something and lingers
 // ANIM_STEP_FRAMES, until a step moves nothing. Only the tiles are
 // repainted between steps — the score a merge just banked appears with
@@ -122,14 +123,14 @@ export function main(): void {
         input.poll();
         entropy.tick(); // keep the generator moving between moves — see spawnTile()
 
-        // The window resized or the phone rotated: every position lib/layout.8bs
+        // The window resized or the phone rotated: every position lib/layout/
         // computed depends on the grid computeLayout() read, so
         // it has to run again before anything else this frame draws. The
         // grid changed shape under whatever was already on screen, so a
         // reblank plus forcing every cell to redraw (shown[] holds no valid
         // exponent) is the same recovery resetGame() gives a fresh board —
         // without touching score, over, or won, which a resize does not
-        // change — and App() puts back whichever of the title and the
+        // change — and Game() puts back whichever of the title and the
         // board was up. Guarded by HAS_RESIZE, not just screen.resized()'s
         // own answer: resized() cannot fold, so without the guard this
         // whole block — and the otherwise-unreferenced resized() itself —
@@ -142,14 +143,14 @@ export function main(): void {
                 for (let i: utinyint = 0; i < 16; i++) {
                     shown[i] = 255;
                 }
-                App();
+                Game();
             }
         }
 
         if (!started) {
             // One step of the title's raster wobble — an empty call,
             // deleted by the compiler, everywhere #fact(video.raster) is
-            // false (see lib/wobble.8bs).
+            // false (see lib/raster/wobble.8bs).
             wobble.step();
             if (input.confirm()) {
                 started = true;

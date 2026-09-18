@@ -4,9 +4,9 @@
 // fixed C64 and VIC-20 replicas (the same rules at their columns — a
 // replica is the machine's own layout, so it reads this file), and the
 // web's fluid host, whose grid changes shape under a running game. The
-// web's PET replica (layout.web.pet-2001.8bs) has its own numbers; the
-// PET itself lays nothing out — its positions are literals in
-// lib/petscii.8bs, and computeLayout() returns before the first store.
+// web's PET replica (layout.web.pet-2001.8bs) and the PET itself
+// (layout.pet.8bs) have their own numbers, the 4K 2001's arrangement —
+// twins of this file, never read by any other build.
 //
 // One surface, every skin: the elements in ui/ import these names and
 // never a twin's own. A position is a `let` the fluid host recomputes on
@@ -20,7 +20,7 @@
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { Input, System, Video } from "@8bitscript/system";
-import { GAME_OVER, RETURN_TO_TRY_AGAIN, RETURN_TO_TRY_AGAIN_NARROW, START_TO_TRY_AGAIN, FIRE_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN_NARROW, TOUCH_TO_TRY_AGAIN } from "./strings.8bs";
+import { GAME_OVER, RETURN_TO_TRY_AGAIN, RETURN_TO_TRY_AGAIN_NARROW, START_TO_TRY_AGAIN, FIRE_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN_NARROW, TOUCH_TO_TRY_AGAIN } from "../text/strings.8bs";
 
 // Whether this build's grid can change shape under a running program —
 // true only for the web's fluid host. A build-time constant, so every
@@ -36,14 +36,14 @@ const ROW: usmallint = text.COLUMNS;
 
 // What the confirm key is called on the web: a PC keyboard's Enter. The
 // web's PET replica (layout.web.pet-2001.8bs) says RETURN, the PET's own
-// word; the strings for both are lib/strings.8bs's, and the element picks
+// word; the strings for both are lib/text/strings.8bs's, and the element picks
 // by this. A machine build never reads it — its arm names its own key.
 export const ENTER_KEY: bool = true;
 
-// Whether a tile's value may be stamped as block digits (lib/font.8bs)
+// Whether a tile's value may be stamped as block digits (lib/draw/font.8bs)
 // rather than printed as a number: this skin's answer is "when the grid
 // can change" — the fluid host decides per resize in blockDigitsFit()
-// below. A fixed grid prints, and ui/Tile.8bx's block arm is not in its
+// below. A fixed grid prints, and ui/board/Tile.8bx's block arm is not in its
 // image.
 export const BLOCK_DIGITS: bool = screen.RESIZABLE;
 
@@ -88,7 +88,7 @@ const ROW_GAP: utinyint = 1; // between tile rows — never contended for room
 
 // The board's width in cells — the number that decides whether a machine
 // is too narrow for the full tile and the long form of the try-again
-// prompt (the VIC-20's 22 columns). A namespace so ui/GameOver.8bx can
+// prompt (the VIC-20's 22 columns). A namespace so ui/board/GameOver.8bx can
 // import it.
 export namespace board {
     const FULL_WIDTH: usmallint = 23; // 4 tiles * 5 + 3 gaps * 1
@@ -180,12 +180,6 @@ export let hintBottomAt: usmallint;
 // a parameterless function that only calls another costs the VIC-20 four
 // bytes today.
 export function computeLayout(): void {
-    if (#system() == System.PET) {
-        // The PET's positions are the build's own literals (lib/petscii.8bs);
-        // nothing below is linked into its image, and its arms in ui/ read
-        // none of the lets above.
-        return;
-    }
     if (FLUID) {
         fluidLayout();
         return;
@@ -233,7 +227,7 @@ export function computeLayout(): void {
     // always has one, so that is the one it names); a machine without one
     // names its own button. A screen too narrow for the full prompt — the
     // VIC-20's 22 columns — takes the narrow one. The arms here mirror
-    // ui/GameOver.8bx's, and each reads the length of the string that arm
+    // ui/board/GameOver.8bx's, and each reads the length of the string that arm
     // prints, so a translation moves the line with the words.
     overAt = tileCell(1, 0) - ROW - boardLeft + ((text.COLUMNS - GAME_OVER.length) >> 1);
     if (#system() == System.WEB) {
@@ -429,7 +423,7 @@ export function tileCell(row: utinyint, col: utinyint): usmallint {
 }
 
 // Whether this frame's tile is wide enough for the block-digit font —
-// ui/Tile.8bx's one question, on the host whose answer changes. One
+// ui/board/Tile.8bx's one question, on the host whose answer changes. One
 // compare, and it inlines.
 export function blockDigitsFit(): bool {
     return tileW >= BLOCK_DIGIT_MIN;
