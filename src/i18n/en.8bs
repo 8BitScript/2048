@@ -1,0 +1,36 @@
+// English message catalog. Imported as `@8bitscript/i18n/catalog`.
+// Control names are interpolated (`{control}` / `{other}`); padding
+// widths live in the layout, not here.
+
+export namespace Game {
+    const NAME: string = "2048";
+    const SCORE: string = "SCORE";
+    const GAME_OVER: string = "GAME OVER";
+}
+
+export namespace Prompt {
+    const START: string = "PRESS {control}";
+    const START_EITHER: string = "PRESS {control} OR {other}";
+    const TOUCH_START: string = "TOUCH TO START";
+    const RETRY: string = "PRESS {control} TO TRY AGAIN";
+    const RETRY_COMPACT: string = "{control} TO TRY AGAIN";
+    const TOUCH_RETRY: string = "TOUCH TO TRY AGAIN";
+}
+
+export namespace Status {
+    const WON: string = "YOU MADE 2048 ";
+    const WON_COMPACT: string = "YOU WIN!";
+    const MOVE: string = "ARROWS TO MOVE";
+    const MOVE_TOUCH: string = "SWIPE OR ARROWS";
+}
+
+export namespace Hint {
+    const SWIPE: string = "SWIPE";
+    const ARROW: string = "ARROW";
+    const WIN: string = "WIN!";
+}
+
+export namespace Copyright {
+    const LINE: string = " C  2026 8BITSCRIPT";
+    const WORD: string = "COPYRIGHT 2026 8BITSCRIPT";
+}

@@ -14,8 +14,8 @@ elements — `Game.8bx` is the root, `ui/board/` the game and `ui/title/`
 the front door, one file per element; and [`src/lib/`](src/lib) is the
 `.8bs` underneath, by what it is: `lib/game/` the rules and the board,
 `lib/layout/` where everything goes, `lib/draw/` how a tile is painted
-and the tables it is painted from, `lib/text/` every line the game
-prints and the version, `lib/host/` what the machine is like, and
+and the tables it is painted from, `lib/text/` the version, `src/i18n/` every line the game
+prints, `lib/host/` what the machine is like, and
 `lib/raster/` the title's wobble. No element names a machine: what
 differs between builds is a fact the element tests, or a machine twin
 in `lib/` that the build picks by filename. There are five twins — the
@@ -106,14 +106,18 @@ builds that directory and deploys it to [2048.8bitscript.com](https://2048.8bits
 once the `8bitscript.com` zone is in Cloudflare and `CLOUDFLARE_API_TOKEN` is
 set. Every other target reads a real keyboard, joystick, or pad the same way.
 
-Every line the game prints is in [`src/lib/text/strings.8bs`](src/lib/text/strings.8bs),
-and `strings.de.8bs` beside it is the German one: `pnpm exec 8bs
-build --target vic20 --locale de` (or `8bs run c64 --locale de`) builds a
-German game, `dist/2048-vic20-de-ntsc.prg` beside the English one, and the
-release ships the German web build and the German 4K PET. A locale is a
-build input, not a menu — a 4K PET has no room for a switch — and with no
-locale named no locale's file is read, so the English builds are the
-bytes they were. The PET prints the same strings through
+Every line the game prints is in [`src/i18n/en.8bs`](src/i18n/en.8bs)
+and [`src/i18n/de.8bs`](src/i18n/de.8bs), imported as
+`@8bitscript/i18n/catalog`. `pnpm run start:de` or
+`pnpm exec 8bs build --target vic20 --locale de` (or `8bs run c64 --locale
+de`) builds a German game, `dist/2048-vic20-de-ntsc.prg` beside the English
+one, and the release ships the German web build and the German 4K PET. A
+locale is a build input, not a menu — a 4K PET has no room for a switch —
+and with no locale named the English catalog is the default. Scores use [`@8bitscript/i18n`](../8bitscript/packages/i18n)'s
+`number.print` on every target that has the bytes so thousands grouping
+follows the build (`12.345` in German); the unexpanded VIC-20 keeps a
+zero-padded field like English — there is no room for the routine. The PET
+prints the same strings through
 `@8bitscript/text` as every other machine (until 0.7.0 its lines were
 baked screen codes in a `codes.8bs` of their own, and a second table for
 the German build — see "the PET is the same program" below). The
@@ -186,7 +190,7 @@ screen prints a `v` and then the number.
   measured, one element at a time, at exactly the bytes the per-machine
   twins cost. `ui/board/Tile.8bx` is one call, `drawTile()` in
   `lib/draw/tile.8bs`, and the PET's `tile.pet.8bs` beside it is what
-  that call is there; each element's words are `lib/text/strings.8bs`'s;
+  that call is there; each element's words are `src/i18n/<locale>.8bs`'s;
   the elements are the arrangement, and `lib/` is the how. That is free
   because a function with one caller is written into it (8bitscript
   #184): on 0.11.0 the same `Tile` measured +56 bytes on every 6502 and
@@ -213,9 +217,9 @@ screen prints a `v` and then the number.
   — eight switches in eight files, and a second copy of every string.
   Measured, that machinery bought **97 bytes**: the PET now prints
   through `@8bitscript/text` like the other eight, at 2876 bytes on the
-  4K 2001 (2779 with the arms; 2877 in German; the 3071-byte ceiling
-  stands), 2886 on the 4032, and 2905 on the 8032 (2970 before — the
-  two-width cell tables went). What the PET keeps is its *look*, as two
+  4K 2001 (2779 with the arms; 3056 in German after catalogs, still
+  under the 3071-byte ceiling), 2886 on the 4032, and 2905 on the 8032
+  (2970 before — the two-width cell tables went). What the PET keeps is its *look*, as two
   twins in `lib/`: `layout/layout.pet.8bs` (the 8×5 block-digit
   arrangement, both widths in one file, folded) and `draw/tile.pet.8bs`
   (the tile stamped into video RAM). The tile is the one thing that

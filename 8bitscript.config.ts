@@ -6,8 +6,9 @@ export default {
   targets: {
     vic20: {},
     c64: {},
-    // The game is 2876 bytes of program on a 2001/4K, measured 2026-09-17
-    // against the 0.13.0 toolchain, with the PET printing through
+    // The game is 2876 bytes of program on a 2001/4K English build
+    // (3056 German, still under the 3071-byte ceiling), measured
+    // 2026-09-18 after catalogs, with the PET printing through
     // @8bitscript/text like every other machine and its look in two lib/
     // twins (layout.pet.8bs, tile.pet.8bs): 2779 with the elements'
     // `#system() == System.PET` arms of baked screen codes it had before,
@@ -49,12 +50,16 @@ export default {
         { hardware: { machine: 'c64' } },
         { hardware: { machine: 'pet-2001' } },
         { hardware: { machine: 'vic20' } },
-        // The German one: lib/text/strings.de.8bs in place of
-        // lib/text/strings.8bs, and nothing else. Any target builds it
-        // with `--locale de`; the release ships it for the web and the
-        // 4K PET (2877 bytes, one more than the English).
+        // The German one: src/i18n/de.8bs in place of src/i18n/en.8bs,
+        // and nothing else. Any target builds it with `--locale de`;
+        // the release ships it for the web and the 4K PET.
         { locale: 'de' },
       ],
     },
+  },
+  i18n: {
+    defaultLocale: 'en',
+    fallbackLocale: 'en',
+    locales: ['en', 'de'],
   },
 };

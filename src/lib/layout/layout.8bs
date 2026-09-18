@@ -20,7 +20,9 @@
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { Input, System, Video } from "@8bitscript/system";
-import { GAME_OVER, RETURN_TO_TRY_AGAIN, RETURN_TO_TRY_AGAIN_NARROW, START_TO_TRY_AGAIN, FIRE_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN_NARROW, TOUCH_TO_TRY_AGAIN } from "../text/strings.8bs";
+import { Input as Controls } from "@8bitscript/input";
+import { i18n } from "@8bitscript/i18n";
+import { Game, Prompt } from "@8bitscript/i18n/catalog";
 
 // Whether this build's grid can change shape under a running program —
 // true only for the web's fluid host. A build-time constant, so every
@@ -36,7 +38,7 @@ const ROW: usmallint = text.COLUMNS;
 
 // What the confirm key is called on the web: a PC keyboard's Enter. The
 // web's PET replica (layout.web.pet-2001.8bs) says RETURN, the PET's own
-// word; the strings for both are lib/text/strings.8bs's, and the element picks
+// word; the strings for both are src/i18n/<locale>.8bs's, and the element picks
 // by this. A machine build never reads it — its arm names its own key.
 export const ENTER_KEY: bool = true;
 
@@ -229,24 +231,24 @@ export function computeLayout(): void {
     // VIC-20's 22 columns — takes the narrow one. The arms here mirror
     // ui/board/GameOver.8bx's, and each reads the length of the string that arm
     // prints, so a translation moves the line with the words.
-    overAt = tileCell(1, 0) - ROW - boardLeft + ((text.COLUMNS - GAME_OVER.length) >> 1);
+    overAt = tileCell(1, 0) - ROW - boardLeft + ((text.COLUMNS - Game.GAME_OVER.length) >> 1);
     if (#system() == System.WEB) {
         if (text.COLUMNS < board.FULL_WIDTH) {
-            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - ENTER_TO_TRY_AGAIN_NARROW.length) >> 1);
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - i18n.format(Prompt.RETRY_COMPACT, { control: Controls.CONFIRM_LABEL }).length) >> 1);
         } else {
-            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - ENTER_TO_TRY_AGAIN.length) >> 1);
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }).length) >> 1);
         }
-        overTouchAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - TOUCH_TO_TRY_AGAIN.length) >> 1);
+        overTouchAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - Prompt.TOUCH_RETRY.length) >> 1);
     } else if (Input.KEYBOARD) {
         if (text.COLUMNS < board.FULL_WIDTH) {
-            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - RETURN_TO_TRY_AGAIN_NARROW.length) >> 1);
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - i18n.format(Prompt.RETRY_COMPACT, { control: Controls.CONFIRM_LABEL }).length) >> 1);
         } else {
-            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - RETURN_TO_TRY_AGAIN.length) >> 1);
+            overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }).length) >> 1);
         }
     } else if (Input.PADS > 0) {
-        overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - START_TO_TRY_AGAIN.length) >> 1);
+        overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }).length) >> 1);
     } else {
-        overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - FIRE_TO_TRY_AGAIN.length) >> 1);
+        overPromptAt = tileCell(3, 0) - ROW - boardLeft + ((text.COLUMNS - i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }).length) >> 1);
     }
     return;
 }
@@ -386,9 +388,9 @@ function fluidLayout(): void {
     }
 
     // The game-over lines, in the gap rows tileCell() already knows.
-    overAt = tileCell(1, 0) - rowWidth - boardLeft + ((rowWidth - GAME_OVER.length) >> 1);
-    overTouchAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - TOUCH_TO_TRY_AGAIN.length) >> 1);
-    overPromptAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - ENTER_TO_TRY_AGAIN.length) >> 1);
+    overAt = tileCell(1, 0) - rowWidth - boardLeft + ((rowWidth - Game.GAME_OVER.length) >> 1);
+    overTouchAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - Prompt.TOUCH_RETRY.length) >> 1);
+    overPromptAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }).length) >> 1);
     return;
 }
 

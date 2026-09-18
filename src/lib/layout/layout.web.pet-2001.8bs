@@ -8,7 +8,8 @@
 // numbers for both of its widths (the language has no re-export, so the
 // two files say them twice).
 import { text } from "@8bitscript/text";
-import { GAME_OVER, RETURN_TO_TRY_AGAIN, TOUCH_TO_TRY_AGAIN } from "../text/strings.8bs";
+import { i18n } from "@8bitscript/i18n";
+import { Game, Prompt } from "@8bitscript/i18n/catalog";
 
 const ROW: usmallint = text.COLUMNS; // 40
 
@@ -23,7 +24,7 @@ export function blockDigitsFit(): bool {
 }
 
 // The PET's key, in the PET's words: the elements print RETURN here, not
-// the web's ENTER (lib/text/strings.8bs has both).
+// the web's ENTER (src/i18n catalogs interpolate RETURN here).
 export const ENTER_KEY: bool = false;
 export namespace board {
     const FULL_WIDTH: usmallint = 23;
@@ -69,9 +70,9 @@ export let hintBottomAt: usmallint = 0;
 // only ones worked out here, and only because their length is the
 // locale's.
 export function computeLayout(): void {
-    overAt = 6 * 40 + ((40 - GAME_OVER.length) >> 1);
-    overPromptAt = 18 * 40 + ((40 - RETURN_TO_TRY_AGAIN.length) >> 1);
-    overTouchAt = 18 * 40 + ((40 - TOUCH_TO_TRY_AGAIN.length) >> 1);
+    overAt = 6 * 40 + ((40 - Game.GAME_OVER.length) >> 1);
+    overPromptAt = 18 * 40 + ((40 - i18n.format(Prompt.RETRY, { control: "RETURN" }).length) >> 1);
+    overTouchAt = 18 * 40 + ((40 - Prompt.TOUCH_RETRY.length) >> 1);
 }
 
 export function tileCell(row: utinyint, col: utinyint): usmallint {

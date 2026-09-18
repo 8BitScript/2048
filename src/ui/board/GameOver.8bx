@@ -13,8 +13,10 @@
 import { screen, BorderColor } from "@8bitscript/screen";
 import { text, TextColor } from "@8bitscript/text";
 import { Input, System } from "@8bitscript/system";
+import { Input as Controls } from "@8bitscript/input";
+import { i18n } from "@8bitscript/i18n";
+import { Game, Prompt } from "@8bitscript/i18n/catalog";
 import { overAt, overPromptAt, overTouchAt, board, ENTER_KEY } from "../../lib/layout/layout.8bs";
-import { GAME_OVER, RETURN_TO_TRY_AGAIN, RETURN_TO_TRY_AGAIN_NARROW, START_TO_TRY_AGAIN, FIRE_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN, ENTER_TO_TRY_AGAIN_NARROW, TOUCH_TO_TRY_AGAIN } from "../../lib/text/strings.8bs";
 import { host } from "../../lib/host/host.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
@@ -25,26 +27,26 @@ export component GameOver() {
         text.setReverse(false);
         text.setColor(TextColor.WHITE);
     }
-    text.print(overAt, GAME_OVER);
+    text.print(overAt, Game.GAME_OVER);
     if (#system() == System.WEB) {
         if (host.touch()) {
-            text.print(overTouchAt, TOUCH_TO_TRY_AGAIN);
+            text.print(overTouchAt, Prompt.TOUCH_RETRY);
         } else if (!FLUID && text.COLUMNS < board.FULL_WIDTH) {
-            text.print(overPromptAt, ENTER_TO_TRY_AGAIN_NARROW);
+            text.print(overPromptAt, i18n.format(Prompt.RETRY_COMPACT, { control: Controls.CONFIRM_LABEL }));
         } else if (ENTER_KEY) {
-            text.print(overPromptAt, ENTER_TO_TRY_AGAIN);
+            text.print(overPromptAt, i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }));
         } else {
-            text.print(overPromptAt, RETURN_TO_TRY_AGAIN);
+            text.print(overPromptAt, i18n.format(Prompt.RETRY, { control: "RETURN" }));
         }
     } else if (Input.KEYBOARD) {
         if (text.COLUMNS < board.FULL_WIDTH) {
-            text.print(overPromptAt, RETURN_TO_TRY_AGAIN_NARROW);
+            text.print(overPromptAt, i18n.format(Prompt.RETRY_COMPACT, { control: Controls.CONFIRM_LABEL }));
         } else {
-            text.print(overPromptAt, RETURN_TO_TRY_AGAIN);
+            text.print(overPromptAt, i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }));
         }
     } else if (Input.PADS > 0) {
-        text.print(overPromptAt, START_TO_TRY_AGAIN);
+        text.print(overPromptAt, i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }));
     } else {
-        text.print(overPromptAt, FIRE_TO_TRY_AGAIN);
+        text.print(overPromptAt, i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }));
     }
 }
