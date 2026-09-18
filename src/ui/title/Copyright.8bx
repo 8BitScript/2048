@@ -25,7 +25,7 @@ import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { System, Video } from "@8bitscript/system";
 import { wide } from "../../lib/layout/layout.8bs";
-import { COPYRIGHT, COPYRIGHT_WORD } from "../../lib/text/strings.8bs";
+import { Copyright as Copy } from "@8bitscript/i18n/catalog";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
@@ -41,16 +41,16 @@ export component Copyright() {
         if (wide) {
             let cols: usmallint = text.columns();
             let rows: usmallint = text.rows();
-            let at: usmallint = (rows - 2) * cols + ((cols - COPYRIGHT.length) >> 1);
-            text.print(at, COPYRIGHT);
+            let at: usmallint = (rows - 2) * cols + ((cols - Copy.LINE.length) >> 1);
+            text.print(at, Copy.LINE);
             text.putChar(at, PAREN_OPEN);
             text.putChar(at + 2, PAREN_CLOSE);
         }
     } else if (#system() == System.NES) {
-        text.print((Video.ROWS - 2) * ROW + ((text.COLUMNS - COPYRIGHT_WORD.length) >> 1), COPYRIGHT_WORD);
+        text.print((Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.WORD.length) >> 1), Copy.WORD);
     } else {
-        text.print((Video.ROWS - 2) * ROW + ((text.COLUMNS - COPYRIGHT.length) >> 1), COPYRIGHT);
-        text.putChar((Video.ROWS - 2) * ROW + ((text.COLUMNS - COPYRIGHT.length) >> 1), PAREN_OPEN);
-        text.putChar((Video.ROWS - 2) * ROW + ((text.COLUMNS - COPYRIGHT.length) >> 1) + 2, PAREN_CLOSE);
+        text.print((Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.LINE.length) >> 1), Copy.LINE);
+        text.putChar((Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.LINE.length) >> 1), PAREN_OPEN);
+        text.putChar((Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.LINE.length) >> 1) + 2, PAREN_CLOSE);
     }
 }

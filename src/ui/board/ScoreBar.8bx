@@ -12,20 +12,34 @@
 // grid's image carries only the header/status arm.
 import { screen, BorderColor } from "@8bitscript/screen";
 import { text, TextColor } from "@8bitscript/text";
+import { number } from "@8bitscript/i18n/number";
+import { messages } from "@8bitscript/i18n/messages";
+import { Game, Hint, Status } from "@8bitscript/i18n/catalog";
 import { System } from "@8bitscript/system";
 import { headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "../../lib/layout/layout.8bs";
 import { host } from "../../lib/host/host.8bs";
-import { NAME, SCORE_LABEL, HINT_SWIPE, HINT_ARROW, HINT_WIN, HINT_CLEAR, STATUS_WON, STATUS_MOVE, STATUS_CLEAR, FLUID_STATUS_WON, FLUID_STATUS_MOVE, FLUID_STATUS_CLEAR, REPLICA_STATUS_WON, REPLICA_STATUS_MOVE, REPLICA_STATUS_CLEAR } from "../../lib/text/strings.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
+const SCORE_PAD: utinyint = 5;
+const SCORE_GROUP: utinyint = 6;
+const FLUID_STATUS_WIDTH: utinyint = 15;
+const REPLICA_STATUS_WIDTH: utinyint = 19;
+const HINT_WIDTH: utinyint = 5;
+
+// German scores use @8bitscript/i18n/number everywhere the image has room;
+// the unexpanded VIC-20 does not, so it keeps `${score:5}` like English.
 
 export component ScoreBar(score: usmallint, over: bool, won: bool) {
     if (FLUID && wide) {
         text.setReverse(false);
         text.setColor(TextColor.WHITE);
-        text.print(titleNameAt, NAME);
-        text.print(scoreLabelAt, SCORE_LABEL);
-        text.print(scoreValueAt, `${score:5}`);
+        text.print(titleNameAt, Game.NAME);
+        text.print(scoreLabelAt, Game.SCORE);
+        if (#locale("de") && #system() != System.VIC20) {
+            number.print(scoreValueAt, score, SCORE_GROUP);
+        } else {
+            text.print(scoreValueAt, `${score:5}`);
+        }
         // Always write both hint lines, never just leave them: the branch
         // that printed nothing is what used to strand "YOU MADE 2048" on
         // screen across a restart, and would now strand the move hint
@@ -33,64 +47,75 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
         // on this host (a touchscreen laptop has both), so the hint names
         // both rather than picking one.
         if (won) {
-            text.print(hintTopAt, HINT_SWIPE);
-            text.print(hintBottomAt, HINT_WIN);
+            messages.printLine(hintTopAt, Hint.SWIPE, HINT_WIDTH);
+            messages.printLine(hintBottomAt, Hint.WIN, HINT_WIDTH);
         } else if (!over) {
-            text.print(hintTopAt, HINT_SWIPE);
-            text.print(hintBottomAt, HINT_ARROW);
+            messages.printLine(hintTopAt, Hint.SWIPE, HINT_WIDTH);
+            messages.printLine(hintBottomAt, Hint.ARROW, HINT_WIDTH);
         } else {
-            text.print(hintTopAt, HINT_CLEAR);
-            text.print(hintBottomAt, HINT_CLEAR);
+            messages.clearLine(hintTopAt, HINT_WIDTH);
+            messages.clearLine(hintBottomAt, HINT_WIDTH);
         }
     } else {
         if (FLUID) {
             text.setReverse(false);
         }
         text.setColor(TextColor.WHITE);
-        text.print(headerAt + boardLeft, NAME);
+        text.print(headerAt + boardLeft, Game.NAME);
         if (FLUID) {
             // Right-aligned on the board's own right edge, not the
             // screen's: the score's last digit lands directly above the
             // last tile column instead of running out to whatever margin
             // a wide window happens to have.
-            text.print(headerAt + boardLeft + boardWidth - (SCORE_LABEL.length + 6), SCORE_LABEL);
-            text.print(headerAt + boardLeft + boardWidth - 5, `${score:5}`);
+            if (#locale("de") && #system() != System.VIC20) {
+                text.print(headerAt + boardLeft + boardWidth - (Game.SCORE.length + SCORE_GROUP), Game.SCORE);
+                number.print(headerAt + boardLeft + boardWidth - SCORE_GROUP, score, SCORE_GROUP);
+            } else {
+                text.print(headerAt + boardLeft + boardWidth - (Game.SCORE.length + SCORE_PAD), Game.SCORE);
+                text.print(headerAt + boardLeft + boardWidth - SCORE_PAD, `${score:5}`);
+            }
         } else {
-            text.print(headerAt + text.COLUMNS - (SCORE_LABEL.length + 6), SCORE_LABEL);
-            text.print(headerAt + text.COLUMNS - 5, `${score:5}`);
+            if (#locale("de") && #system() != System.VIC20) {
+                text.print(headerAt + text.COLUMNS - (Game.SCORE.length + SCORE_GROUP), Game.SCORE);
+                number.print(headerAt + text.COLUMNS - SCORE_GROUP, score, SCORE_GROUP);
+            } else {
+                text.print(headerAt + text.COLUMNS - (Game.SCORE.length + SCORE_PAD), Game.SCORE);
+                text.print(headerAt + text.COLUMNS - SCORE_PAD, `${score:5}`);
+            }
         }
         // The status line does not announce the end of the game —
         // <GameOver /> does — so it goes blank rather than keeping the move
         // hint up under a board that cannot move. Always write it, never
         // just leave it: the branch that printed nothing is what strands
-        // a message across a restart. Each build's three lines are the
-        // same width, the length of its longest, so a shorter one never
-        // leaves a leftover glyph. The wording is the machine's: a
-        // touchscreen may be in the web's hands, and the web's fixed
-        // replicas say nothing at all on one.
+        // a message across a restart. Widths are the layout's, not a
+        // translated blank. The wording is the machine's: a touchscreen
+        // may be in the web's hands, and the web's fixed replicas say
+        // nothing at all on one.
         if (FLUID) {
             if (won) {
-                text.print(statusAt, FLUID_STATUS_WON);
+                messages.printLine(statusAt, Status.WON_COMPACT, FLUID_STATUS_WIDTH);
             } else if (!over) {
-                text.print(statusAt, FLUID_STATUS_MOVE);
+                messages.printLine(statusAt, Status.MOVE_TOUCH, FLUID_STATUS_WIDTH);
             } else {
-                text.print(statusAt, FLUID_STATUS_CLEAR);
+                messages.clearLine(statusAt, FLUID_STATUS_WIDTH);
             }
         } else if (#system() == System.WEB) {
             if (won) {
-                text.print(statusAt, REPLICA_STATUS_WON);
+                messages.printLine(statusAt, Status.WON, REPLICA_STATUS_WIDTH);
             } else if (!over && !host.touch()) {
-                text.print(statusAt, REPLICA_STATUS_MOVE);
+                messages.printLine(statusAt, Status.MOVE, REPLICA_STATUS_WIDTH);
             } else {
-                text.print(statusAt, REPLICA_STATUS_CLEAR);
+                messages.clearLine(statusAt, REPLICA_STATUS_WIDTH);
             }
         } else {
+            // A fixed grid: one print, no printLine. The 4K PET cannot
+            // afford the helper; WON and MOVE are the same width (14).
             if (won) {
-                text.print(statusAt, STATUS_WON);
+                text.print(statusAt, Status.WON);
             } else if (!over) {
-                text.print(statusAt, STATUS_MOVE);
+                text.print(statusAt, Status.MOVE);
             } else {
-                text.print(statusAt, STATUS_CLEAR);
+                text.print(statusAt, "              ");
             }
         }
     }

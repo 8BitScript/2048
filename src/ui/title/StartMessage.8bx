@@ -9,12 +9,14 @@
 // inputs; FIRE or START alone is only for a build with no keyboard (the
 // NES). The web asks the host once whether it is a touchscreen
 // (lib/host/host.web.8bs) and names the key otherwise — its own word for it,
-// lib/layout/layout.8bs's START_KEY, ENTER on a PC and RETURN on the PET replica.
+// lib/layout/layout.8bs's ENTER_KEY, ENTER on a PC and RETURN on the PET replica.
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { Input, System, Video } from "@8bitscript/system";
+import { Input as Controls } from "@8bitscript/input";
+import { i18n } from "@8bitscript/i18n";
+import { Prompt } from "@8bitscript/i18n/catalog";
 import { ENTER_KEY } from "../../lib/layout/layout.8bs";
-import { PRESS_RETURN, PRESS_START, PRESS_FIRE, PRESS_RETURN_OR_START, PRESS_RETURN_OR_FIRE, PRESS_ENTER, TOUCH_TO_START } from "../../lib/text/strings.8bs";
 import { host } from "../../lib/host/host.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
@@ -30,31 +32,31 @@ export component StartMessage() {
         let cols: usmallint = text.columns();
         let rows: usmallint = text.rows();
         if (host.touch()) {
-            text.print(((rows >> 1) + 1) * cols + ((cols - TOUCH_TO_START.length) >> 1), TOUCH_TO_START);
+            text.print(((rows >> 1) + 1) * cols + ((cols - Prompt.TOUCH_START.length) >> 1), Prompt.TOUCH_START);
         } else {
-            text.print(((rows >> 1) + 1) * cols + ((cols - PRESS_ENTER.length) >> 1), PRESS_ENTER);
+            text.print(((rows >> 1) + 1) * cols + ((cols - i18n.format(Prompt.START, { control: Controls.CONFIRM_LABEL }).length) >> 1), i18n.format(Prompt.START, { control: Controls.CONFIRM_LABEL }));
         }
     } else if (#system() == System.WEB) {
         if (host.touch()) {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - TOUCH_TO_START.length) >> 1), TOUCH_TO_START);
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - Prompt.TOUCH_START.length) >> 1), Prompt.TOUCH_START);
         } else if (ENTER_KEY) {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_ENTER.length) >> 1), PRESS_ENTER);
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - i18n.format(Prompt.START, { control: Controls.CONFIRM_LABEL }).length) >> 1), i18n.format(Prompt.START, { control: Controls.CONFIRM_LABEL }));
         } else {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_RETURN.length) >> 1), PRESS_RETURN);
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - i18n.format(Prompt.START, { control: "RETURN" }).length) >> 1), i18n.format(Prompt.START, { control: "RETURN" }));
         }
     } else if (Input.PADS > 0) {
         if (Input.KEYBOARD) {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_RETURN_OR_START.length) >> 1), PRESS_RETURN_OR_START);
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - i18n.format(Prompt.START_EITHER, { control: Controls.CONFIRM_LABEL, other: Controls.ALT_CONFIRM_LABEL }).length) >> 1), i18n.format(Prompt.START_EITHER, { control: Controls.CONFIRM_LABEL, other: Controls.ALT_CONFIRM_LABEL }));
         } else {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_START.length) >> 1), PRESS_START);
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - i18n.format(Prompt.START, { control: Controls.CONFIRM_LABEL }).length) >> 1), i18n.format(Prompt.START, { control: Controls.CONFIRM_LABEL }));
         }
     } else if (Input.JOYSTICKS > 0) {
         if (Input.KEYBOARD) {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_RETURN_OR_FIRE.length) >> 1), PRESS_RETURN_OR_FIRE);
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - i18n.format(Prompt.START_EITHER, { control: Controls.CONFIRM_LABEL, other: Controls.ALT_CONFIRM_LABEL }).length) >> 1), i18n.format(Prompt.START_EITHER, { control: Controls.CONFIRM_LABEL, other: Controls.ALT_CONFIRM_LABEL }));
         } else {
-            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_FIRE.length) >> 1), PRESS_FIRE);
+            text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - i18n.format(Prompt.START, { control: Controls.CONFIRM_LABEL }).length) >> 1), i18n.format(Prompt.START, { control: Controls.CONFIRM_LABEL }));
         }
     } else {
-        text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - PRESS_RETURN.length) >> 1), PRESS_RETURN);
+        text.print(((Video.ROWS >> 1) + 1) * ROW + ((text.COLUMNS - i18n.format(Prompt.START, { control: Controls.CONFIRM_LABEL }).length) >> 1), i18n.format(Prompt.START, { control: Controls.CONFIRM_LABEL }));
     }
 }

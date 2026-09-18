@@ -22,7 +22,9 @@
 // multiply the backend inlines for row × COLUMNS.
 import { text } from "@8bitscript/text";
 import { Video } from "@8bitscript/system";
-import { GAME_OVER, RETURN_TO_TRY_AGAIN } from "../text/strings.8bs";
+import { Input as Controls } from "@8bitscript/input";
+import { i18n } from "@8bitscript/i18n";
+import { Game, Prompt } from "@8bitscript/i18n/catalog";
 
 const ROW: usmallint = text.COLUMNS; // 40, or 80 on an 8032 build
 
@@ -100,8 +102,8 @@ export function computeLayout(): void {
     statusAt = 24 * ROW + ((ROW - BOARD_WIDTH) >> 1);
     // Centred on the screen, from the length of the string a build prints,
     // so a translation moves the line with the words.
-    overAt = 6 * ROW + ((ROW - GAME_OVER.length) >> 1);
-    overPromptAt = 18 * ROW + ((ROW - RETURN_TO_TRY_AGAIN.length) >> 1);
+    overAt = 6 * ROW + ((ROW - Game.GAME_OVER.length) >> 1);
+    overPromptAt = 18 * ROW + ((ROW - i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }).length) >> 1);
     return;
 }
 
