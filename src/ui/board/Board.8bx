@@ -3,7 +3,7 @@
 // merge just banked appears with the board that earned it; the message
 // before the tiles so it is printed in the score bar's colour, not the
 // last tile's.
-import { score, over, won } from "../../lib/game/rules.8bs";
+import { score, over, won } from "@lib/game/rules.8bs";
 import { Tiles } from "./Tiles.8bx";
 import { ScoreBar } from "./ScoreBar.8bx";
 import { GameOver } from "./GameOver.8bx";

@@ -6,7 +6,7 @@
 // board takes the HUD too (<Board />). One function for both, which is
 // why every build that animates is 60 bytes smaller than the hand-written
 // program that kept a second copy of this loop.
-import { board, shown } from "../../lib/game/rules.8bs";
+import { board, shown } from "@lib/game/rules.8bs";
 import { Tile } from "./Tile.8bx";
 
 export component Tiles() {

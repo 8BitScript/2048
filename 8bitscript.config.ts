@@ -3,6 +3,10 @@ export default {
   // that drives the game; ui/Game.8bx and lib/game/rules.8bs reach it by
   // import.
   entry: 'src/2048.8bs',
+  imports: {
+    '@lib': 'src/lib',
+    '@ui': 'src/ui',
+  },
   targets: {
     vic20: {},
     c64: {},

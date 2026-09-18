@@ -24,7 +24,7 @@
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { System, Video } from "@8bitscript/system";
-import { wide } from "../../lib/layout/layout.8bs";
+import { wide } from "@lib/layout/layout.8bs";
 import { Copyright as Copy } from "@8bitscript/i18n/catalog";
 
 const FLUID: bool = screen.RESIZABLE;

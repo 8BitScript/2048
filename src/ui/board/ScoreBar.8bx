@@ -16,8 +16,8 @@ import { number } from "@8bitscript/i18n/number";
 import { messages } from "@8bitscript/i18n/messages";
 import { Game, Hint, Status } from "@8bitscript/i18n/catalog";
 import { System } from "@8bitscript/system";
-import { headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "../../lib/layout/layout.8bs";
-import { host } from "../../lib/host/host.8bs";
+import { headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "@lib/layout/layout.8bs";
+import { host } from "@lib/host/host.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const SCORE_PAD: utinyint = 5;

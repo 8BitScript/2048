@@ -16,8 +16,8 @@ import { Input, System, Video } from "@8bitscript/system";
 import { Input as Controls } from "@8bitscript/input";
 import { i18n } from "@8bitscript/i18n";
 import { Prompt } from "@8bitscript/i18n/catalog";
-import { ENTER_KEY } from "../../lib/layout/layout.8bs";
-import { host } from "../../lib/host/host.8bs";
+import { ENTER_KEY } from "@lib/layout/layout.8bs";
+import { host } from "@lib/host/host.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
