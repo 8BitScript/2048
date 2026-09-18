@@ -1,0 +1,22 @@
+// What 2048 puts on the screen, as composition. The rules and the board
+// are lib/game/rules.8bs's; the board and the title screen are elements
+// of their own under ui/board and ui/title, over the positions
+// lib/layout/ works out; this file is the arrangement — which of those
+// is on the screen — and nothing else, so a reader can see the whole
+// picture without a single screen address.
+//
+// It is the first .8bx in a real program, and the measure of it is that
+// it costs nothing: a component is a function, an element is a call, and
+// every build is the same functions at the same sizes as the version that
+// wrote these calls out by hand in 2048.8bs (see README.md for the byte
+// counts, and ui/board/Tiles.8bx for the one place a build got smaller).
+import { started } from "../lib/game/rules.8bs";
+import { TitleScreen } from "./title/TitleScreen.8bx";
+import { Board } from "./board/Board.8bx";
+
+// Whatever is on the screen right now — for putting it back after the
+// grid changes shape under it (the web's fluid host, on a resize or a
+// rotated phone).
+export component Game() {
+    return (<>{started ? <Board /> : <TitleScreen />}</>);
+}

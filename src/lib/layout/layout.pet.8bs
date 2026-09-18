@@ -1,0 +1,114 @@
+// The PET's own layout: 40×25 (or 80×25 on an 8032 build), no colour, and
+// the arrangement a stock 4K 2001 was fitted with — 8×5 block-digit tiles
+// with a one-cell gap, 2048 at the board's left and SCORE at the right
+// edge on the top row, the status line on the last, the game-over
+// message in the board's two gap rows. The web's PET replica
+// (layout.web.pet-2001.8bs) is these numbers on the web's grid; the
+// language has no re-export, so the two files say them twice.
+//
+// The same surface as layout.8bs — the elements in ui/ import these
+// names and never a twin's own — and only the ones a PET build reads
+// are assigned: the fluid host's own lets (wide, rowWidth, the WIDE
+// arrangement's HUD cells) exist so the imports resolve, and are pruned
+// because nothing this build takes ever reads them. No let carries an
+// initializer: an initializer is a store in the image whether or not
+// the let survives, and computeLayout() runs before anything reads one.
+//
+// Every position is arithmetic on text.COLUMNS, a fact on this machine,
+// so each line below folds to one literal per width and the 8032 costs
+// no branch at run time: the 40-column arm is what a 2001, 3032 or 4032
+// build carries, the 80-column one the 8032's. tileCell() is a table
+// rather than the multiply, because an index is smaller than the 16-bit
+// multiply the backend inlines for row × COLUMNS.
+import { text } from "@8bitscript/text";
+import { Video } from "@8bitscript/system";
+import { GAME_OVER, RETURN_TO_TRY_AGAIN } from "../text/strings.8bs";
+
+const ROW: usmallint = text.COLUMNS; // 40, or 80 on an 8032 build
+
+// ---- what the elements ask this skin ---------------------------------------
+
+// The PET's key, in the PET's words: the elements print RETURN here. Only
+// the web's arms read this, and those fold away on a PET build; it is
+// here so the import resolves.
+export const ENTER_KEY: bool = false;
+
+// Always block digits — an 8-wide tile has room for four of them, which
+// is the whole point of this arrangement. lib/draw/tile.pet.8bs stamps
+// them into video RAM, so neither of these is read on a PET build.
+export const BLOCK_DIGITS: bool = true;
+export function blockDigitsFit(): bool {
+    return true;
+}
+
+export namespace board {
+    const FULL_WIDTH: usmallint = 23; // ui/board/GameOver.8bx's narrow test — never narrow here
+}
+
+// ---- the positions -------------------------------------------------------
+
+const BOARD_WIDTH: usmallint = 35; // 4 tiles × 8 + 3 gaps
+
+// Top-left cell of each board square: (1 + row×6)×COLUMNS + boardLeft +
+// col×9, for each width. Compile-time data; the other width's table is
+// pruned.
+const ORIGIN_40: array<usmallint, 16> = [
+    42, 51, 60, 69,
+    282, 291, 300, 309,
+    522, 531, 540, 549,
+    762, 771, 780, 789,
+];
+const ORIGIN_80: array<usmallint, 16> = [
+    102, 111, 120, 129,
+    582, 591, 600, 609,
+    1062, 1071, 1080, 1089,
+    1542, 1551, 1560, 1569,
+];
+
+export let tileW: usmallint;
+export let tileH: utinyint;
+export let boardLeft: usmallint;
+export let boardTop: usmallint;
+export let boardWidth: usmallint;
+export let headerAt: usmallint;      // row 0 — never stored, folds to 0 (see computeLayout)
+export let statusAt: usmallint;      // row 24, at the board's left — directly under the board
+export let overAt: usmallint;        // row 6: "GAME OVER", centred
+export let overPromptAt: usmallint;  // row 18: "PRESS RETURN TO TRY AGAIN", centred
+export let overTouchAt: usmallint;   // the web's; never read here
+// The fluid host's own: never read on a PET build.
+export let wide: bool;
+export let rowWidth: usmallint;
+export let titleNameAt: usmallint;
+export let scoreLabelAt: usmallint;
+export let scoreValueAt: usmallint;
+export let hintTopAt: usmallint;
+export let hintBottomAt: usmallint;
+
+// Only the four a PET build reads and that are not zero are stored.
+// A store to a let nothing reads is still a store, and keeps the let in
+// RAM: assigning tileW, tileH, boardTop, boardWidth and overTouchAt too
+// cost 54 bytes of program and 9 of RAM on the 4K 2001 (measured
+// 2026-09-17) — the tile's size and the board's top are tileCell()'s
+// table and tile.pet.8bs's own constants, and the touch prompt is the
+// web's. headerAt is deliberately never assigned: the header is row 0,
+// a let with no store anywhere in the build reads as its zero
+// initialization, and the linker folds it — `headerAt + boardLeft` in
+// ui/board/ScoreBar.8bx becomes `boardLeft`, and the one store cost 63
+// bytes and 2 of RAM.
+export function computeLayout(): void {
+    boardLeft = (ROW - BOARD_WIDTH) >> 1; // 2, or 22 on 80 columns
+    statusAt = 24 * ROW + ((ROW - BOARD_WIDTH) >> 1);
+    // Centred on the screen, from the length of the string a build prints,
+    // so a translation moves the line with the words.
+    overAt = 6 * ROW + ((ROW - GAME_OVER.length) >> 1);
+    overPromptAt = 18 * ROW + ((ROW - RETURN_TO_TRY_AGAIN.length) >> 1);
+    return;
+}
+
+export function tileCell(row: utinyint, col: utinyint): usmallint {
+    let cell: utinyint = row * 4 + col;
+    if (Video.COLUMNS != 40) {
+        return ORIGIN_80[cell];
+    }
+    return ORIGIN_40[cell];
+}

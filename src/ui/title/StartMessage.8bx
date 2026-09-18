@@ -1,6 +1,5 @@
 // How to start, one row below the middle of the screen, in the words of
-// this machine's controls. The PET writes PRESS RETURN as twelve screen
-// codes (lib/petscii.8bs — the retry prompt's own first twelve) on row 13.
+// this machine's controls.
 //
 // On the machines the control is a compile-time fact (Input.*), so
 // unused strings never reach the image. A stick or pad cannot be probed
@@ -9,16 +8,14 @@
 // machine that *has* joystick or pad ports always names both confirm
 // inputs; FIRE or START alone is only for a build with no keyboard (the
 // NES). The web asks the host once whether it is a touchscreen
-// (lib/host.web.8bs) and names the key otherwise — its own word for it,
-// lib/layout.8bs's START_KEY, ENTER on a PC and RETURN on the PET replica.
+// (lib/host/host.web.8bs) and names the key otherwise — its own word for it,
+// lib/layout/layout.8bs's START_KEY, ENTER on a PC and RETURN on the PET replica.
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { Input, System, Video } from "@8bitscript/system";
-import { ENTER_KEY } from "../lib/layout.8bs";
-import { PRESS_RETURN, PRESS_START, PRESS_FIRE, PRESS_RETURN_OR_START, PRESS_RETURN_OR_FIRE, PRESS_ENTER, TOUCH_TO_START } from "../lib/strings.8bs";
-import { host } from "../lib/host.8bs";
-import { writeCells } from "../lib/petscii.8bs";
-import { hud, at } from "../lib/codes.8bs";
+import { ENTER_KEY } from "../../lib/layout/layout.8bs";
+import { PRESS_RETURN, PRESS_START, PRESS_FIRE, PRESS_RETURN_OR_START, PRESS_RETURN_OR_FIRE, PRESS_ENTER, TOUCH_TO_START } from "../../lib/text/strings.8bs";
+import { host } from "../../lib/host/host.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
@@ -29,13 +26,7 @@ const ROW: usmallint = text.COLUMNS;
 // costs a 16-bit add and a slot in the image (+35 bytes on the VIC-20).
 // The fluid host asks the live grid instead.
 export component StartMessage() {
-    if (#system() == System.PET) {
-        let cell: usmallint = at.PROMPT_40;
-        if (Video.COLUMNS != 40) {
-            cell = at.PROMPT_80;
-        }
-        writeCells(cell, hud.TITLE_PRESS_RETURN, hud.TITLE_PRESS_RETURN_LEN);
-    } else if (FLUID) {
+    if (FLUID) {
         let cols: usmallint = text.columns();
         let rows: usmallint = text.rows();
         if (host.touch()) {

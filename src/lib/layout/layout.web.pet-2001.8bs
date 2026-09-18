@@ -3,9 +3,12 @@
 // SCORE right on the top row, the status line on the last — drawn through
 // @8bitscript/text rather than video RAM. Picked up when the web build's
 // hardware tag is `pet-2001`. The same surface as layout.8bs, so the
-// elements in ui/ are the same files; every number here is the PET's.
+// elements in ui/ are the same files; every number here is the PET's —
+// layout.pet.8bs beside this file is the PET's own twin with the same
+// numbers for both of its widths (the language has no re-export, so the
+// two files say them twice).
 import { text } from "@8bitscript/text";
-import { GAME_OVER, RETURN_TO_TRY_AGAIN, TOUCH_TO_TRY_AGAIN } from "./strings.8bs";
+import { GAME_OVER, RETURN_TO_TRY_AGAIN, TOUCH_TO_TRY_AGAIN } from "../text/strings.8bs";
 
 const ROW: usmallint = text.COLUMNS; // 40
 
@@ -20,7 +23,7 @@ export function blockDigitsFit(): bool {
 }
 
 // The PET's key, in the PET's words: the elements print RETURN here, not
-// the web's ENTER (lib/strings.8bs has both).
+// the web's ENTER (lib/text/strings.8bs has both).
 export const ENTER_KEY: bool = false;
 export namespace board {
     const FULL_WIDTH: usmallint = 23;

@@ -1,19 +1,23 @@
 export default {
   // One program for every target — see README.md. The entry is the .8bs
-  // that drives the game; ui/App.8bx and lib/game.8bs reach it by import.
+  // that drives the game; ui/Game.8bx and lib/game/rules.8bs reach it by
+  // import.
   entry: 'src/2048.8bs',
   targets: {
     vic20: {},
     c64: {},
-    // The game is 2759 bytes of program on a 2001/4K, measured 2026-09-17
-    // against the 0.11.0 toolchain, with the screen as ui/ elements over
-    // lib/ (#50–#56): 2763 before the restructure, and the same functions
-    // at the same sizes at every step of it but the last four bytes, a
-    // title trampoline that went. The title screen's raster wobble folds
-    // away entirely here and on the unexpanded VIC-20 (3482 bytes, 3490
-    // before): #fact(video.raster) is false on both, and the PET's arms
-    // read lib/petscii.8bs anyway. 8bitscript #184's inliner takes these
-    // to 2687 and 3396 when it ships.
+    // The game is 2876 bytes of program on a 2001/4K, measured 2026-09-17
+    // against the 0.13.0 toolchain, with the PET printing through
+    // @8bitscript/text like every other machine and its look in two lib/
+    // twins (layout.pet.8bs, tile.pet.8bs): 2779 with the elements'
+    // `#system() == System.PET` arms of baked screen codes it had before,
+    // the 97 bytes those arms bought. Before that: 2759 on 0.11.0 with
+    // the screen as ui/ elements over lib/ (#50–#56), 2763 before that
+    // restructure, the same functions at the same sizes at every step of
+    // it but four bytes, a title trampoline that went. The title screen's
+    // raster wobble folds away entirely here and on the unexpanded VIC-20
+    // (3415 bytes on 0.13.0; 3482 on 0.11.0): #fact(video.raster) is
+    // false on both.
     // (2581 at 0.9.0; 2420 at 0.6.1 before
     // the title screen, right-aligned HUD, and 0.6.2; 2624 before the
     // 0.6.1 linker stopped writing input.poll() out once per call site;
@@ -24,7 +28,7 @@ export default {
     // 4005 before the compiler's 0.2.3 leaner 6502 codegen),
     // so `--profile 2001 --hardware ram=4` fits a stock 4K 2001's
     // usable RAM ($0401–$0FFF). The default PET stays the 4032: 40
-    // columns (the layout lib/petscii.8bs centres for), 32K, the biggest
+    // columns (the layout lib/layout/layout.pet.8bs centres for), 32K, the biggest
     // on-board RAM a PET shipped with. `--profile 8032` still builds
     // the 80-column version.
     //
@@ -45,10 +49,10 @@ export default {
         { hardware: { machine: 'c64' } },
         { hardware: { machine: 'pet-2001' } },
         { hardware: { machine: 'vic20' } },
-        // The German one: lib/strings.de.8bs in place of lib/strings.8bs,
-        // and nothing else. Any target builds it with `--locale de`; the
-        // release ships it for the web and the 4K PET (whose strings are
-        // lib/codes.de.8bs, baked screen codes — see that file).
+        // The German one: lib/text/strings.de.8bs in place of
+        // lib/text/strings.8bs, and nothing else. Any target builds it
+        // with `--locale de`; the release ships it for the web and the
+        // 4K PET (2877 bytes, one more than the English).
         { locale: 'de' },
       ],
     },

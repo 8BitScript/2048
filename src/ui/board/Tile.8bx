@@ -1,0 +1,16 @@
+// One tile of the board: a filled square in the tile's colour, its value
+// on the middle row. How that is painted is lib/draw/tile.8bs's — reverse-
+// video fills and block digits or a printed number through
+// @8bitscript/text — and on the PET its twin tile.pet.8bs's, screen codes
+// straight into video RAM. The build picks the file; this element names
+// no machine.
+//
+// The element is a call into lib/, and it costs what the inline drawing
+// did: a function with one caller is written into it (8bitscript #184).
+// Before that rule this form measured +56 bytes on every 6502 and +84 on
+// the PET (2048 #51), which is why the drawing used to live here.
+import { drawTile } from "../../lib/draw/tile.8bs";
+
+export component Tile(row: utinyint, col: utinyint, exponent: utinyint) {
+    drawTile(row, col, exponent);
+}

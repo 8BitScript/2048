@@ -3,13 +3,13 @@
 // screen, where <Logo /> puts it) starts at picture line bandTop, the band
 // opens a row above and closes a row below, and the wobble straightens out
 // on the band's last line. 2048.8bs's loop animates
-// it (wobble.step() in lib/wobble.8bs) and tears it down (raster.disable)
+// it (wobble.step() in lib/raster/wobble.8bs) and tears it down (raster.disable)
 // the moment the game starts. Only composed where #fact(video.raster) is
 // true — the real C64, and the web's C64 skin.
 import { raster, Slot } from "@8bitscript/raster";
 import { Video } from "@8bitscript/system";
 import { BorderColor, BackgroundColor } from "@8bitscript/screen";
-import { SINE, band, wobbleStride, wobbleFirst } from "../lib/wobble.8bs";
+import { SINE, band, wobbleStride, wobbleFirst } from "../../lib/raster/wobble.8bs";
 
 // Not a prop: the two skins that compose this both put the title one row
 // above the middle, and a prop would make this a function with an

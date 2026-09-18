@@ -1,26 +1,15 @@
 // The version, flush right on the last row: a "v" and then package.json's
-// number, on row 24 for the build's width. On the PET the V is screen
-// code 22 (ASCII 118 is a graphics block there) and the number is copied
-// byte for byte — lib/petscii.8bs's stampVersion — so no conversion is
-// linked into the 4K build.
+// number, on the last row for the build's width.
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
-import { System, Video } from "@8bitscript/system";
-import { VERSION } from "../lib/version.8bs";
-import { stampVersion } from "../lib/petscii.8bs";
-import { at } from "../lib/codes.8bs";
+import { Video } from "@8bitscript/system";
+import { VERSION } from "../../lib/text/version.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
 
 export component Version() {
-    if (#system() == System.PET) {
-        let cell: usmallint = at.VERSION_40;
-        if (Video.COLUMNS != 40) {
-            cell = at.VERSION_80;
-        }
-        stampVersion(cell);
-    } else if (FLUID) {
+    if (FLUID) {
         let cols: usmallint = text.columns();
         let rows: usmallint = text.rows();
         let cell: usmallint = (rows - 1) * cols + cols - VERSION.length - 1;

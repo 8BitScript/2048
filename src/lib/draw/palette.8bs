@@ -4,7 +4,7 @@
 import { TextColor } from "@8bitscript/text";
 
 // Exponent to face value — the drawing side's copy. The rules keep their
-// own in lib/game.8bs; the two never share a module, and a skin that never
+// own in lib/game/rules.8bs; the two never share a module, and a skin that never
 // prints a number (the PET's block digits) never links this one.
 export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 
@@ -19,7 +19,7 @@ export const TILE_DIGITS: array<utinyint, 12> = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4
 // @8bitscript/ui's AGENTS.md for why those three), so an element draws the
 // same calls everywhere and the machines that cannot colour a cell simply
 // do not. Index 0 is the empty square's own colour (every cell is a filled
-// block — see ui/Tile.8bx) and shares WHITE with the "2" tile rather than
+// block — see ui/board/Tile.8bx) and shares WHITE with the "2" tile rather than
 // using BLACK: a black reverse block on the black screen behind the board
 // is invisible, and the sixteen-square grid would vanish everywhere but
 // the occupied cells.

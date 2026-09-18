@@ -1,13 +1,15 @@
-// Drawing primitives over @8bitscript/text that more than one element
-// shares — the filled square and the block-digit glyph — for the skins
-// that stamp a tile's value from lib/font.8bs (the fluid web host, the
-// web's PET replica). The portable tile paints its square inline in
-// ui/Tile.8bx: on a fixed grid that is the cheapest form, and these two
-// are never linked there.
+// One tile, through @8bitscript/text, on every machine but the PET —
+// whose twin beside this file, tile.pet.8bs, stamps screen codes into
+// video RAM instead (see there for the one reason it has to). The two
+// primitives above drawTile() — the filled square and the block-digit
+// glyph — are for the skins that stamp a tile's value from
+// lib/draw/font.8bs (the fluid web host, the web's PET replica); a fixed
+// grid paints its square inline in drawTile()'s other arm, the cheapest
+// form there, and never links these two.
 import { text } from "@8bitscript/text";
 import { POW2, TILE_COLOR, TILE_DIGITS } from "./palette.8bs";
 import { DIGIT_TILES, TILE_DIGIT_AT, TILE_DIGIT } from "./font.8bs";
-import { tileCell, tileW, tileH, rowWidth, BLOCK_DIGITS, blockDigitsFit } from "./layout.8bs";
+import { tileCell, tileW, tileH, rowWidth, BLOCK_DIGITS, blockDigitsFit } from "../layout/layout.8bs";
 
 // This machine's row width on a fixed grid, so cell = y * ROW + x.
 const ROW: usmallint = text.COLUMNS;
@@ -47,7 +49,7 @@ export function drawDigit(cell: usmallint, value: utinyint): void {
 //
 // - A grid with room for block digits (the fluid web host when its tile is
 //   wide enough, the web's PET replica always): the square from
-//   fillTile(), then 2×3 glyphs from lib/font.8bs centred in it — or a
+//   fillTile(), then 2×3 glyphs from lib/draw/font.8bs centred in it — or a
 //   printed number when the tile is too narrow this frame.
 // - Every other fixed grid: `text.setReverse(true)` turns a printed space
 //   into a solid block in the current colour on every target (a plain
@@ -58,9 +60,10 @@ export function drawDigit(cell: usmallint, value: utinyint): void {
 //   falls to the right — `>> 1` truncates, never rounds up); the top and
 //   bottom rows are blank on purpose — they are the rest of the square.
 //
-// ui/Tile.8bx is this call. A function with one caller is written into it
-// (8bitscript #184), so the element costs what the inline drawing did.
-export function paintTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+// ui/board/Tile.8bx is this call. A function with one caller is written
+// into it (8bitscript #184), so the element costs what the inline drawing
+// did.
+export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
     let origin: usmallint = tileCell(row, col);
     if (BLOCK_DIGITS) {
         fillTile(origin, exponent);
