@@ -9,7 +9,7 @@
 // did: a function with one caller is written into it (8bitscript #184).
 // Before that rule this form measured +56 bytes on every 6502 and +84 on
 // the PET (2048 #51), which is why the drawing used to live here.
-import { drawTile } from "../../lib/draw/tile.8bs";
+import { drawTile } from "@lib/draw/tile.8bs";
 
 export component Tile(row: utinyint, col: utinyint, exponent: utinyint) {
     drawTile(row, col, exponent);

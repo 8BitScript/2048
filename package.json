@@ -37,26 +37,26 @@
     "changeset:version": "changeset version && pnpm install --no-frozen-lockfile"
   },
   "devDependencies": {
-    "@8bitscript/cli": "0.14.0",
+    "@8bitscript/cli": "0.15.0",
     "@changesets/cli": "^3.0.2",
     "wrangler": "4.127.1"
   },
   "dependencies": {
-    "@8bitscript/i18n": "0.14.0",
-    "@8bitscript/screen": "0.14.0",
-    "@8bitscript/text": "0.14.0",
-    "@8bitscript/input": "0.14.0",
-    "@8bitscript/random": "0.14.0",
-    "@8bitscript/raster": "0.14.0",
-    "@8bitscript/system": "0.14.0",
-    "@8bitscript/pet": "0.14.0",
-    "@8bitscript/vic20": "0.14.0",
-    "@8bitscript/c64": "0.14.0",
-    "@8bitscript/c128": "0.14.0",
-    "@8bitscript/atari8": "0.14.0",
-    "@8bitscript/nes": "0.14.0",
-    "@8bitscript/cx16": "0.14.0",
-    "@8bitscript/mega65": "0.14.0",
-    "@8bitscript/web": "0.14.0"
+    "@8bitscript/i18n": "0.15.0",
+    "@8bitscript/screen": "0.15.0",
+    "@8bitscript/text": "0.15.0",
+    "@8bitscript/input": "0.15.0",
+    "@8bitscript/random": "0.15.0",
+    "@8bitscript/raster": "0.15.0",
+    "@8bitscript/system": "0.15.0",
+    "@8bitscript/pet": "0.15.0",
+    "@8bitscript/vic20": "0.15.0",
+    "@8bitscript/c64": "0.15.0",
+    "@8bitscript/c128": "0.15.0",
+    "@8bitscript/atari8": "0.15.0",
+    "@8bitscript/nes": "0.15.0",
+    "@8bitscript/cx16": "0.15.0",
+    "@8bitscript/mega65": "0.15.0",
+    "@8bitscript/web": "0.15.0"
   }
 }

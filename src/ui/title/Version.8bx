@@ -3,7 +3,7 @@
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { Video } from "@8bitscript/system";
-import { VERSION } from "../../lib/text/version.8bs";
+import { VERSION } from "@lib/text/version.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;

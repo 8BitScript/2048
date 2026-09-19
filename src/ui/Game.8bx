@@ -10,9 +10,9 @@
 // every build is the same functions at the same sizes as the version that
 // wrote these calls out by hand in 2048.8bs (see README.md for the byte
 // counts, and ui/board/Tiles.8bx for the one place a build got smaller).
-import { started } from "../lib/game/rules.8bs";
-import { TitleScreen } from "./title/TitleScreen.8bx";
-import { Board } from "./board/Board.8bx";
+import { started } from "@lib/game/rules.8bs";
+import { TitleScreen } from "@ui/title/TitleScreen.8bx";
+import { Board } from "@ui/board/Board.8bx";
 
 // Whatever is on the screen right now — for putting it back after the
 // grid changes shape under it (the web's fluid host, on a resize or a

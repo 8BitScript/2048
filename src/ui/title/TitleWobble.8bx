@@ -9,7 +9,7 @@
 import { raster, Slot } from "@8bitscript/raster";
 import { Video } from "@8bitscript/system";
 import { BorderColor, BackgroundColor } from "@8bitscript/screen";
-import { SINE, band, wobbleStride, wobbleFirst } from "../../lib/raster/wobble.8bs";
+import { SINE, band, wobbleStride, wobbleFirst } from "@lib/raster/wobble.8bs";
 
 // Not a prop: the two skins that compose this both put the title one row
 // above the middle, and a prop would make this a function with an
