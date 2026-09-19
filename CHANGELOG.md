@@ -1,5 +1,11 @@
 # 2048
 
+## 0.8.1
+
+### Patch Changes
+
+- 58292d7: The Atari 8-bit build now uses 20-column ANTIC 6 (`textmode=gr1`) so board tiles get per-cell color instead of grey reverse video.
+
 ## 0.8.0
 
 ### Minor Changes
