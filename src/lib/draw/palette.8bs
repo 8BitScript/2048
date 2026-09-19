@@ -15,10 +15,10 @@ export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512
 export const TILE_DIGITS: array<utinyint, 12> = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4];
 
 // Exponent to colour, on the targets with per-cell colour — a deliberately
-// empty text.setColor() on the others (PET, Atari 8-bit, NES; see
-// @8bitscript/ui's AGENTS.md for why those three), so an element draws the
-// same calls everywhere and the machines that cannot colour a cell simply
-// do not. Index 0 is the empty square's own colour (every cell is a filled
+// empty text.setColor() on the others (PET, NES, and stock Atari GR.0; see
+// @8bitscript/ui's AGENTS.md for why those three). The Atari 8-bit build of
+// this game opts into `textmode=gr1`, so the table is live there too.
+// Index 0 is the empty square's own colour (every cell is a filled
 // block — see ui/board/Tile.8bx) and shares WHITE with the "2" tile rather than
 // using BLACK: a black reverse block on the black screen behind the board
 // is invisible, and the sixteen-square grid would vanish everywhere but

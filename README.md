@@ -238,13 +238,14 @@ screen prints a `v` and then the number.
   VIC-20), and every target but the PET is byte-identical with the arms
   gone too (the VIC-20 checksummed through both steps, sizes on the
   rest).
-- **Colour is a table lookup, and it costs nothing on the three machines
+- **Colour is a table lookup, and it costs nothing on the machines
   that can't use it.** `TILE_COLOR[exponent]` feeds `text.setColor()` before
-  every tile is drawn. On the PET, Atari 8-bit and NES that call is an
+  every tile is drawn. On the PET and NES that call is an
   empty function, and the compiler deletes it — table and all — so those
-  three never link `setColor`. The other six (VIC-20, C64, C128,
-  Commander X16, MEGA65, web) show each tile value in a distinct colour,
-  the closest a text-mode board gets to upstream 2048's own tile colours.
+  two never link `setColor`. The Atari 8-bit build opts into
+  `textmode=gr1` (20-column ANTIC 6), so its tiles take the same table as
+  VIC-20, C64, C128, Commander X16, MEGA65, and the web — the closest a
+  text-mode board gets to upstream 2048's own tile colours.
   The PET and the web both stamp a 2×3-cell block-digit into an 8×5
   square so a "2" fills the tile the way the PET's own ROM digits do —
   the same glyphs, `lib/draw/font.8bs` for the web and
