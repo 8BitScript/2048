@@ -1,5 +1,16 @@
 # 2048
 
+## 0.8.0
+
+### Minor Changes
+
+- d508d1c: German and English builds use `@8bitscript/i18n/catalog`: namespaced catalogs in `src/i18n/en.8bs` and `src/i18n/de.8bs`, with `i18n.format` for control labels and `number.print` for grouped scores (the unexpanded VIC-20 keeps a zero-padded field). One locale, one binary. Measured 2026-09-18: 2876 bytes English / 3056 German on the 4K PET 2001; 3431 on the unexpanded VIC-20 in both locales; 4500 / 4771 on the C64.
+
+### Patch Changes
+
+- 40a5113: Bump `@8bitscript/*` dependencies from 0.14.0 to 0.15.0. That release is what actually lands the `@lib`/`@ui` import aliases, the `@8bitscript/i18n/catalog` and `./messages` exports, and the `Game.NAME.length`-style chained member expression this project's code already assumed — 0.14.0 predated all three, which is why `pnpm run check` and CI's compile step were failing on both this branch and trunk.
+- 40a5113: Use `@lib` and `@ui` import aliases from `8bitscript.config.ts` instead of relative `../../lib` paths in UI modules.
+
 ## 0.7.0
 
 ### Minor Changes
