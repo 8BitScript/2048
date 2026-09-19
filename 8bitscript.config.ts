@@ -44,7 +44,7 @@ export default {
     // speaker option this project doesn't.
     pet: { hardware: { model: '4032', ram: '32' }, release: ['2001', {}, { profile: '2001', locale: 'de' }] },
     c128: {},
-    atari8: {},
+    atari8: { hardware: { textmode: 'gr1' } },
     nes: {},
     cx16: {},
     mega65: {},
