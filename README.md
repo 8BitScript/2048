@@ -333,3 +333,15 @@ a gap in this version: the text-mode board above is the version that runs
 identically, and legibly, on all nine targets first, matching 8BitScript's
 own project principle that a program says what a machine cannot do rather
 than papering over it.
+
+8BitScript 0.18 added two things this game does not use yet, and the
+baseline is how they would come in. `@8bitscript/sprites` moves objects
+on every machine — hardware sprites on the C64, up to twenty-four reused
+down the frame, and a glyph per object on the character grid elsewhere —
+so the slide could move tiles by the pixel on the baseline and by the
+cell everywhere else, from one `<Tiles />`; the report above would then
+list `video.sprites 0 of 8` on the builds that fold it. `@8bitscript/timeline`
+is frame-counted cues, pure on every target: a title that assembles
+itself, a merge that lingers a beat. Both wait on the same rule as the
+bitmap board: measured on the C64 first, then the byte counts on the 4K
+PET decide whether the 4K PET carries a single byte of it.
