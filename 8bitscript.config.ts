@@ -3,6 +3,13 @@ export default {
   // that drives the game; ui/Game.8bx and lib/game/rules.8bs reach it by
   // import.
   entry: 'src/2048.8bs',
+  // The system the game is designed on: the build every fact it tests is
+  // true on — 40 columns, sixteen colours, a raster list, a SID for
+  // entropy, RAM to animate. `8bs run` alone runs it, and `8bs build
+  // --release` says what every other build is short of, in facts (see
+  // README.md, "The baseline"). The floor is the 4K PET 2001 below;
+  // nothing here changes a build's bytes.
+  baseline: 'c64',
   imports: {
     '@lib': 'src/lib',
     '@ui': 'src/ui',

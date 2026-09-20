@@ -9,7 +9,7 @@
 import { raster, Slot } from "@8bitscript/raster";
 import { Video } from "@8bitscript/system";
 import { BorderColor, BackgroundColor } from "@8bitscript/screen";
-import { SINE, band, wobbleStride, wobbleFirst } from "@lib/raster/wobble.8bs";
+import { SINE, band } from "@lib/raster/wobble.8bs";
 
 // Not a prop: the two skins that compose this both put the title one row
 // above the middle, and a prop would make this a function with an
@@ -25,17 +25,6 @@ export component TitleWobble() {
     raster.at(bandTop + 8, Slot.SCROLL_X, 0);
     raster.at(bandTop + 16, Slot.BACKGROUND, BackgroundColor.BLACK);
     raster.at(bandTop + 16, Slot.BORDER, BorderColor.BLUE);
-
-    // The stride probe, exactly as fancy runs it: offset 3 is entry 1
-    // (the band.BORDER split) where entries are three bytes, and
-    // misaligned — refused untouched — where they are four. The value
-    // written is the value entry 1 already holds, so the list is the
-    // same afterwards either way; only the returned bool differs.
-    wobbleStride = 4;
-    if (raster.setValue(3, band.BORDER)) {
-        wobbleStride = 3;
-    }
-    wobbleFirst = wobbleStride * 2;
 
     raster.enable();
 }

@@ -46,7 +46,7 @@ jobs:
       # No `targets`: compile.yml runs `8bs build --release`, which reads
       # this project's own 8bitscript.config.ts — the PET 4K/32K matrix and
       # the web build — so the release matrix lives in one place.
-      cli-version: 0.4.0
+      cli-version: 0.19.1
       attach-release: true
 
   # The release is out — the GitHub Release exists and compile.yml has
