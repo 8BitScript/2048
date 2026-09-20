@@ -167,57 +167,57 @@ importers:
   .:
     dependencies:
       '@8bitscript/atari8':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/c128':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/c64':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/cx16':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/i18n':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/input':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/mega65':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/nes':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/pet':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/random':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/raster':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/screen':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/system':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/text':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/vic20':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@8bitscript/web':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
     devDependencies:
       '@8bitscript/cli':
-        specifier: 0.19.1
-        version: 0.19.1
+        specifier: 0.20.0
+        version: 0.20.0
       '@changesets/cli':
         specifier: ^3.0.2
         version: 3.0.2
@@ -227,84 +227,84 @@ importers:
 
 packages:
 
-  '@8bitscript/atari8@0.19.1':
-    resolution: {integrity: sha512-XXtitezDx1P9JCyJkEIq9pr5RQO3VEDWm2uCRrldPDb20EJC3xyoQtMzbAKpoe+6TkUj6QZX6w+02yLqrNXPaQ==}
+  '@8bitscript/atari8@0.20.0':
+    resolution: {integrity: sha512-L9TRH758PnjauMdah1WWENUX2CkjQ9BbL0zBYm1iR7NyRH6q1AEFZsdHP5axHim8CJi866P9/9w7f54JNwSH9g==}
 
-  '@8bitscript/c128@0.19.1':
-    resolution: {integrity: sha512-xHO5QZixtWe7DLwWEMH+Pxnt5fOOpJxH3xJumFL9DuJLcG1wZfnp4SCS0C+Mspo15Z2vMXnC9xg4j9uQWPDDaw==}
+  '@8bitscript/c128@0.20.0':
+    resolution: {integrity: sha512-WagR76+bOXns0qqGfBeNw2KdrMmludUQf8W1H+ZdN0BJIPy3n7k7sUvZc0O4Ee5NACK/rJ0ZizxFi+meR1wDFg==}
 
-  '@8bitscript/c64@0.19.1':
-    resolution: {integrity: sha512-C/Jq3ZWclduyPWliKyko9eBYevM5XWPEL0Z7QnrhNCgJD1gMSc4glRRER+8hPriqM2t8zCnPBWvLllvyZnZccA==}
+  '@8bitscript/c64@0.20.0':
+    resolution: {integrity: sha512-WndG75CkfNcAn1juMTrlp0SX/gw2xlmhyy72ZC7KnIJivUu2Ir+U+A3DvwHbr8IRZ6NmWYQvtiYnS6slVVo9PQ==}
 
-  '@8bitscript/cli@0.19.1':
-    resolution: {integrity: sha512-U4sWy+oRyGvlhKMsctYPwDMR++ixzckv9aRijdhciEFEu4c1WYX8RHVq9njVfNV8ZzEvS/eKZMniJHf0ftw4Hw==}
+  '@8bitscript/cli@0.20.0':
+    resolution: {integrity: sha512-9E0hTznOa3yPVndRFx8+cXXgm77OFPowhoRjPC0B0iSpAtqNHyzOtWMAoaxFJ+EXUSIbev0Cx22YdXiSB0uHTA==}
     engines: {node: '>=26'}
     hasBin: true
 
-  '@8bitscript/compiler@0.19.1':
-    resolution: {integrity: sha512-BKUfDPgQUnUVqQHbdvFPhj48akdb80Qyu8NY3J/TciED6xNBFnUS+yJ8jrqNuTqHJA+s+5IrQt9tObB0fxBXdA==}
+  '@8bitscript/compiler@0.20.0':
+    resolution: {integrity: sha512-9uELP8CusDK+hhTOlHElXRjmX73k+xJ3sgI7irvkNG+qnExF98oK4INUa+d54DgYFIttr2InDG9lF5nFCS1E2w==}
     engines: {node: '>=26'}
 
-  '@8bitscript/cx16@0.19.1':
-    resolution: {integrity: sha512-OAKYMRQq8b6wNvf8n5DjXDjRdtyAQl9hiCLrVh2KqOjNm8dkuyXDA03BRyaTQT8V1KyzbPznEXo4s/HCBivOOQ==}
+  '@8bitscript/cx16@0.20.0':
+    resolution: {integrity: sha512-5aHgYkzLQ6v4U9VShGnanmcOzHyJZbigs/fXuUPzDci6cReFfxhRlWqB2UQijXRoRN553Z5n9vJyepYdXTCFIw==}
 
-  '@8bitscript/examples@0.19.1':
-    resolution: {integrity: sha512-1dYwp7ishJbpRJJLKxXgzhf0q7JCpgyY3NtbU5JSTGzkgNrawR69zr6W3NcqyIpG6Q9MAqsmD/O5n2GS4cGdNQ==}
+  '@8bitscript/examples@0.20.0':
+    resolution: {integrity: sha512-R7uEOb/VAPCWe4l0RsYSQp3ppmwrL0mcL0ltqcZaHmtM+RwuKR5RKYJN4upZf9U7Pbk3iTXikmr+aWBSr9EIcA==}
 
-  '@8bitscript/i18n@0.19.1':
-    resolution: {integrity: sha512-lSGNAb4CGfsWTIJUl7jfZaULjWlLBAkMWB4qxSeaF0gzRASTr5PdkSNnvNtkrxbXnUOq1sBaw+/SNyaJY6rlBg==}
+  '@8bitscript/i18n@0.20.0':
+    resolution: {integrity: sha512-19/3NgeLJ9uaRRbT+WDQp5JYaRkeLMcJQkN6sbEOpk872PjfWKbYXgsm1dIvbjcsGpH6LuUoDCzIW1nF4SbxGw==}
 
-  '@8bitscript/input@0.19.1':
-    resolution: {integrity: sha512-Pvm3yBx7AJA7nu0wD0QRugbrL2rSOpHcaNBQpFeTgO/rLO0K5OZgFzrY4KMpdHFjO8dRdDYueJ0a+jPEEKFWMg==}
+  '@8bitscript/input@0.20.0':
+    resolution: {integrity: sha512-BKzr6uyM7k1yXJ5m0BkexQUKmhxS28q4vLhumZVgPYAD3nToT3hT92alXGkEEjndPPMaHKz9V/ncgFLMOv5h7w==}
 
-  '@8bitscript/language-server@0.19.1':
-    resolution: {integrity: sha512-X6EjK+e+o7BgLA/UVqa/7uM0oeaX79z8nT11VL0xXIr2i/+5qOpV6mSyQweKdC7lUOoipYLZJZCfulK97tLr8A==}
+  '@8bitscript/language-server@0.20.0':
+    resolution: {integrity: sha512-QLRGSFWcKM96y2ANLW3xQv+8+Le0uKFHNHqUFQTlIwu+L7ydz1Qi4Myk2TYD00QicSZeu28N1DMMCTAwNfviIg==}
     engines: {node: '>=26'}
 
-  '@8bitscript/mega65@0.19.1':
-    resolution: {integrity: sha512-oppQoFH+QyiiBPjgYXFQIGT5Lg+2GIv1XEd6aw+Cyzs8gRmGIWlYc8UeUZwfX4KSJUo1AYzPiVS5SiDEmd8l1A==}
+  '@8bitscript/mega65@0.20.0':
+    resolution: {integrity: sha512-Wv3GG98soaA2hawdzDnaenINrp+1UHTphdMX81h/91SpNevPx3lxXqVJWq1XZBDQUCZ2KG+RXKItJm45qrv0IA==}
 
-  '@8bitscript/nes@0.19.1':
-    resolution: {integrity: sha512-68/UNm/YISEUOfgPyNYIbUOQPST3MndMGKeBjIFn6gXqSkuEA0QJFgYBvmlPSWk+KXiA3pG8eqFA9L7LqH9EVg==}
+  '@8bitscript/nes@0.20.0':
+    resolution: {integrity: sha512-Cr5Ig5QOCagSjaLdA6qcHUs3ukNV5CjMoP3M7nkpyBRZyjelMTd6X3IsFlY8GSvsh8kf8tNEfa9V3LHPxrNRRQ==}
 
-  '@8bitscript/pet@0.19.1':
-    resolution: {integrity: sha512-/u4diFvqAbOWjbLG3EZ8cEAE4BSJEirLYBkGAKhLbK/qSpgBGAL1RhdYuE2i2FzToMHBrgFzGT4jtRVtTxxbWA==}
+  '@8bitscript/pet@0.20.0':
+    resolution: {integrity: sha512-gOonfGp7RtK6N6MpjTD369r8eW5vs3Tld9CjOP3Q1mGDfgnKDCuH5Tmb1iPpBqS5g8mtN9MDdHIrdiu/4WpnYQ==}
 
-  '@8bitscript/pointer@0.19.1':
-    resolution: {integrity: sha512-uoYuNIftBzG3JVA93D4I/KeBD0HUGwB4hGFGAi/eLx3+IwUbTiVN8kuptEQfYkccDk83VA9M9xspHm9WWorTGg==}
+  '@8bitscript/pointer@0.20.0':
+    resolution: {integrity: sha512-gdnY3EAMVm43fyDXAGW0u4dwdh6MWSrtFA6xQOlL/dyCnmSfQOt6yqffU69razmZs9KOyH2I+lGwU6rNzpicWg==}
 
-  '@8bitscript/random@0.19.1':
-    resolution: {integrity: sha512-hfopSi2Mqvwp0RW3s5Q4R9E55s6vUFAjWi31vSYHjiAWPQG49HSfjqQIDjm0loZlR/mtHdZL32KMWZTa2NJ74Q==}
+  '@8bitscript/random@0.20.0':
+    resolution: {integrity: sha512-ifwzffcdeF4ns5B8AeZcApbmF8vq1Zt5S8f/YUOt2ZdP7VOuMX3cIgI11+y9IDpcD2jD3VHcG/Ggan1NHs4IKg==}
 
-  '@8bitscript/raster@0.19.1':
-    resolution: {integrity: sha512-E+j5FpIC3gIiGPqjSbTWEWPHQIBCm+5xSYb/NWFBFzXyIAqkEyR/BAFMZnG7YNXy6fgLc+cez9zgOlS9lgJxFA==}
+  '@8bitscript/raster@0.20.0':
+    resolution: {integrity: sha512-82eIm3Qav8Jq6TdeUyDsyboesdmfybSqwDjB/3vvYLBftLPPQcWNQvKqLMVBfL3al0zZdnisj3e9hr8IurGNVA==}
 
-  '@8bitscript/screen@0.19.1':
-    resolution: {integrity: sha512-HCShuZkiXNt2z0UDaCulULKMVVqTrGJCtEB5eaufaSLu6Bj9ktYGHYXZSwGmLDUh0Lp7SMZXxIC8ngjUCg3CyA==}
+  '@8bitscript/screen@0.20.0':
+    resolution: {integrity: sha512-8N32ni3pa4oySugDFPmWb7nP8yjxGMqlSgNXxAtvbfwaN1RqRc8BPjpw0AWQ/sVc+ajuDO/nZaiWsXdvvxDqMA==}
 
-  '@8bitscript/sprites@0.19.1':
-    resolution: {integrity: sha512-iObwJr/wbITC75zpTddIV49czvrAefq6tqGIhZdHor09uZHg1D+aXIJOmvGeOErYdORABudy2+FGkINwYHGtGA==}
+  '@8bitscript/sprites@0.20.0':
+    resolution: {integrity: sha512-hYPDxi9nsnvj7db0xiAnurfPkrLaEsaRprgqvDRJJVrOKL0kc/6KTI0BBdONDMvvGhhFSO5HnleZx6lot64tIw==}
 
-  '@8bitscript/studio@0.19.1':
-    resolution: {integrity: sha512-MSIMT2CevL5O3adOcbs7Aby0TtUMUD0xgfVjxNlnguBbW82yjW7/lutyV3e8KBVqdj31LnHMOztB/lz/eYlA/A==}
+  '@8bitscript/studio@0.20.0':
+    resolution: {integrity: sha512-q1Uacmw+VJZY+Kl37YFTLx5Nh/xQ/hMZG27NhfToZYAjq9ImhWf8fLS4ei69/4sKpIVC7tpvvhyvYosfvo/Cwg==}
 
-  '@8bitscript/system@0.19.1':
-    resolution: {integrity: sha512-M6oX9QF0wjDJH3xVF8b1wxKRN2RgMTBeputCV+SwSCEpIhsqA3mwialJoVRzcIoOWNF5jQBIxuVgfO9jKx3jrw==}
+  '@8bitscript/system@0.20.0':
+    resolution: {integrity: sha512-LYJfg4oAH7hJJA8zMLqOLBUPMIovwT4uNwLmSPD9PUFMCdP/IspCLhy8AvtF1k2ItWefPmmOY/d0ST2ByUM+sg==}
 
-  '@8bitscript/text@0.19.1':
-    resolution: {integrity: sha512-7ScGwk0zt8PbikRHYW4h4NIwCSd8A8dtSDw6wzTHD3v5/oJFuxv9xH4XZEl1fBQgURtlcQlLSqrgvNQjP2ifDQ==}
+  '@8bitscript/text@0.20.0':
+    resolution: {integrity: sha512-jJbIUUqgIRRjEnq9U9LseFYqJlgviRpJYuUT/YDFh0utV8CfYb2Y5XGWx9Gggy6Mext1+kP/Lq7XChUGoJu/yA==}
 
-  '@8bitscript/timeline@0.19.1':
-    resolution: {integrity: sha512-vcxR0HZzf/srgKKlpTR8BpyT15JEnAR060HST2CEPXOG2O+97D06oCIzcbtmFfYjiiUqonhUtGEWy0uM0lAbOw==}
+  '@8bitscript/timeline@0.20.0':
+    resolution: {integrity: sha512-RZ6ZGd8pa0nk5T2JmHrZGqQ6Lu20BoGfraza0YuUsTuABzycvGEenYTrWDbNb7NRJyW+H+iIsa6NtEQVG3gnyw==}
 
-  '@8bitscript/ui@0.19.1':
-    resolution: {integrity: sha512-tYoDC3Biep80HFmUmbJy5qgAkxzY2hL4gNUUp1ASCCdYFWaSl8KpfPC5yrXo+XaIyhLC1OU6WB9VhBf1k7dLrQ==}
+  '@8bitscript/ui@0.20.0':
+    resolution: {integrity: sha512-gis+Sh7ZMqXfgfnNdfVokm1KX1/EZYyipDs336LA/xOqC/7dEHi8LcRWcaLIu2cLpL/UejIBEOw0c9rPCxxezA==}
 
-  '@8bitscript/vic20@0.19.1':
-    resolution: {integrity: sha512-aA9FUr9/sccrabUp0K64GR7f9y+i2b4wVxUzz8+AJ4NV0C11lPTyEUZ3ZDnMzuY+C+WimI0VnV92i5eJT/Af6A==}
+  '@8bitscript/vic20@0.20.0':
+    resolution: {integrity: sha512-xsN2DIOcLDy/KI5/BqBrdhToiOIccc91l/TNnNBfmTCdcI00nY9BDwWK9fBJX+G5aozEjogaZ5B+X1LDc0527A==}
 
-  '@8bitscript/web@0.19.1':
-    resolution: {integrity: sha512-bgKiAN55L0Oj7MIT1DT0J4yZ6ulMaXbi/GoPr3I/1B+vNLZz9wrZO5t78wBxnEPdMM4fyK/sYLZlpUz///fEYg==}
+  '@8bitscript/web@0.20.0':
+    resolution: {integrity: sha512-O1jq3hfigwMj91FisIVj/5udGKONk9M5NCvfK7Cniw73aeeE3gy+UHWt0u/O/9KsWB1h2//JHowlghLLWj1FTw==}
 
   '@changesets/apply-release-plan@8.1.0':
     resolution: {integrity: sha512-M93HOGyX3ssg6He3b5NotaHtQVu6uajHS6UIQ28xKt2RzskCy73ayX4I914qBKjTJmrE4YFlELQjfcqxbmGLJw==}
@@ -966,155 +966,155 @@ packages:
 
 snapshots:
 
-  '@8bitscript/atari8@0.19.1': {}
+  '@8bitscript/atari8@0.20.0': {}
 
-  '@8bitscript/c128@0.19.1': {}
+  '@8bitscript/c128@0.20.0': {}
 
-  '@8bitscript/c64@0.19.1': {}
+  '@8bitscript/c64@0.20.0': {}
 
-  '@8bitscript/cli@0.19.1':
+  '@8bitscript/cli@0.20.0':
     dependencies:
-      '@8bitscript/atari8': 0.19.1
-      '@8bitscript/c128': 0.19.1
-      '@8bitscript/c64': 0.19.1
-      '@8bitscript/compiler': 0.19.1
-      '@8bitscript/cx16': 0.19.1
-      '@8bitscript/examples': 0.19.1
-      '@8bitscript/language-server': 0.19.1
-      '@8bitscript/mega65': 0.19.1
-      '@8bitscript/nes': 0.19.1
-      '@8bitscript/pet': 0.19.1
-      '@8bitscript/studio': 0.19.1
-      '@8bitscript/vic20': 0.19.1
-      '@8bitscript/web': 0.19.1
+      '@8bitscript/atari8': 0.20.0
+      '@8bitscript/c128': 0.20.0
+      '@8bitscript/c64': 0.20.0
+      '@8bitscript/compiler': 0.20.0
+      '@8bitscript/cx16': 0.20.0
+      '@8bitscript/examples': 0.20.0
+      '@8bitscript/language-server': 0.20.0
+      '@8bitscript/mega65': 0.20.0
+      '@8bitscript/nes': 0.20.0
+      '@8bitscript/pet': 0.20.0
+      '@8bitscript/studio': 0.20.0
+      '@8bitscript/vic20': 0.20.0
+      '@8bitscript/web': 0.20.0
 
-  '@8bitscript/compiler@0.19.1': {}
+  '@8bitscript/compiler@0.20.0': {}
 
-  '@8bitscript/cx16@0.19.1': {}
+  '@8bitscript/cx16@0.20.0': {}
 
-  '@8bitscript/examples@0.19.1':
+  '@8bitscript/examples@0.20.0':
     dependencies:
-      '@8bitscript/c64': 0.19.1
-      '@8bitscript/input': 0.19.1
-      '@8bitscript/pet': 0.19.1
-      '@8bitscript/raster': 0.19.1
-      '@8bitscript/screen': 0.19.1
-      '@8bitscript/sprites': 0.19.1
-      '@8bitscript/system': 0.19.1
-      '@8bitscript/text': 0.19.1
-      '@8bitscript/timeline': 0.19.1
-      '@8bitscript/web': 0.19.1
+      '@8bitscript/c64': 0.20.0
+      '@8bitscript/input': 0.20.0
+      '@8bitscript/pet': 0.20.0
+      '@8bitscript/raster': 0.20.0
+      '@8bitscript/screen': 0.20.0
+      '@8bitscript/sprites': 0.20.0
+      '@8bitscript/system': 0.20.0
+      '@8bitscript/text': 0.20.0
+      '@8bitscript/timeline': 0.20.0
+      '@8bitscript/web': 0.20.0
 
-  '@8bitscript/i18n@0.19.1':
+  '@8bitscript/i18n@0.20.0':
     dependencies:
-      '@8bitscript/text': 0.19.1
+      '@8bitscript/text': 0.20.0
 
-  '@8bitscript/input@0.19.1':
+  '@8bitscript/input@0.20.0':
     dependencies:
-      '@8bitscript/atari8': 0.19.1
-      '@8bitscript/c128': 0.19.1
-      '@8bitscript/c64': 0.19.1
-      '@8bitscript/cx16': 0.19.1
-      '@8bitscript/mega65': 0.19.1
-      '@8bitscript/nes': 0.19.1
-      '@8bitscript/pet': 0.19.1
-      '@8bitscript/vic20': 0.19.1
-      '@8bitscript/web': 0.19.1
+      '@8bitscript/atari8': 0.20.0
+      '@8bitscript/c128': 0.20.0
+      '@8bitscript/c64': 0.20.0
+      '@8bitscript/cx16': 0.20.0
+      '@8bitscript/mega65': 0.20.0
+      '@8bitscript/nes': 0.20.0
+      '@8bitscript/pet': 0.20.0
+      '@8bitscript/vic20': 0.20.0
+      '@8bitscript/web': 0.20.0
 
-  '@8bitscript/language-server@0.19.1':
+  '@8bitscript/language-server@0.20.0':
     dependencies:
-      '@8bitscript/compiler': 0.19.1
+      '@8bitscript/compiler': 0.20.0
       vscode-languageserver: 10.1.1
       vscode-languageserver-textdocument: 1.0.14
 
-  '@8bitscript/mega65@0.19.1': {}
+  '@8bitscript/mega65@0.20.0': {}
 
-  '@8bitscript/nes@0.19.1': {}
+  '@8bitscript/nes@0.20.0': {}
 
-  '@8bitscript/pet@0.19.1': {}
+  '@8bitscript/pet@0.20.0': {}
 
-  '@8bitscript/pointer@0.19.1':
+  '@8bitscript/pointer@0.20.0':
     dependencies:
-      '@8bitscript/atari8': 0.19.1
-      '@8bitscript/c128': 0.19.1
-      '@8bitscript/c64': 0.19.1
-      '@8bitscript/cx16': 0.19.1
-      '@8bitscript/input': 0.19.1
-      '@8bitscript/mega65': 0.19.1
-      '@8bitscript/nes': 0.19.1
-      '@8bitscript/pet': 0.19.1
-      '@8bitscript/text': 0.19.1
-      '@8bitscript/vic20': 0.19.1
-      '@8bitscript/web': 0.19.1
+      '@8bitscript/atari8': 0.20.0
+      '@8bitscript/c128': 0.20.0
+      '@8bitscript/c64': 0.20.0
+      '@8bitscript/cx16': 0.20.0
+      '@8bitscript/input': 0.20.0
+      '@8bitscript/mega65': 0.20.0
+      '@8bitscript/nes': 0.20.0
+      '@8bitscript/pet': 0.20.0
+      '@8bitscript/text': 0.20.0
+      '@8bitscript/vic20': 0.20.0
+      '@8bitscript/web': 0.20.0
 
-  '@8bitscript/random@0.19.1':
+  '@8bitscript/random@0.20.0':
     dependencies:
-      '@8bitscript/atari8': 0.19.1
-      '@8bitscript/c64': 0.19.1
+      '@8bitscript/atari8': 0.20.0
+      '@8bitscript/c64': 0.20.0
 
-  '@8bitscript/raster@0.19.1':
+  '@8bitscript/raster@0.20.0':
     dependencies:
-      '@8bitscript/atari8': 0.19.1
-      '@8bitscript/c128': 0.19.1
-      '@8bitscript/c64': 0.19.1
-      '@8bitscript/cx16': 0.19.1
-      '@8bitscript/mega65': 0.19.1
-      '@8bitscript/nes': 0.19.1
-      '@8bitscript/pet': 0.19.1
-      '@8bitscript/vic20': 0.19.1
-      '@8bitscript/web': 0.19.1
+      '@8bitscript/atari8': 0.20.0
+      '@8bitscript/c128': 0.20.0
+      '@8bitscript/c64': 0.20.0
+      '@8bitscript/cx16': 0.20.0
+      '@8bitscript/mega65': 0.20.0
+      '@8bitscript/nes': 0.20.0
+      '@8bitscript/pet': 0.20.0
+      '@8bitscript/vic20': 0.20.0
+      '@8bitscript/web': 0.20.0
 
-  '@8bitscript/screen@0.19.1':
+  '@8bitscript/screen@0.20.0':
     dependencies:
-      '@8bitscript/atari8': 0.19.1
-      '@8bitscript/c128': 0.19.1
-      '@8bitscript/c64': 0.19.1
-      '@8bitscript/cx16': 0.19.1
-      '@8bitscript/mega65': 0.19.1
-      '@8bitscript/nes': 0.19.1
-      '@8bitscript/pet': 0.19.1
-      '@8bitscript/vic20': 0.19.1
-      '@8bitscript/web': 0.19.1
+      '@8bitscript/atari8': 0.20.0
+      '@8bitscript/c128': 0.20.0
+      '@8bitscript/c64': 0.20.0
+      '@8bitscript/cx16': 0.20.0
+      '@8bitscript/mega65': 0.20.0
+      '@8bitscript/nes': 0.20.0
+      '@8bitscript/pet': 0.20.0
+      '@8bitscript/vic20': 0.20.0
+      '@8bitscript/web': 0.20.0
 
-  '@8bitscript/sprites@0.19.1':
+  '@8bitscript/sprites@0.20.0':
     dependencies:
-      '@8bitscript/c64': 0.19.1
-      '@8bitscript/screen': 0.19.1
-      '@8bitscript/system': 0.19.1
-      '@8bitscript/text': 0.19.1
+      '@8bitscript/c64': 0.20.0
+      '@8bitscript/screen': 0.20.0
+      '@8bitscript/system': 0.20.0
+      '@8bitscript/text': 0.20.0
 
-  '@8bitscript/studio@0.19.1':
+  '@8bitscript/studio@0.20.0':
     dependencies:
-      '@8bitscript/input': 0.19.1
-      '@8bitscript/pointer': 0.19.1
-      '@8bitscript/screen': 0.19.1
-      '@8bitscript/system': 0.19.1
-      '@8bitscript/text': 0.19.1
-      '@8bitscript/ui': 0.19.1
+      '@8bitscript/input': 0.20.0
+      '@8bitscript/pointer': 0.20.0
+      '@8bitscript/screen': 0.20.0
+      '@8bitscript/system': 0.20.0
+      '@8bitscript/text': 0.20.0
+      '@8bitscript/ui': 0.20.0
 
-  '@8bitscript/system@0.19.1': {}
+  '@8bitscript/system@0.20.0': {}
 
-  '@8bitscript/text@0.19.1':
+  '@8bitscript/text@0.20.0':
     dependencies:
-      '@8bitscript/atari8': 0.19.1
-      '@8bitscript/c128': 0.19.1
-      '@8bitscript/c64': 0.19.1
-      '@8bitscript/cx16': 0.19.1
-      '@8bitscript/mega65': 0.19.1
-      '@8bitscript/nes': 0.19.1
-      '@8bitscript/pet': 0.19.1
-      '@8bitscript/vic20': 0.19.1
-      '@8bitscript/web': 0.19.1
+      '@8bitscript/atari8': 0.20.0
+      '@8bitscript/c128': 0.20.0
+      '@8bitscript/c64': 0.20.0
+      '@8bitscript/cx16': 0.20.0
+      '@8bitscript/mega65': 0.20.0
+      '@8bitscript/nes': 0.20.0
+      '@8bitscript/pet': 0.20.0
+      '@8bitscript/vic20': 0.20.0
+      '@8bitscript/web': 0.20.0
 
-  '@8bitscript/timeline@0.19.1': {}
+  '@8bitscript/timeline@0.20.0': {}
 
-  '@8bitscript/ui@0.19.1':
+  '@8bitscript/ui@0.20.0':
     dependencies:
-      '@8bitscript/text': 0.19.1
+      '@8bitscript/text': 0.20.0
 
-  '@8bitscript/vic20@0.19.1': {}
+  '@8bitscript/vic20@0.20.0': {}
 
-  '@8bitscript/web@0.19.1': {}
+  '@8bitscript/web@0.20.0': {}
 
   '@changesets/apply-release-plan@8.1.0':
     dependencies:
