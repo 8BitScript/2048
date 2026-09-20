@@ -21,6 +21,7 @@ export namespace Status {
     const WON_COMPACT: string = "GEWONNEN!";
     const MOVE: string = "PFEILE BEWEGEN";
     const MOVE_TOUCH: string = "WISCHEN, PFEILE";
+    const MOVE_SWIPE: string = "WISCHEN BEWEGT";
 }
 
 export namespace Hint {

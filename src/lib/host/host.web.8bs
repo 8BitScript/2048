@@ -1,10 +1,17 @@
 // The web's host: a touchscreen or not is a property of the page, written
-// once at start-up by the host into the input snapshot — not a press. See
-// @8bitscript/web/input's touch().
+// once at start-up by the host into the input snapshot — not a press. A
+// keyboard is the page's best guess, and the one answer that can change:
+// a phone or a tablet in the hands has none, and an iPad on a keyboard
+// folio gets one back at its first arrow — so the game asks when it
+// prints, not once. See @8bitscript/web/input's touch() and keyboard().
 import { input } from "@8bitscript/input";
 
 export namespace host {
     function touch(): bool {
         return input.touch();
+    }
+
+    function keyboard(): bool {
+        return input.keyboard();
     }
 }

@@ -44,14 +44,21 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
         // that printed nothing is what used to strand "YOU MADE 2048" on
         // screen across a restart, and would now strand the move hint
         // through a game over. Both input methods are real possibilities
-        // on this host (a touchscreen laptop has both), so the hint names
-        // both rather than picking one.
+        // on this host (a touchscreen laptop has both; a mouse drags a
+        // swipe too), so the hint names both — unless the host says there
+        // is nothing to press an arrow on (a tablet in the hands), and
+        // then it names the one there is. Asked at every print, not once:
+        // the answer changes the moment a plugged-in keyboard sends a key.
         if (won) {
             messages.printLine(hintTopAt, Hint.SWIPE, HINT_WIDTH);
             messages.printLine(hintBottomAt, Hint.WIN, HINT_WIDTH);
         } else if (!over) {
             messages.printLine(hintTopAt, Hint.SWIPE, HINT_WIDTH);
-            messages.printLine(hintBottomAt, Hint.ARROW, HINT_WIDTH);
+            if (host.keyboard()) {
+                messages.printLine(hintBottomAt, Hint.ARROW, HINT_WIDTH);
+            } else {
+                messages.clearLine(hintBottomAt, HINT_WIDTH);
+            }
         } else {
             messages.clearLine(hintTopAt, HINT_WIDTH);
             messages.clearLine(hintBottomAt, HINT_WIDTH);
@@ -88,22 +95,37 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
         // hint up under a board that cannot move. Always write it, never
         // just leave it: the branch that printed nothing is what strands
         // a message across a restart. Widths are the layout's, not a
-        // translated blank. The wording is the machine's: a touchscreen
-        // may be in the web's hands, and the web's fixed replicas say
-        // nothing at all on one.
+        // translated blank. The wording is the machine's: on the web it
+        // is the host's — SWIPE OR ARROWS wherever both work (a mouse
+        // drags a swipe too), SWIPE TO MOVE on a phone or a tablet in
+        // the hands, where there are no arrows to press. The fixed
+        // replicas used to say nothing at all on a touchscreen, because
+        // SWIPE OR ARROWS might have been a lie there; now that the host
+        // says which, they say the same as the fluid grid. Asked at every
+        // print: a keyboard plugged into a tablet changes the answer.
         if (FLUID) {
             if (won) {
                 messages.printLine(statusAt, Status.WON_COMPACT, FLUID_STATUS_WIDTH);
             } else if (!over) {
-                messages.printLine(statusAt, Status.MOVE_TOUCH, FLUID_STATUS_WIDTH);
+                if (host.keyboard()) {
+                    messages.printLine(statusAt, Status.MOVE_TOUCH, FLUID_STATUS_WIDTH);
+                } else {
+                    messages.printLine(statusAt, Status.MOVE_SWIPE, FLUID_STATUS_WIDTH);
+                }
             } else {
                 messages.clearLine(statusAt, FLUID_STATUS_WIDTH);
             }
         } else if (#system() == System.WEB) {
             if (won) {
                 messages.printLine(statusAt, Status.WON, REPLICA_STATUS_WIDTH);
-            } else if (!over && !host.touch()) {
-                messages.printLine(statusAt, Status.MOVE, REPLICA_STATUS_WIDTH);
+            } else if (!over) {
+                if (!host.touch()) {
+                    messages.printLine(statusAt, Status.MOVE, REPLICA_STATUS_WIDTH);
+                } else if (host.keyboard()) {
+                    messages.printLine(statusAt, Status.MOVE_TOUCH, REPLICA_STATUS_WIDTH);
+                } else {
+                    messages.printLine(statusAt, Status.MOVE_SWIPE, REPLICA_STATUS_WIDTH);
+                }
             } else {
                 messages.clearLine(statusAt, REPLICA_STATUS_WIDTH);
             }
