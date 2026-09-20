@@ -55,8 +55,8 @@ VIC-20 skin. [GitHub Releases](https://github.com/8BitScript/2048/releases)
 attach every build `8bitscript.config.ts` declares: the VIC-20, C64, C128,
 Atari 8-bit (GR.1), NES, Commander X16 and MEGA65 programs, three PETs — a
 stock 4K 2001, the 32K 4032, and the German 2001 — and the web bundle
-(every skin and the German build, zipped). One source, fifteen artifacts,
-all from `8bs build --release`.
+(every skin and the German build, zipped). One source, fifteen builds,
+eleven downloads, all from `8bs build --release`.
 
 ## Playing it
 
