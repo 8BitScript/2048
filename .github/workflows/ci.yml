@@ -12,4 +12,4 @@ jobs:
       # No `targets`: builds whatever 8bitscript.config.ts declares for a
       # release (both PET RAM tiers, plus web), so CI catches a variant
       # that stops fitting before a release does.
-      cli-version: 0.19.1
+      cli-version: 0.20.0
