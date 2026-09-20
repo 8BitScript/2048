@@ -101,8 +101,12 @@ that's what Cloudflare Workers Builds runs to deploy
 needs `LLVM_MOS_HOME`, which that build image doesn't have.
 
 `pnpm run start:web` is playable in the browser: arrows or swipe slide
-tiles, Enter or a tap starts a new game once it is over. A touch host
-hides the arrows tutorial so the board keeps that row. `pnpm run build:web`
+tiles, Enter or a tap starts a new game once it is over. The status row
+names what the host has — SWIPE OR ARROWS on a desktop or a touchscreen
+laptop, SWIPE TO MOVE on a phone or a tablet in the hands, where there are
+no arrows to press (`host.keyboard()`, the web's `input.keyboard()`; a
+keyboard plugged into a tablet changes the answer at its first arrow). A
+touch host hides the arrows tutorial so the board keeps that row. `pnpm run build:web`
 emits `program.wasm` plus `program-c64.wasm`, `program-pet-2001.wasm` and
 `program-vic20.wasm` into `dist/web/`, then copies `site/index.html` (the
 machine picker) over the generated shell. `pnpm run deploy:web`

@@ -1,9 +1,18 @@
 // What the machine running the game is like, asked the same way on every
-// target. The portable answers: no touchscreen. lib/host/host.web.8bs is the
-// web's twin, where a phone may be holding the game. An answer that is a
-// literal folds, so a branch on it costs the eight machines nothing.
+// target. The portable answers: no touchscreen, and a keyboard exactly when
+// the build has one (Input.KEYBOARD — the NES has none, and says so as a
+// fact). lib/host/host.web.8bs is the web's twin, where a phone may be
+// holding the game and the answers are the page's. An answer that is a
+// literal or a fact folds, so a branch on it costs the eight machines
+// nothing.
+import { Input } from "@8bitscript/system";
+
 export namespace host {
     function touch(): bool {
         return false;
+    }
+
+    function keyboard(): bool {
+        return Input.KEYBOARD;
     }
 }

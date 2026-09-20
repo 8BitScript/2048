@@ -22,6 +22,7 @@ export namespace Status {
     const WON_COMPACT: string = "YOU WIN!";
     const MOVE: string = "ARROWS TO MOVE";
     const MOVE_TOUCH: string = "SWIPE OR ARROWS";
+    const MOVE_SWIPE: string = "SWIPE TO MOVE";
 }
 
 export namespace Hint {
