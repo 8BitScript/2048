@@ -83,7 +83,7 @@ Then, from this directory:
 
 | Command | Machine |
 | --- | --- |
-| `pnpm start` | C64 — the baseline (`8bs run` alone does the same from 8BitScript 0.19.0, which reads `baseline` in `8bitscript.config.ts`) |
+| `pnpm start` | C64 — the baseline: plain `8bs run`, which reads `baseline` in `8bitscript.config.ts` |
 | `pnpm run start:vic20` | VIC-20 (NTSC) |
 | `pnpm run start:pet` | PET (a 32K 4032 by default; `--profile 2001 --hardware ram=4` for a stock 4K 2001 — the game is 2876 bytes of program, inside that machine's ~3K of usable RAM; `--profile 8032` for 80 columns) |
 | `pnpm run start:c128` | C128 |
@@ -291,7 +291,8 @@ Only the facts the program's own files test are counted — the
 `#fact(video.raster)` and `#fact(video.palette)` guards, `Memory.RAM`
 against the animation line, `Input.JOYSTICKS` and `Input.KEYBOARD` for
 the start message, `Video.ROWS` for the layout — never what a package
-folds on for it. The report, 2026-09-19, the game's own words:
+folds on for it. The report, `8bs build --release` on 8BitScript 0.19.1,
+2026-09-20, the game's own words:
 
 ```
 baseline: stock c64
