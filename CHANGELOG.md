@@ -1,5 +1,14 @@
 # 2048
 
+## 0.8.1
+
+### Patch Changes
+
+- c1b96ea: Bump `@8bitscript/*` from 0.15.0 to 0.19.1. The Atari 8-bit's `textmode=gr1` (#71) is 0.16.0's, so CI's compile step had refused the option since that merge; it builds again, as `2048-atari8-gr1-ntsc.xex` (4089 bytes of program). What 0.18.0 changes under the game, measured 2026-09-19 with `8bs build --release` (0.19.1, 2026-09-20, is byte-identical to it on every build): the C64 takes `@8bitscript/c64/text`'s native `print`/`printNumber`/`fill` (a nine-character HUD print 1,908 → 498 cycles) and the reworked, double-buffered raster list, 4500 → 5185 bytes of program (4771 → 5398 German); the MEGA65 3566 → 3581. Every other build is byte-identical — 2876 English / 3056 German on the 4K PET 2001, 2886 on the 4032, 3431 on the unexpanded VIC-20, 3599 on the C128, 4345 on the X16, and the five web builds. The two workflows' `cli-version` fallback moves to 0.19.1 with it.
+- 58292d7: The Atari 8-bit build now uses 20-column ANTIC 6 (`textmode=gr1`) so board tiles get per-cell color instead of grey reverse video.
+- c1b96ea: `baseline: 'c64'` in `8bitscript.config.ts`: the game is designed on the C64 — the build every fact it tests is true on — and says so where the toolchain can read it. On 8BitScript 0.19.1, `8bs run` alone runs the C64 build and `8bs build --release` prints, after every artifact, which of the facts the game tests that build is short of (`2048-pet.prg: short of the baseline (c64): video.palette 2 of 16, video.raster, input.joysticks 0 of 2, memory.ram 3071 of 51199`). `pnpm start` is plain `8bs run` now — the C64 (`pnpm run start:vic20` for the VIC-20). README: the opening says the C64 is the baseline and the 4K PET the floor, the 22-columns bullet says the VIC-20 is the floor of width rather than "the machine checked first", and a new section carries the release report and the vocabulary — floor, baseline, build; not port, tier or edition. No build's bytes change.
+- c1b96ea: The title's wobble reads `raster.STRIDE` — the bytes one raster-list entry takes, 4 on the C64 and 3 on the web, a fact that folds — instead of probing for it at start-up. `<TitleWobble />` no longer writes a trial `setValue` at offset 3 and `wobble.step()` no longer reads the answer back from two bytes of RAM each frame; `examples/fancy` in 8bitscript, whose probe this was, made the same change in 0.18. C64: 5185 → 5122 bytes of program and 94 → 92 of RAM; the web's C64 skin 109 → 107 of RAM; the 4K PET and the VIC-20, which never link the wobble, byte-identical. Checked on screen: `8bs run c64 --screenshot --frames 1200` and `1203` show the band, the yellow border, and "2048" sheared at the two-scanline pitch in two different phases; the web's C64 skin at `--frames 300` and `303` the same.
+
 ## 0.8.0
 
 ### Minor Changes
