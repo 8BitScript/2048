@@ -7,7 +7,12 @@
 from scratch in [8BitScript](https://github.com/8BitScript/8bitscript) — one
 program, running on the VIC-20, C64, PET, C128, Atari 8-bit, NES, Commander
 X16, MEGA65, *and* the web, the way 8BitScript's own `examples/borders` and
-`examples/menubar` do. [`src/2048.8bs`](src/2048.8bs) is the program (the
+`examples/menubar` do. It is designed on the **C64** — the build where
+every fact the program tests is true — and its floor is a **4K PET
+2001**; the other builds are the same source, folded for what each
+machine lacks, and `8bs build --release` says what (see
+[the baseline](#the-baseline-and-what-each-build-is-short-of) below).
+[`src/2048.8bs`](src/2048.8bs) is the program (the
 loop that reads the player); [`src/ui/`](src/ui) is what goes on the screen,
 as [8BX](https://github.com/8BitScript/8bitscript/blob/trunk/docs/project/8bx.md)
 elements — `Game.8bx` is the root, `ui/board/` the game and `ui/title/`
@@ -78,8 +83,8 @@ Then, from this directory:
 
 | Command | Machine |
 | --- | --- |
-| `pnpm start` | VIC-20 (NTSC) |
-| `pnpm run start:c64` | C64 |
+| `pnpm start` | C64 — the baseline (`8bs run` alone does the same from 8BitScript 0.19.0, which reads `baseline` in `8bitscript.config.ts`) |
+| `pnpm run start:vic20` | VIC-20 (NTSC) |
 | `pnpm run start:pet` | PET (a 32K 4032 by default; `--profile 2001 --hardware ram=4` for a stock 4K 2001 — the game is 2876 bytes of program, inside that machine's ~3K of usable RAM; `--profile 8032` for 80 columns) |
 | `pnpm run start:c128` | C128 |
 | `pnpm run start:atari8` | Atari 8-bit |
@@ -261,8 +266,61 @@ screen prints a `v` and then the number.
   stock 4K 2001.
 - **Nothing is wider than a VIC-20's 22 columns.** The HUD line is 17
   characters, the board's widest row 19, the dashed rule 20 — checked by
-  actually running it there (`pnpm start`), the machine every layout in
-  this project is checked against first.
+  actually running it there (`pnpm run start:vic20`). The VIC-20 is the
+  floor of width the way the 4K PET is the floor of RAM: a layout is
+  checked against the narrowest grid first, and then it fits every
+  wider one. That is a different thing from the machine the game is
+  designed *on*, which is the next section.
+
+## The baseline, and what each build is short of
+
+2048 is designed on the C64: 40 columns, sixteen colours, a raster list
+behind the title, a SID to draw entropy from, and RAM enough to animate
+a slide. It builds for eight other machines from the same source, and
+`8bitscript.config.ts` says so — `baseline: 'c64'` — so the toolchain
+can say the rest. The floor is `requires`' business (a 4K PET 2001
+clears it); the baseline is where every fact the program tests answers
+yes; and each other build is the same program with the branches on the
+facts it lacks folded away. Not a port (there is one source), not a
+tier (a tier is a bucket, and buckets hide which facts), not a lesser
+edition — a *build*, short of the baseline by exactly the facts
+`8bs build --release` prints after it. The vocabulary is
+[8BitScript's own note](https://github.com/8BitScript/8bitscript/blob/trunk/docs/project/baseline.md).
+
+Only the facts the program's own files test are counted — the
+`#fact(video.raster)` and `#fact(video.palette)` guards, `Memory.RAM`
+against the animation line, `Input.JOYSTICKS` and `Input.KEYBOARD` for
+the start message, `Video.ROWS` for the layout — never what a package
+folds on for it. The report, 2026-09-19, the game's own words:
+
+```
+baseline: stock c64
+2048-c64-ntsc.prg          the baseline
+2048-c128-ntsc.prg         short of the baseline (c64): video.raster, memory.ram 41983 of 51199
+2048-mega65-ntsc.prg       short of the baseline (c64): video.raster, memory.ram 45055 of 51199
+2048-cx16.prg              short of the baseline (c64): video.raster, input.joysticks 0 of 2, memory.ram 38655 of 51199
+2048-atari8-gr1-ntsc.xex   short of the baseline (c64): video.rows 24 of 25, video.raster, memory.ram 40960 of 51199
+2048-vic20-ntsc.prg        short of the baseline (c64): video.rows 23 of 25, video.raster, input.joysticks 1 of 2, memory.ram 3583 of 51199
+2048-pet-4032-32.prg       short of the baseline (c64): video.palette 2 of 16, video.raster, input.joysticks 0 of 2, memory.ram 31743 of 51199
+2048-pet.prg (2001, 4K)    short of the baseline (c64): video.palette 2 of 16, video.raster, input.joysticks 0 of 2, memory.ram 3071 of 51199
+2048-nes.nes               short of the baseline (c64): video.raster, input.keyboard, input.joysticks 0 of 2, memory.ram 1536 of 51199
+2048.wasm                  short of the baseline (c64): input.joysticks 0 of 2
+2048-c64.wasm              short of the baseline (c64): input.joysticks 0 of 2
+2048-pet-2001.wasm         short of the baseline (c64): video.palette 2 of 16, input.joysticks 0 of 2
+2048-vic20.wasm            short of the baseline (c64): video.rows 23 of 25, input.joysticks 0 of 2
+```
+
+Read down it and every bullet in "How it's built" is there as a fact:
+`video.raster` is why only the C64 and the web's C64 skin wobble;
+`memory.ram 3583` and `3071` are the unexpanded VIC-20 and the 4K PET
+keeping their instant moves; `video.palette 2 of 16` is the PET's
+block-digit tiles instead of coloured ones; `input.keyboard` is the NES
+start message naming its pad button alone, with no "OR RETURN" beside
+it. Nothing on the list is a feature the
+game *has* on the C64 and *lost* elsewhere; each is a fact the machine
+answers differently, and the program says what it does about it. The
+baseline changes no build's bytes — every artifact above is
+byte-identical with and without the key.
 
 ## What's next
 
