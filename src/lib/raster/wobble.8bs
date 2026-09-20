@@ -38,19 +38,12 @@ export const SINE: array<utinyint, 32> = [
 export namespace band {
     const ENTRIES: utinyint = 4;
     const BACKGROUND: utinyint = 2; // red behind the title
-    const BORDER: utinyint = 7;     // yellow beside it — also the stride probe's known value
+    const BORDER: utinyint = 7;     // yellow beside it
 }
 
-// The wobble's walk through the sine table, and the two numbers the
-// per-frame rewrite needs, which <TitleWobble /> works out when it builds
-// the list: bytes per entry in setValue's unit (probed the way fancy
-// probes it — offset 3 names entry 1 where entries are three bytes and is
-// refused untouched where they are four), and the byte offset of the
-// first SCROLL_X entry (index 2 — the two opening colour splits come
-// first). Only ever touched inside `if (TITLE_WOBBLES)`.
+// The wobble's walk through the sine table. Only ever touched inside
+// wobble.step()'s guard.
 export let wobblePhase: utinyint = 0;
-export let wobbleStride: utinyint = 0;
-export let wobbleFirst: utinyint = 0;
 
 export namespace wobble {
     // One step: rewrite only the four SCROLL_X value bytes, right after
@@ -59,8 +52,17 @@ export namespace wobble {
     function step(): void {
         if (#fact(video.raster) && !screen.RESIZABLE && text.COLUMNS == 40 && #fact(video.palette) == 16) {
             wobblePhase = (wobblePhase + 1) & 31;
+            // The band's SCROLL_X entries start at index 2 (the two opening
+            // colour splits come first), and setValue names an entry by
+            // its byte offset: raster.STRIDE bytes each, the machine's own
+            // number (4 on the C64, 3 on the web) and a fact that folds.
+            // Until 0.18 the portable surface had no such constant and
+            // <TitleWobble /> probed for it at start-up the way
+            // examples/fancy did — a setValue at offset 3, entry 1 where
+            // entries are three bytes and refused untouched where they
+            // are four — into two bytes of RAM this read back each frame.
             for (let i: utinyint = 0; i < band.ENTRIES; i++) {
-                raster.setValue(wobbleFirst + i * wobbleStride, SINE[(i + wobblePhase) & 31]);
+                raster.setValue(raster.STRIDE * (2 + i), SINE[(i + wobblePhase) & 31]);
             }
         }
         return;

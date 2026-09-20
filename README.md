@@ -51,13 +51,12 @@ is deliberately here rather than on a 22-column screen.
 Play it in a browser at [2048.8bitscript.com](https://2048.8bitscript.com)
 (swipe on a phone, arrows on a keyboard). The site's picker loads a
 separate wasm per look — the default 16:9 host, or a PET 2001 / C64 /
-VIC-20 skin. GitHub Releases attach the
-compiled PET `.prg` — a stock 4K 2001 and a roomier 32K build — and the
-web `.wasm`. VIC-20, C64, C128, Atari 8-bit, NES, Commander X16, and
-MEGA65 binaries return once 8BitScript's own backends for those machines
-do (`RELEASE_MACHINES` in [8bitscript](https://github.com/8BitScript/8bitscript)'s
-compiler); the source already targets all of them, so nothing about this
-game's own code needs to change when they land.
+VIC-20 skin. [GitHub Releases](https://github.com/8BitScript/2048/releases)
+attach every build `8bitscript.config.ts` declares: the VIC-20, C64, C128,
+Atari 8-bit (GR.1), NES, Commander X16 and MEGA65 programs, three PETs — a
+stock 4K 2001, the 32K 4032, and the German 2001 — and the web bundle
+(every skin and the German build, zipped). One source, fifteen artifacts,
+all from `8bs build --release`.
 
 ## Playing it
 
