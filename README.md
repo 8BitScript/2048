@@ -3,6 +3,8 @@
 [![CI](https://github.com/8BitScript/2048/actions/workflows/ci.yml/badge.svg)](https://github.com/8BitScript/2048/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/8BitScript/2048?label=release)](https://github.com/8BitScript/2048/releases)
 
+> **Development build.** This port is a work in progress, written for a language that is also a work in progress. A GitHub release is a snapshot you can build and play. It does not mean the game, or 8BitScript, is a finished product.
+
 [2048](https://github.com/gabrielecirulli/2048) (MIT, Gabriele Cirulli), written
 from scratch in [8BitScript](https://github.com/8BitScript/8bitscript) — one
 program, running on the VIC-20, C64, PET, C128, Atari 8-bit, NES, Commander
@@ -256,10 +258,12 @@ screen prints a `v` and then the number.
   `textmode=gr1` (20-column ANTIC 6), so its tiles take the same table as
   VIC-20, C64, C128, Commander X16, MEGA65, and the web — the closest a
   text-mode board gets to upstream 2048's own tile colours.
-  The PET and the web both stamp a 2×3-cell block-digit into an 8×5
-  square so a "2" fills the tile the way the PET's own ROM digits do —
-  the same glyphs, `lib/draw/font.8bs` for the web and
-  `lib/draw/font.pet.8bs` as screen codes.
+  The PET, and the web's PET replica, stamp a 2×3-cell block-digit into
+  an 8×5 square so a "2" fills the tile the way the PET's own ROM digits
+  do — the same glyphs, `lib/draw/font.8bs` for the web and
+  `lib/draw/font.pet.8bs` as screen codes. The fluid web host uses a
+  square tile instead, and prints the number until the side is wide
+  enough for those digits (8 cells).
 - **RAM is tiny everywhere.** `8bs build` reports 65 bytes of RAM on a
   PET 2001 and 109 on the web — the board, a 16-byte copy of what is on
   screen (so a tile that did not move is never erased and redrawn), the

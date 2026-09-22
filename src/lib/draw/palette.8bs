@@ -18,13 +18,16 @@ export const TILE_DIGITS: array<utinyint, 12> = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4
 // empty text.setColor() on the others (PET, NES, and stock Atari GR.0; see
 // @8bitscript/ui's AGENTS.md for why those three). The Atari 8-bit build of
 // this game opts into `textmode=gr1`, so the table is live there too.
-// Index 0 is the empty square's own colour (every cell is a filled
-// block — see ui/board/Tile.8bx) and shares WHITE with the "2" tile rather than
-// using BLACK: a black reverse block on the black screen behind the board
-// is invisible, and the sixteen-square grid would vanish everywhere but
-// the occupied cells.
+// Index 0 is the empty square. It used to share WHITE with the "2" tile:
+// BLACK is invisible on the black screen behind the board, and the grid
+// vanished everywhere but the occupied cells. GREY is the C64's medium
+// grey (color 12, #787878) — muted, and still a tile. VIC-20 character
+// color is only three bits, so 12 would become purple there; drawTile
+// keeps WHITE on that machine. A PET has no per-cell color at all.
+export const GREY: utinyint = 12;
+
 export const TILE_COLOR: array<utinyint, 12> = [
-    TextColor.WHITE,  // 0: empty
+    TextColor.WHITE,  // 0: empty — drawTile substitutes GREY where it reads as grey
     TextColor.WHITE,  // 2
     TextColor.CYAN,   // 4
     TextColor.GREEN,  // 8

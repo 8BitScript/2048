@@ -68,8 +68,9 @@ export const BLOCK_DIGITS: bool = screen.RESIZABLE;
 // (2026-09-07, screenshots). But four tiles five wide plus three gaps is
 // 23 columns, one past the VIC-20's 22, so the VIC-20 alone keeps the
 // narrower 4-wide tile (gap intact) and lives with tighter centring; the
-// C64 and the X16 take a larger tile that fills their own grids (6×4 and
-// 12×8) and everyone else keeps five.
+// C64 and the X16 take a larger tile that fills their own grids (6×4,
+// and 12×12 — the X16's cells are square, so the tile is too) and everyone
+// else keeps five.
 const FULL_TILE_W: utinyint = 5;
 const NARROW_TILE_W: utinyint = 4; // the VIC-20's own width — see above
 const DEFAULT_TILE_H: utinyint = 3;
@@ -78,13 +79,13 @@ const DEFAULT_TILE_H: utinyint = 3;
 // (measured in cells, 2026-09-12, screenshot before this change).
 const C64_TILE_W: utinyint = 6;
 const C64_TILE_H: utinyint = 4;
-// Commander X16 text is 76×56 inside the border inset. The portable 5×3
-// tile that fits a 40-column machine occupies 23×15 of that — about a
-// third of the width — and reads as a postage stamp (x16emu, 2026-09-13).
-// 12×8 is 2× the C64's 6×4, the same 3:2 cell aspect, on a grid a little
-// under twice as wide and more than twice as tall.
+// Commander X16 text is 76×56 of square cells inside the border inset.
+// The portable 5×3 tile that fits a 40-column machine occupies 23×15 of
+// that — about a third of the width — and reads as a postage stamp
+// (x16emu, 2026-09-13). 12×12 is the largest square whose board (51×51)
+// still leaves a header row and a status row on 56: the stack is 55.
 const CX16_TILE_W: utinyint = 12;
-const CX16_TILE_H: utinyint = 8;
+const CX16_TILE_H: utinyint = 12;
 const COL_GAP: utinyint = 1; // between tile columns — always on, see above
 const ROW_GAP: utinyint = 1; // between tile rows — never contended for room
 
@@ -108,32 +109,25 @@ const NARROW_BOARD_WIDTH: usmallint = 19; // 4 tiles * 4 + 3 gaps * 1
 // the NARROW arrangement takes over — the fixed grids' own shape, a
 // header row above the board and a status row below.
 //
-// Neither arrangement's tile size is fixed: fluidLayout() works tileW and
-// tileH out independently, each the biggest that fits four of it plus
-// gaps on its own axis plus what that arrangement's HUD needs there. The
-// tile is kept even because a block digit is two cells wide, so a run of
-// them centres exactly only on an even tile.
+// Neither arrangement's tile size is fixed: fluidLayout() takes the
+// biggest square that fits four of it plus gaps on both axes, after that
+// arrangement's HUD. The side stays even — a block digit is two cells
+// wide, and a printed "2048" is four — so every digit count from one to
+// four centres. An odd side would park "2048" against the left edge of
+// the square (the leftover cell falls to the right).
 const WIDE_MIN_COLUMNS: usmallint = 48;
 // Columns reserved outside the WIDE board for the side margins — 6 for
 // the widest field (the version) plus a gap column on the right, 6 on
 // the left for symmetry: 13, exactly what the original 48-wide, 35-board
-// design left over. Rows reserved above and below: 2 each.
+// design left over. The wide arrangement spends no rows on the HUD.
 const WIDE_MARGIN_COLUMNS: usmallint = 13;
-const WIDE_MARGIN_ROWS: usmallint = 4;
-// The smallest and largest tile either arrangement will pick, so a huge
-// window doesn't get a comically large board and a barely-fitting one
-// doesn't get a tile too small to hold "2048"'s four digits.
-const WIDE_TILE_MIN: usmallint = 8;
-const WIDE_TILE_MAX: usmallint = 20;
-const WIDE_TILE_H_MIN: usmallint = 5;
-const WIDE_TILE_H_MAX: usmallint = 14;
-const NARROW_TILE_MIN: usmallint = 4;
-const NARROW_TILE_MAX: usmallint = 16;
-// The block-digit font needs 2 cells per digit, 4 digits wide for "2048" —
-// the 8 WIDE_TILE_MIN already guarantees; NARROW's square tile clears it
-// whenever the live grid has the room, which is most shapes wider than a
-// true phone portrait.
-const BLOCK_DIGIT_MIN: usmallint = WIDE_TILE_MIN;
+// The smallest square that still holds "2048" as four printed digits, and
+// the largest either arrangement will pick, so a huge window doesn't get
+// a comically large board. Below 8 the block-digit font does not fit and
+// the tile prints its number instead — see blockDigitsFit().
+const SQUARE_MIN: usmallint = 4;
+const SQUARE_MAX: usmallint = 14;
+const BLOCK_DIGIT_MIN: usmallint = 8;
 const RIGHT_HUD_WIDTH: utinyint = 6; // the version — the widest field rightAt anchors
 
 // ---- the positions -------------------------------------------------------
@@ -203,7 +197,7 @@ export function computeLayout(): void {
     } else if (#system() == System.CX16) {
         tileW = CX16_TILE_W;
         tileH = CX16_TILE_H;
-        width = 51; // 4 tiles * 12 + 3 gaps
+        width = 51; // 4 tiles * 12 + 3 gaps. Height is the same 51.
     } else {
         tileW = FULL_TILE_W;
         tileH = DEFAULT_TILE_H;
@@ -260,71 +254,40 @@ function fluidLayout(): void {
     gridRows = rows;
 
     wide = rowWidth >= WIDE_MIN_COLUMNS;
+    // One side for both axes. The HUD sits beside the board in the wide
+    // arrangement and above and below it in the narrow one, so only that
+    // axis gives up cells before the square is measured.
+    let wBudget: usmallint = rowWidth;
+    let hBudget: usmallint = rows;
     if (wide) {
-        // The biggest tile whose 4 columns plus 3 gaps plus the side
-        // margins fit rowWidth — rounded down to even for the block-digit
-        // font — and, independently, whose 4 rows plus 3 gaps plus the
-        // top/bottom margin fit rows.
-        let wFit: usmallint = WIDE_TILE_MIN;
-        if (rowWidth > WIDE_MARGIN_COLUMNS + 3) {
-            wFit = (rowWidth - WIDE_MARGIN_COLUMNS - 3) >> 2;
+        if (rowWidth > WIDE_MARGIN_COLUMNS) {
+            wBudget = rowWidth - WIDE_MARGIN_COLUMNS;
         }
-        if ((wFit & 1) == 1) {
-            wFit = wFit - 1;
-        }
-        if (wFit < WIDE_TILE_MIN) {
-            wFit = WIDE_TILE_MIN;
-        } else if (wFit > WIDE_TILE_MAX) {
-            wFit = WIDE_TILE_MAX;
-        }
-        let hFit: usmallint = WIDE_TILE_H_MIN;
-        if (rows > WIDE_MARGIN_ROWS + 3) {
-            hFit = (rows - WIDE_MARGIN_ROWS - 3) >> 2;
-        }
-        if (hFit < WIDE_TILE_H_MIN) {
-            hFit = WIDE_TILE_H_MIN;
-        } else if (hFit > WIDE_TILE_H_MAX) {
-            hFit = WIDE_TILE_H_MAX;
-        }
-        tileW = wFit;
-        tileH = hFit;
-    } else {
-        // The biggest tile that fits with the header/status stack — tileW
-        // and tileH each against its own axis, not forced square. Both
-        // divisions reserve 2 more than the bare minimum so the leftover
-        // is guaranteed at least 2, and the header never sits flush
-        // against the top of the screen at some window sizes and not
-        // others. tileH is capped at 1.5× tileW: a tile wider than tall
-        // reads as an ordinary landscape tile, one much taller than wide
-        // as an obelisk, which a phone portrait's row budget would
-        // otherwise produce.
-        let wFit: usmallint = NARROW_TILE_MIN;
-        if (rowWidth > 5) {
-            wFit = (rowWidth - 5) >> 2;
-        }
-        let hFit: usmallint = NARROW_TILE_MIN;
-        if (rows > 9) {
-            hFit = (rows - 9) >> 2;
-        }
-        if (hFit > ((wFit * 3) >> 1)) {
-            hFit = (wFit * 3) >> 1;
-        }
-        if ((wFit & 1) == 1) {
-            wFit = wFit - 1;
-        }
-        if (wFit < NARROW_TILE_MIN) {
-            wFit = NARROW_TILE_MIN;
-        } else if (wFit > NARROW_TILE_MAX) {
-            wFit = NARROW_TILE_MAX;
-        }
-        if (hFit < NARROW_TILE_MIN) {
-            hFit = NARROW_TILE_MIN;
-        } else if (hFit > NARROW_TILE_MAX) {
-            hFit = NARROW_TILE_MAX;
-        }
-        tileW = wFit;
-        tileH = hFit;
+    } else if (rows > 4) {
+        hBudget = rows - 4;
     }
+    let wFit: usmallint = SQUARE_MIN;
+    if (wBudget > 3) {
+        wFit = (wBudget - 3) >> 2;
+    }
+    let hFit: usmallint = SQUARE_MIN;
+    if (hBudget > 3) {
+        hFit = (hBudget - 3) >> 2;
+    }
+    let side: usmallint = wFit;
+    if (hFit < side) {
+        side = hFit;
+    }
+    if ((side & 1) == 1) {
+        side = side - 1;
+    }
+    if (side < SQUARE_MIN) {
+        side = SQUARE_MIN;
+    } else if (side > SQUARE_MAX) {
+        side = SQUARE_MAX;
+    }
+    tileW = side;
+    tileH = side;
     boardWidth = 4 * tileW + 3;
     boardHeight = 4 * tileH + 3;
 

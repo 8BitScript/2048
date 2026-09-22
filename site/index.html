@@ -15,6 +15,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#000000">
 <title>2048 — 8BitScript</title>
+<script>
+  try {
+    if (localStorage.getItem('2048.notice') === 'development-v1') {
+      document.documentElement.classList.add('notice-dismissed');
+    }
+  } catch (e) {}
+</script>
 <style>
   :root { color-scheme: dark; }
 
@@ -76,6 +83,32 @@
   #handle:focus-visible { outline: 2px solid #5b8cff; outline-offset: 2px; }
   #panel.open #handle { color: #d7dae0; border-color: #39414d; background: rgba(12, 14, 18, 0.9); }
 
+  /* Beside the settings handle, in the letterbox, never inside #game.
+     Opening the tray takes that same edge, so the notice steps aside
+     rather than sitting on top of the controls. */
+  .dev-notice {
+    position: absolute; z-index: 1; left: 46px; top: 0;
+    display: flex; align-items: center; gap: 8px;
+    width: max-content;
+    max-width: min(36rem, calc(100vw - 72px));
+    margin: 0; padding: 8px 8px 8px 12px;
+    color: #9aa1ab; background: rgba(18, 21, 27, 0.82);
+    border: 1px solid #39414d; border-radius: 10px;
+    font-size: 12px; line-height: 1.35;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .dev-notice button {
+    flex: none; padding: 4px 8px;
+    color: #d7dae0; background: transparent;
+    border: 1px solid #39414d; border-radius: 6px;
+    font: inherit; font-size: 11px; cursor: pointer;
+    touch-action: manipulation;
+  }
+  .dev-notice button:hover { border-color: #5b6573; }
+  .dev-notice button:focus-visible { outline: 2px solid #5b8cff; outline-offset: 2px; }
+  #panel.open .dev-notice,
+  html.notice-dismissed .dev-notice { display: none; }
+
   #tray {
     display: flex; flex-direction: column; gap: 10px;
     padding: 12px 14px;
@@ -121,6 +154,10 @@
       <path fill="currentColor" d="M19.4 13a7.8 7.8 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-1.7-1l-.4-2.5h-3.9l-.4 2.5c-.6.2-1.2.6-1.7 1l-2.4-1-2 3.4L6.6 11a7.8 7.8 0 0 0 0 2l-2 1.6 2 3.4 2.4-1c.5.4 1.1.8 1.7 1l.4 2.5h3.9l.4-2.5c.6-.2 1.2-.6 1.7-1l2.4 1 2-3.4-2.1-1.6Z" opacity=".55"/>
     </svg>
   </button>
+  <p class="dev-notice" id="dev-notice" role="status">
+    <span>Development build. Releases are snapshots, not a finished game.</span>
+    <button type="button" id="dev-notice-dismiss">Dismiss</button>
+  </p>
   <div id="tray" role="group" aria-label="Player settings">
     <strong>8BitScript</strong>
     <label for="system">System
@@ -144,6 +181,8 @@
 var game = document.getElementById('game');
 var panel = document.getElementById('panel');
 var handle = document.getElementById('handle');
+var devNotice = document.getElementById('dev-notice');
+var devNoticeDismiss = document.getElementById('dev-notice-dismiss');
 var systemSelect = document.getElementById('system');
 var modelSelect = document.getElementById('model');
 
@@ -204,6 +243,14 @@ handle.addEventListener('click', function (e) {
   e.stopPropagation();
   setOpen(!panel.classList.contains('open'));
 });
+if (devNoticeDismiss) {
+  devNoticeDismiss.addEventListener('click', function (e) {
+    e.stopPropagation();
+    try { localStorage.setItem('2048.notice', 'development-v1'); } catch (err) {}
+    document.documentElement.classList.add('notice-dismissed');
+    if (devNotice) devNotice.remove();
+  });
+}
 // A tap anywhere on the picture is a game move; it also puts the tray away.
 game.addEventListener('pointerdown', function (e) {
   if (!panel.contains(e.target)) setOpen(false);
