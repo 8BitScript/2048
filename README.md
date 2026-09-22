@@ -12,12 +12,14 @@ every fact the program tests is true — and its floor is a **4K PET
 2001**; the other builds are the same source, folded for what each
 machine lacks, and `8bs build --release` says what (see
 [the baseline](#the-baseline-and-what-each-build-is-short-of) below).
-[`src/2048.8bs`](src/2048.8bs) is the program (the
-loop that reads the player); [`src/ui/`](src/ui) is what goes on the screen,
+[`src/2048.8bs`](src/2048.8bs) is the program: it starts the session
+and runs a frame. [`src/lib/session.8bs`](src/lib/session.8bs) is that
+frame, [`src/lib/game/play.8bs`](src/lib/game/play.8bs) is a turn, and
+[`src/ui/`](src/ui) is what goes on the screen,
 as [8BX](https://github.com/8BitScript/8bitscript/blob/trunk/docs/project/8bx.md)
 elements — `Game.8bx` is the root, `ui/board/` the game and `ui/title/`
 the front door, one file per element; and [`src/lib/`](src/lib) is the
-`.8bs` underneath, by what it is: `lib/game/` the rules and the board,
+`.8bs` underneath, by what it is: `lib/game/` the rules, the board, and a turn,
 `lib/layout/` where everything goes, `lib/draw/` how a tile is painted
 and the tables it is painted from, `lib/text/` the version, `src/i18n/` every line the game
 prints, `lib/host/` what the machine is like, and
@@ -153,7 +155,7 @@ screen prints a `v` and then the number.
   frame instead of all at once: every tile that can advance does — into
   an empty neighbour, or merging onto an equal tile that hasn't merged
   this move — the changed tiles repaint, and the next step follows a
-  frame later (`ANIM_STEP_FRAMES` in `2048.8bs` is the knob). A
+  frame later (`ANIM_STEP_FRAMES` in `lib/game/play.8bs` is the knob). A
   full-width slide lands in 3 steps, ~50–100ms at 60/50Hz, and settles
   on exactly the board the instant mover computes — checked exhaustively
   over all 20,736 line states. The 4K PET 2001, the unexpanded VIC-20,

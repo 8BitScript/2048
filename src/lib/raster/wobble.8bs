@@ -8,7 +8,8 @@
 // made here.
 //
 // ui/title/TitleWobble.8bx builds the list from these tables; wobble.step()
-// below animates it, once per title-screen frame from 2048.8bs's loop.
+// below animates it, once per title-screen frame from lib/session.8bs, and
+// wobble.stop() tears the list down the moment the game starts.
 // Whether a build takes the effect is TAKES_WOBBLE below: a per-scanline
 // hook, on the 40-column, 16-colour picture the band was drawn for — the
 // real C64, and the web's C64 replica, which answers #fact(video.raster)
@@ -66,5 +67,13 @@ export namespace wobble {
             }
         }
         return;
+    }
+
+    // The title's splits do not survive into the board. Same guard as
+    // step(), so a build that never built the list carries no disable.
+    function stop(): void {
+        if (#fact(video.raster) && !screen.RESIZABLE && text.COLUMNS == 40 && #fact(video.palette) == 16) {
+            raster.disable();
+        }
     }
 }

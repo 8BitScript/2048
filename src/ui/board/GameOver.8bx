@@ -5,7 +5,7 @@
 // START on a pad, FIRE on a stick, ENTER or a touch in a browser. Each is
 // a compile-time fact but the touch, so one print survives per build.
 //
-// Nothing here erases these lines: 2048.8bs blanks the screen when the
+// Nothing here erases these lines: play.8bs blanks the screen when the
 // next game starts, which is the only way out of a finished game. On the
 // fluid web host the border turns red too — two lines inside the board
 // are a quiet thing to say, and the border is the rest of the screen

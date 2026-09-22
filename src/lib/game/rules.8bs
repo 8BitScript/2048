@@ -1,6 +1,6 @@
 // The rules of 2048, and the board they act on. Nothing here draws:
-// ui/Game.8bx reads this state to put it on the screen, and 2048.8bs — the
-// program — drives both. Rules follow https://github.com/gabrielecirulli/2048
+// ui/Game.8bx reads this state to put it on the screen, lib/session.8bs
+// drives a frame, and lib/game/play.8bs plays a turn. Rules follow https://github.com/gabrielecirulli/2048
 // (MIT): a 4x4 grid, arrows slide every tile as far as it goes, two equal
 // tiles that collide combine into one worth their sum, and a new 2
 // (usually) or 4 (one time in ten) appears after every move that actually
@@ -33,7 +33,7 @@ export let board: array<utinyint, 16>;
 export let shown: array<utinyint, 16>;
 let line: array<utinyint, 4>;
 
-// Animated builds only (both fold away below 2048.8bs's ANIM_MIN_RAM):
+// Animated builds only (both fold away below play.8bs's ANIM_MIN_RAM):
 // merged[i] rides along with the tile in cell i for the length of one
 // move, so a tile that has already combined once cannot combine again
 // while it is still sliding — the rule mergeLine() gets for free from its
@@ -124,7 +124,7 @@ export function moveLines(start: utinyint, step: utinyint, stride: utinyint): vo
 // The same move as compress/merge/compress, taken one cell at a time so
 // there is something to watch: each step, every tile that can advance one
 // cell toward the wall does — into an empty neighbour, or onto an equal
-// tile neither half of which has merged this move. 2048.8bs's animateMove()
+// tile neither half of which has merged this move. play.8bs's animateMove()
 // repaints between steps and lingers; when a step moves nothing the move
 // is finished, and the board it settles on is exactly the board
 // moveLines() would have written at once: iterating "shift or merge one
@@ -182,7 +182,7 @@ export function stepLines(start: utinyint, step: utinyint, stride: utinyint): vo
 // tenth. Where those numbers come from depends on the machine, and
 // @8bitscript/random/entropy is the one place that decides: seven targets
 // get 8BitScript's own deterministic generator, stepped once a frame in
-// 2048.8bs's loop so the sequence follows how long the player actually
+// session.8bs's frame so the sequence follows how long the player actually
 // took between moves rather than repeating the same game every run; the
 // C64 and the Atari 8-bit read their own hardware entropy instead, which
 // on those two is both smaller than computing it and genuinely

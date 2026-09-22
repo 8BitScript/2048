@@ -1,0 +1,119 @@
+// One turn of a game in progress: a finished game starts again, and a
+// direction slides the board. The frame loop is lib/session.8bs's; the
+// rules and the board are rules.8bs's. Nothing here knows which machine
+// it is on.
+// Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see rules.8bs.
+import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
+import { input } from "@8bitscript/input";
+import { Memory } from "@8bitscript/system";
+import { merged, stepped, moved, over, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "@lib/game/rules.8bs";
+import { Board } from "@ui/board/Board.8bx";
+import { Tiles } from "@ui/board/Tiles.8bx";
+
+// Builds with this much RAM to spare animate a move: tiles slide one board
+// cell per repaint instead of teleporting. Memory.RAM is a build-time fact
+// and the branch on it folds, so the builds below the line — the 4K PET
+// (3071 bytes), the unexpanded VIC-20 (3583), the NES (1536 of work RAM) —
+// carry not one byte of the animation, and keep their instant moves.
+const ANIM_MIN_RAM: usmallint = 4096;
+
+// How long each step of the slide lingers: frames waited after each
+// repaint. 1 makes a full-width slide land in 3 frames (a merge on the way
+// adds a step or two) — 50–100ms at 60/50Hz, upstream 2048's own tempo.
+// Raise it to slow the slide down; the board still settles to exactly the
+// same position, so this is the one knob and it is safe to turn.
+const ANIM_STEP_FRAMES: utinyint = 1;
+
+// rules.8bs's stepLines() takes the move one cell at a time; this repaints
+// the board after each step that moved something and lingers
+// ANIM_STEP_FRAMES, until a step moves nothing. Only the tiles are
+// repainted between steps — the score a merge just banked appears with
+// the settled board instead, and the header is not repainted five times
+// in 100ms.
+function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
+    for (let i: utinyint = 0; i < 16; i++) {
+        merged[i] = 0;
+    }
+    stepped = true;
+    while (stepped) {
+        stepped = false;
+        stepLines(start, step, stride);
+        if (stepped) {
+            moved = true;
+            Tiles();
+            for (let f: utinyint = 0; f < ANIM_STEP_FRAMES; f++) {
+                waitFrame();
+                // Every waitFrame() needs a poll() right behind it (see
+                // @8bitscript/pet/input.8bs and index.8bs's pia1PortB note):
+                // reading the keyboard matrix is what clears the PET's
+                // vertical-retrace flag, so skipping it here — as the first
+                // cut of this animation did — leaves that flag stuck set.
+                // The next waitFrame() then returns instantly instead of
+                // pacing, and keys pressed mid-slide are never sampled, so
+                // they either vanish or all land on the same edge check once
+                // polling resumes — the "input does nothing, then five moves
+                // fire at once" bug. Ignoring the result here (a move in
+                // progress cannot be interrupted) still keeps the matrix and
+                // the frame clock in sync for the next real move.
+                input.poll();
+            }
+        }
+    }
+    return;
+}
+
+// A confirm on a finished game deals again. Otherwise one direction, if
+// the player asked for one: the instant slide on a build under
+// ANIM_MIN_RAM, the animated one above it. Two copies of the dispatch,
+// one per mover, rather than one dispatch into a move(start, step, stride)
+// wrapper that branches on Memory.RAM inside: the fold keeps whichever
+// copy this build gets and deletes the other, where a parameterised
+// wrapper survives folding as a real function — 20 bytes measured back
+// onto the 4K PET image.
+export function turn(): void {
+    if (over) {
+        if (input.confirm()) {
+            // Clear the screen first, the same way starting the first
+            // game does. The game-over message every skin draws sits in
+            // the board's own gap rows, and a gap row is the one thing
+            // <Tile /> never paints over — so without this the message
+            // would survive into the next game. One blank here costs
+            // every target less than an erase in every skin, and it is
+            // what lets the narrowest of them carry the message at all.
+            screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
+            resetGame();
+            Board();
+        }
+    } else {
+        moved = false;
+        if (Memory.RAM < ANIM_MIN_RAM) {
+            if (input.left()) {
+                moveLines(0, 1, 4);
+            } else if (input.right()) {
+                moveLines(3, 255, 4);
+            } else if (input.up()) {
+                moveLines(0, 4, 1);
+            } else if (input.down()) {
+                moveLines(12, 252, 1);
+            }
+        } else {
+            if (input.left()) {
+                animateMove(0, 1, 4);
+            } else if (input.right()) {
+                animateMove(3, 255, 4);
+            } else if (input.up()) {
+                animateMove(0, 4, 1);
+            } else if (input.down()) {
+                animateMove(12, 252, 1);
+            }
+        }
+
+        if (moved) {
+            spawnTile();
+            if (!hasMoves()) {
+                over = true;
+            }
+            Board();
+        }
+    }
+}

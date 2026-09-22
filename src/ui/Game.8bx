@@ -18,5 +18,5 @@ import { Board } from "@ui/board/Board.8bx";
 // grid changes shape under it (the web's fluid host, on a resize or a
 // rotated phone).
 export component Game() {
-    return (<>{started ? <Board /> : <TitleScreen />}</>);
+    return started ? <Board /> : <TitleScreen />;
 }
