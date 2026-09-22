@@ -1,5 +1,11 @@
 # 2048
 
+## 0.8.3
+
+### Patch Changes
+
+- deaa1cb: The program entry starts the session and runs a frame. `session.8bs` is start-up and that frame, `play.8bs` is a turn, and `<Game />` returns the board or the title directly. Release sizes are unchanged.
+
 ## 0.8.2
 
 ### Patch Changes
