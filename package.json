@@ -33,7 +33,7 @@
     "build:cx16": "8bs build --target cx16",
     "build:mega65": "8bs build --target mega65",
     "deploy:web": "pnpm run build:web && wrangler deploy",
-    "check": "8bs check src/2048.8bs src/lib/draw/font.8bs src/lib/draw/palette.8bs src/lib/draw/tile.8bs src/lib/game/rules.8bs src/lib/host/host.8bs src/i18n/en.8bs src/i18n/de.8bs src/lib/layout/layout.8bs src/lib/raster/wobble.8bs src/lib/text/version.8bs src/ui/Game.8bx src/ui/board/Board.8bx src/ui/board/GameOver.8bx src/ui/board/ScoreBar.8bx src/ui/board/Tile.8bx src/ui/board/Tiles.8bx src/ui/title/Copyright.8bx src/ui/title/Logo.8bx src/ui/title/StartMessage.8bx src/ui/title/TitleScreen.8bx src/ui/title/TitleWobble.8bx src/ui/title/Version.8bx",
+    "check": "8bs check src/2048.8bs src/lib/draw/font.8bs src/lib/draw/palette.8bs src/lib/draw/tile.8bs src/lib/game/play.8bs src/lib/game/rules.8bs src/lib/host/host.8bs src/i18n/en.8bs src/i18n/de.8bs src/lib/layout/layout.8bs src/lib/raster/wobble.8bs src/lib/session.8bs src/lib/text/version.8bs src/ui/Game.8bx src/ui/board/Board.8bx src/ui/board/GameOver.8bx src/ui/board/ScoreBar.8bx src/ui/board/Tile.8bx src/ui/board/Tiles.8bx src/ui/title/Copyright.8bx src/ui/title/Logo.8bx src/ui/title/StartMessage.8bx src/ui/title/TitleScreen.8bx src/ui/title/TitleWobble.8bx src/ui/title/Version.8bx",
     "changeset": "changeset",
     "changeset:version": "changeset version && pnpm install --no-frozen-lockfile"
   },

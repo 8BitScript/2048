@@ -2,7 +2,7 @@
 // last stamped. Sixteen filled squares with a background-coloured gap
 // between them already read as one board; redrawing a tile that did not
 // move blanks it first and that is the blink. The animated move repaints
-// with this alone, between steps (2048.8bs's animateMove); the settled
+// with this alone, between steps (play.8bs's animateMove); the settled
 // board takes the HUD too (<Board />). One function for both, which is
 // why every build that animates is 60 bytes smaller than the hand-written
 // program that kept a second copy of this loop.
