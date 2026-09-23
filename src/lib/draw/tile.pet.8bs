@@ -40,21 +40,49 @@ const TILE_W: utinyint = 8;
 const TILE_H: utinyint = 5;
 
 // Screen code 160 is all four quadrants on — the same reverse-space a
-// filled tile is. Written directly so fillSquare is a store, not a call
+// filled tile is. 127 is one diagonal (top-left and bottom-right), the
+// half-density a monochrome screen can use for an empty cell: there is
+// no grey to set. Written directly so fillSquare is a store, not a call
 // into text.print (five prints of eight spaces cost more than this loop).
 const SOLID: utinyint = 160;
+const DIM: utinyint = 127;
 
-function fillSquare(origin: usmallint): void {
+// Three quadrants on, the outer one off — a chamfer, which is as round as
+// the ROM's 2×2 blocks get. Same codes as @8bitscript/pet/blocks's QUAD
+// table (indexes 7, 11, 13, 14). The digit rows are 1–3 of a 5-row tile,
+// so these four cells are never a digit.
+const CORNER_TL: utinyint = 254;
+const CORNER_TR: utinyint = 252;
+const CORNER_BL: utinyint = 251;
+const CORNER_BR: utinyint = 236;
+
+function fillSquare(origin: usmallint, ink: utinyint): void {
     let rowCell: usmallint = origin;
     let row: utinyint = 0;
     while (row < TILE_H) {
         let col: utinyint = 0;
         while (col < TILE_W) {
-            memory.write(SCREEN + rowCell + col, SOLID);
+            memory.write(SCREEN + rowCell + col, ink);
             col++;
         }
         rowCell = rowCell + ROW;
         row++;
+    }
+    // The chamfer is about 160 bytes, and the German 4K build is already
+    // 3072 — the ceiling — once the empty tile is a dither (measured
+    // 2026-09-21). Builds with more RAM get the notch. Four adds rather
+    // than a multiply: the multiply alone was most of that 160.
+    if (#fact(memory.ram) > 3071) {
+        let bottom: usmallint = origin + ROW + ROW + ROW + ROW;
+        if (ink == DIM) {
+            memory.write(SCREEN + origin, 108);
+            memory.write(SCREEN + bottom + 7, 126);
+        } else {
+            memory.write(SCREEN + origin, CORNER_TL);
+            memory.write(SCREEN + origin + 7, CORNER_TR);
+            memory.write(SCREEN + bottom, CORNER_BL);
+            memory.write(SCREEN + bottom + 7, CORNER_BR);
+        }
     }
     return;
 }
@@ -79,7 +107,11 @@ function stampDigit(cell: usmallint, value: utinyint): void {
 // on the PET, and lib/draw/tile.8bs's on every other machine.
 export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
     let origin: usmallint = tileCell(row, col);
-    fillSquare(origin);
+    let ink: utinyint = SOLID;
+    if (exponent == 0) {
+        ink = DIM;
+    }
+    fillSquare(origin, ink);
     let base: utinyint = TILE_DIGIT_AT[exponent];
     let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
     if (count != 0) {

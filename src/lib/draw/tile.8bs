@@ -7,23 +7,96 @@
 // grid paints its square inline in drawTile()'s other arm, the cheapest
 // form there, and never links these two.
 import { text } from "@8bitscript/text";
-import { POW2, TILE_COLOR, TILE_DIGITS } from "./palette.8bs";
+import { System, Video } from "@8bitscript/system";
+import { POW2, GREY, TILE_COLOR, TILE_DIGITS } from "./palette.8bs";
 import { DIGIT_TILES, TILE_DIGIT_AT, TILE_DIGIT } from "./font.8bs";
 import { tileCell, tileW, tileH, rowWidth, BLOCK_DIGITS, blockDigitsFit } from "../layout/layout.8bs";
 
 // This machine's row width on a fixed grid, so cell = y * ROW + x.
 const ROW: usmallint = text.COLUMNS;
 
+// What colour this tile is. Empty is GREY wherever color 12 is the C64's
+// medium grey. The VIC-20 keeps only three bits of a character color, so
+// 12 would land as purple; its web skin is 22 columns of the same palette.
+// Both of those return the table unchanged, and the branch is a build
+// fact, so neither image pays for a test.
+function tileColor(exponent: utinyint): utinyint {
+    if (#system() == System.VIC20 || (#system() == System.WEB && text.COLUMNS == 22)) {
+        return TILE_COLOR[exponent];
+    }
+    if (exponent == 0) {
+        return GREY;
+    }
+    return TILE_COLOR[exponent];
+}
+
+// The four corner cells, after the square is filled and while reverse is
+// still on. The web font has a quarter-circle mask at 144–147 (the ink is
+// the cut, and reverse punches it out), which is a real curve rather than
+// the one-step chamfer a 2×2 block can draw. A Commodore screen code has
+// only that chamfer — the PET QUAD table's three-quadrant entries — so
+// reverse has to be off for the poke and back on before the digits.
+// Machines without either glyph — Atari, NES, the X16's ISO set — keep
+// square corners. The VIC-20's chamfer is omitted too: four pokes put the
+// unexpanded build past $1E00.
+function roundCorners(origin: usmallint, stride: usmallint): void {
+    if (tileW < 2 || tileH < 2) {
+        return;
+    }
+    let right: usmallint = tileW - 1;
+    let bottom: usmallint = origin + (tileH - 1) * stride;
+    if (#system() == System.WEB && Video.BLOCK_WIDTH == 2) {
+        text.putChar(origin, 144);
+        text.putChar(origin + right, 145);
+        text.putChar(bottom, 146);
+        text.putChar(bottom + right, 147);
+        return;
+    }
+    if (#system() == System.C64 || #system() == System.C128 || #system() == System.VIC20 || #system() == System.MEGA65) {
+        text.setReverse(false);
+        text.putChar(origin, 254);
+        text.putChar(origin + right, 252);
+        text.putChar(bottom, 251);
+        text.putChar(bottom + right, 236);
+        text.setReverse(true);
+    }
+    return;
+}
+
+// Code 137 punches the top-left and bottom-right quadrants, so those two
+// corners of an empty tile are already notched. The other two still have
+// their outer quadrant filled; these two glyphs punch that quadrant and
+// keep the same diagonal, so the empty tile stays half-density.
+function roundDimCorners(origin: usmallint, stride: usmallint): void {
+    let right: usmallint = tileW - 1;
+    let bottom: usmallint = origin + (tileH - 1) * stride;
+    text.putChar(origin + right, 141);
+    text.putChar(bottom, 139);
+    return;
+}
+
 // A tileW × tileH square of reverse video in the tile's colour, at origin.
+// An empty tile on a host with no per-cell color (the web's PET replica)
+// is a 50% block instead of a solid one, which is the grey that host can
+// draw. Code 137 is the web's top-left + bottom-right quadrants.
 export function fillTile(origin: usmallint, exponent: utinyint): void {
-    text.setColor(TILE_COLOR[exponent]);
+    text.setColor(tileColor(exponent));
     text.setReverse(true);
+    let ink: utinyint = 32;
+    if (exponent == 0 && !Video.COLOR_PER_CELL && #system() == System.WEB) {
+        ink = 137;
+    }
     let rowCell: usmallint = origin;
     let line: usmallint = 0;
     while (line < tileH) {
-        text.fill(rowCell, tileW, 32);
+        text.fill(rowCell, tileW, ink);
         rowCell = rowCell + rowWidth;
         line++;
+    }
+    if (ink == 137) {
+        roundDimCorners(origin, rowWidth);
+    } else {
+        roundCorners(origin, rowWidth);
     }
     return;
 }
@@ -97,7 +170,7 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
         }
     } else {
         let value: usmallint = POW2[exponent];
-        text.setColor(TILE_COLOR[exponent]);
+        text.setColor(tileColor(exponent));
         text.setReverse(true);
         // A row cursor rather than origin + line * ROW: the backend inlines
         // a 16-bit multiply at every site, and this one is inside a loop.
@@ -113,6 +186,13 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
             }
             rowCell = rowCell + ROW;
             line++;
+        }
+        // Not the VIC-20: color 12 is not grey there (three-bit character
+        // color), and four corner pokes put the unexpanded build 61 bytes
+        // past $1E00 (measured 2026-09-21). The chamfer needs a glyph the
+        // Atari, NES, and X16 text modes do not have either.
+        if (#system() == System.WEB || #system() == System.C64 || #system() == System.C128 || #system() == System.MEGA65) {
+            roundCorners(origin, ROW);
         }
         if (value != 0) {
             let width: utinyint = TILE_DIGITS[exponent];
