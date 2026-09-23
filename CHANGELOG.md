@@ -1,5 +1,12 @@
 # 2048
 
+## 0.8.5
+
+### Patch Changes
+
+- b6cd172: The game is dealt as the program starts. The header is the title — the copyright, the version, and on the C64 the raster wobble — and the board is the sixteen tiles. Measured against the previous build: the C64 5334 → 5076 bytes of program (99 → 97 of RAM), the 4K PET 2892 → 2826 (66 → 62), the German 4K PET 3072 → 3003, under the 3071-byte ceiling, and the unexpanded VIC-20 3431 → 3316 (84 → 81).
+- 343cb62: The program owns its start-up and its frame. `2048.8bs` is that loop; `session.8bs` is gone. A turn is still `play.8bs`, and what is on the screen is unchanged. Release sizes are unchanged (the C64, the PET 4032, and the VIC-20 checksummed identical).
+
 ## 0.8.4
 
 ### Patch Changes
