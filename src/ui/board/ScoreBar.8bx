@@ -142,7 +142,7 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
         }
     }
     if (FLUID) {
-        // The border session.8bs blanks to at start-up — the playing border.
+        // The border 2048.8bs blanks to at start-up — the playing border.
         // <GameOver /> turns it red on the one frame a game ends, and the
         // next game's first <ScoreBar /> turns it back.
         screen.setBorder(BorderColor.BLUE);

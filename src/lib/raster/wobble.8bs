@@ -8,7 +8,7 @@
 // made here.
 //
 // ui/title/TitleWobble.8bx builds the list from these tables; wobble.step()
-// below animates it, once per title-screen frame from lib/session.8bs, and
+// below animates it, once per title-screen frame from 2048.8bs, and
 // wobble.stop() tears the list down the moment the game starts.
 // Whether a build takes the effect is TAKES_WOBBLE below: a per-scanline
 // hook, on the 40-column, 16-colour picture the band was drawn for — the
