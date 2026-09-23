@@ -1,0 +1,36 @@
+// What 2048 puts on the screen, as composition. The score, the status
+// line, the copyright and the version are elements of their own; the
+// board is the sixteen cells and nothing else; the end of the game, when
+// it has come, is drawn in the board's gap rows. The raster wobble rides
+// the header on the one picture it was drawn for. The rules and the
+// board state are lib/game/rules.8bs's; where each line lands is
+// lib/layout/'s. This file is the arrangement and nothing else, so a
+// reader can see the whole picture without a single screen address.
+//
+// The score bar comes first so the score a merge just banked appears
+// with the board that earned it, and so the lines after it are printed
+// in its colour. The game-over message comes before the tiles for the
+// same reason. The copyright and the version come before the tiles too:
+// a tile sets the text colour, and these lines are not a tile.
+import { text } from "@8bitscript/text";
+import { screen } from "@8bitscript/screen";
+import { score, over, won } from "@lib/game/rules.8bs";
+import { ScoreBar } from "./ScoreBar.8bx";
+import { Copyright } from "./Copyright.8bx";
+import { Version } from "./Version.8bx";
+import { GameOver } from "./GameOver.8bx";
+import { Board } from "./Board.8bx";
+import { TitleWobble } from "./TitleWobble.8bx";
+
+export component Screen() {
+    return (
+        <>
+            <ScoreBar score={score} over={over} won={won} />
+            <Copyright />
+            <Version />
+            {over && <GameOver />}
+            <Board />
+            {#fact(video.raster) && !screen.RESIZABLE && text.COLUMNS == 40 && #fact(video.palette) == 16 && <TitleWobble />}
+        </>
+    );
+}

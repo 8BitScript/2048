@@ -1,0 +1,37 @@
+// The raster band and wobble behind the header "2048": the list, built
+// once, in ascending line order. layout.8bs pins that header on text row
+// 1 of the 40×25 picture this band is drawn for, so the colour split a
+// row above lands on row 0 and the band closes on the blank row under
+// the name, before the first tile row. The wobble straightens out on
+// the band's last line. 2048.8bs animates it (wobble.step() in
+// lib/raster/wobble.8bs) for the whole game. Only composed where
+// #fact(video.raster) is true — the real C64, and the web's C64 skin.
+//
+// Screen() redraws after every move. The list is built on the first of
+// those and left alone after: clearing it again would reset the wave.
+import { raster, Slot } from "@8bitscript/raster";
+import { BorderColor, BackgroundColor } from "@8bitscript/screen";
+import { SINE, band, wobbleBuilt } from "@lib/raster/wobble.8bs";
+
+// Row 1 of that picture, in scanlines. A literal, not a read of the
+// layout: the only builds that compose this are the ones layout pins,
+// and a prop or a stored row would be a variable where a constant folds.
+const BAND_TOP: utinyint = 8;
+
+export component TitleWobble() {
+    if (wobbleBuilt) {
+        return;
+    }
+    wobbleBuilt = true;
+    raster.clear();
+    raster.at(BAND_TOP - 8, Slot.BACKGROUND, band.BACKGROUND);
+    raster.at(BAND_TOP - 8, Slot.BORDER, band.BORDER);
+    for (let i: utinyint = 0; i < band.ENTRIES; i++) {
+        raster.at(BAND_TOP + i * 2, Slot.SCROLL_X, SINE[i]);
+    }
+    raster.at(BAND_TOP + 8, Slot.SCROLL_X, 0);
+    raster.at(BAND_TOP + 16, Slot.BACKGROUND, BackgroundColor.BLACK);
+    raster.at(BAND_TOP + 16, Slot.BORDER, BorderColor.BLUE);
+
+    raster.enable();
+}

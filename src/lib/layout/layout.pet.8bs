@@ -35,6 +35,12 @@ const ROW: usmallint = text.COLUMNS; // 40, or 80 on an 8032 build
 // here so the import resolves.
 export const ENTER_KEY: bool = false;
 
+// The 8×5 board uses every row but the header and the status line, so
+// the copyright sits on the header between the name and the score, and
+// the version shares the status row (flush right; the status text does
+// not reach it). layout.8bs's own is false — two rows under the status.
+export const COPYRIGHT_ON_HEADER: bool = true;
+
 // Always block digits — an 8-wide tile has room for four of them, which
 // is the whole point of this arrangement. lib/draw/tile.pet.8bs stamps
 // them into video RAM, so neither of these is read on a PET build.
@@ -44,7 +50,7 @@ export function blockDigitsFit(): bool {
 }
 
 export namespace board {
-    const FULL_WIDTH: usmallint = 23; // ui/board/GameOver.8bx's narrow test — never narrow here
+    const FULL_WIDTH: usmallint = 23; // ui/GameOver.8bx's narrow test — never narrow here
 }
 
 // ---- the positions -------------------------------------------------------
@@ -95,7 +101,7 @@ export let hintBottomAt: usmallint;
 // web's. headerAt is deliberately never assigned: the header is row 0,
 // a let with no store anywhere in the build reads as its zero
 // initialization, and the linker folds it — `headerAt + boardLeft` in
-// ui/board/ScoreBar.8bx becomes `boardLeft`, and the one store cost 63
+// ui/ScoreBar.8bx becomes `boardLeft`, and the one store cost 63
 // bytes and 2 of RAM.
 export function computeLayout(): void {
     boardLeft = (ROW - BOARD_WIDTH) >> 1; // 2, or 22 on 80 columns

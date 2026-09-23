@@ -1,6 +1,6 @@
-// The version the title screen shows: package.json's, read at compile
+// The version the screen shows: package.json's, read at compile
 // time by #package("version") (8bitscript 0.13.0), so it is one number in
 // one file — bump the package and every build follows. The "v" the screen
-// puts in front is the element's (ui/title/Version.8bx); the string is
+// puts in front is the element's (ui/Version.8bx); the string is
 // bare "0.6.0".
 export const VERSION: string = #package("version");

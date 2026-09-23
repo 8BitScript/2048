@@ -1,20 +1,18 @@
 // 2048 — for every 8BitScript target: VIC-20, C64, PET, C128, Atari 8-bit,
-// NES, Commander X16, MEGA65, and the web. This is the program: it starts,
-// and runs a frame until the machine is turned off. A turn is
+// NES, Commander X16, MEGA65, and the web. This is the program: it deals
+// a game, and runs a frame until the machine is turned off. A turn is
 // lib/game/play.8bs's, the rules and the board are lib/game/rules.8bs's,
-// what goes on the screen is ui/'s — Game.8bx is the root — and where each
-// machine puts it is lib/layout/'s.
+// what goes on the screen is ui/'s — Screen.8bx is the root — and where
+// each machine puts it is lib/layout/'s.
 // Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see lib/game/rules.8bs.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
 import { entropy } from "@8bitscript/random/entropy";
 import { computeLayout } from "@lib/layout/layout.8bs";
 import { wobble } from "@lib/raster/wobble.8bs";
-import { started, shown, resetGame } from "@lib/game/rules.8bs";
+import { shown, resetGame } from "@lib/game/rules.8bs";
 import { turn } from "@lib/game/play.8bs";
-import { Game } from "@ui/Game.8bx";
-import { Board } from "@ui/board/Board.8bx";
-import { TitleScreen } from "@ui/title/TitleScreen.8bx";
+import { Screen } from "@ui/Screen.8bx";
 
 export function main(): void {
     begin();
@@ -42,23 +40,29 @@ function begin(): void {
         screen.resized();
     }
     input.begin();
-    // One frame before the title is drawn, because on the web the host has
+    // One frame before the board is drawn, because on the web the host has
     // not finished introducing itself yet. The page writes its status byte —
     // the bit that says "this is a touchscreen" — when the worker hands it
     // the program's memory, which is the same moment the program starts
-    // running. Drawing the title first is a race the program loses about as
-    // often as it wins, and losing it puts PRESS ENTER on a phone.
-    // waitFrame() is the program's own way of letting the host get a word in,
-    // and every other target treats it as one idle frame at start-up.
+    // running. Drawing the status line first is a race the program loses
+    // about as often as it wins, and losing it puts SWIPE OR ARROWS on a
+    // phone. waitFrame() is the program's own way of letting the host get
+    // a word in, and every other target treats it as one idle frame at
+    // start-up.
     waitFrame();
     input.poll();
-    TitleScreen();
+    resetGame();
+    Screen();
 }
 
 function frame(): void {
     waitFrame();
     input.poll();
     entropy.tick(); // keep the generator moving between moves — see spawnTile()
+    // One step of the header's raster wobble — an empty call, deleted by
+    // the compiler, everywhere the skin does not take the effect (see
+    // lib/raster/wobble.8bs).
+    wobble.step();
 
     // The window resized or the phone rotated: every position lib/layout/
     // computed depends on the grid computeLayout() read, so
@@ -67,8 +71,7 @@ function frame(): void {
     // reblank plus forcing every cell to redraw (shown[] holds no valid
     // exponent) is the same recovery resetGame() gives a fresh board —
     // without touching score, over, or won, which a resize does not
-    // change — and Game() puts back whichever of the title and the
-    // board was up. Guarded by screen.RESIZABLE, not just resized()'s
+    // change — and Screen() puts the board back. Guarded by screen.RESIZABLE, not just resized()'s
     // own answer: resized() cannot fold, so without the guard this
     // whole block — and the otherwise-unreferenced resized() itself —
     // would link into all nine targets instead of just the one whose
@@ -82,28 +85,9 @@ function frame(): void {
             for (let i: utinyint = 0; i < 16; i++) {
                 shown[i] = 255;
             }
-            Game();
+            Screen();
         }
     }
 
-    if (!started) {
-        // One step of the title's raster wobble — an empty call,
-        // deleted by the compiler, everywhere the skin does not take
-        // the effect (see lib/raster/wobble.8bs).
-        wobble.step();
-        if (input.confirm()) {
-            started = true;
-            // The splits are the title screen's; nothing of them
-            // survives into the board. Before the blank and the
-            // first draw, so no frame shows the game through the
-            // title's colour band. Empty, and deleted, where the
-            // skin never built the list.
-            wobble.stop();
-            screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
-            resetGame();
-            Board();
-        }
-    } else {
-        turn();
-    }
+    turn();
 }
