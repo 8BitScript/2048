@@ -1,5 +1,11 @@
 # 2048
 
+## 0.8.4
+
+### Patch Changes
+
+- 6b6a877: Bump `@8bitscript/*` and the CI `cli-version` fallback to 0.22.0.
+
 ## 0.8.3
 
 ### Patch Changes
