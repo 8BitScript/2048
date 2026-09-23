@@ -1,5 +1,5 @@
 // One turn of a game in progress: a finished game starts again, and a
-// direction slides the board. The frame loop is lib/session.8bs's; the
+// direction slides the board. The frame loop is 2048.8bs's; the
 // rules and the board are rules.8bs's. Nothing here knows which machine
 // it is on.
 // Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see rules.8bs.

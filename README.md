@@ -14,9 +14,8 @@ every fact the program tests is true — and its floor is a **4K PET
 2001**; the other builds are the same source, folded for what each
 machine lacks, and `8bs build --release` says what (see
 [the baseline](#the-baseline-and-what-each-build-is-short-of) below).
-[`src/2048.8bs`](src/2048.8bs) is the program: it starts the session
-and runs a frame. [`src/lib/session.8bs`](src/lib/session.8bs) is that
-frame, [`src/lib/game/play.8bs`](src/lib/game/play.8bs) is a turn, and
+[`src/2048.8bs`](src/2048.8bs) is the program: it starts, and runs a
+frame until the machine is turned off. [`src/lib/game/play.8bs`](src/lib/game/play.8bs) is a turn, and
 [`src/ui/`](src/ui) is what goes on the screen,
 as [8BX](https://github.com/8BitScript/8bitscript/blob/trunk/docs/project/8bx.md)
 elements — `Game.8bx` is the root, `ui/board/` the game and `ui/title/`

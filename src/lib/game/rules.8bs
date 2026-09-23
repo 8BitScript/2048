@@ -1,5 +1,5 @@
 // The rules of 2048, and the board they act on. Nothing here draws:
-// ui/Game.8bx reads this state to put it on the screen, lib/session.8bs
+// ui/Game.8bx reads this state to put it on the screen, 2048.8bs
 // drives a frame, and lib/game/play.8bs plays a turn. Rules follow https://github.com/gabrielecirulli/2048
 // (MIT): a 4x4 grid, arrows slide every tile as far as it goes, two equal
 // tiles that collide combine into one worth their sum, and a new 2
@@ -182,7 +182,7 @@ export function stepLines(start: utinyint, step: utinyint, stride: utinyint): vo
 // tenth. Where those numbers come from depends on the machine, and
 // @8bitscript/random/entropy is the one place that decides: seven targets
 // get 8BitScript's own deterministic generator, stepped once a frame in
-// session.8bs's frame so the sequence follows how long the player actually
+// 2048.8bs's frame so the sequence follows how long the player actually
 // took between moves rather than repeating the same game every run; the
 // C64 and the Atari 8-bit read their own hardware entropy instead, which
 // on those two is both smaller than computing it and genuinely

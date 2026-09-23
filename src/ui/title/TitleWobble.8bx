@@ -2,7 +2,7 @@
 // ascending line order — the title's text row (one above the middle of the
 // screen, where <Logo /> puts it) starts at picture line bandTop, the band
 // opens a row above and closes a row below, and the wobble straightens out
-// on the band's last line. lib/session.8bs animates it (wobble.step()
+// on the band's last line. 2048.8bs animates it (wobble.step()
 // in lib/raster/wobble.8bs) and tears it down (wobble.stop()) the moment
 // the game starts. Only composed where #fact(video.raster) is
 // true — the real C64, and the web's C64 skin.
