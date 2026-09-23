@@ -4,11 +4,13 @@
 // it is on.
 // Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see rules.8bs.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
+import { text } from "@8bitscript/text";
 import { input } from "@8bitscript/input";
 import { Memory } from "@8bitscript/system";
+import { wobble } from "@lib/raster/wobble.8bs";
 import { merged, stepped, moved, over, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "@lib/game/rules.8bs";
-import { Board } from "@ui/board/Board.8bx";
-import { Tiles } from "@ui/board/Tiles.8bx";
+import { Screen } from "@ui/Screen.8bx";
+import { Board } from "@ui/Board.8bx";
 
 // Builds with this much RAM to spare animate a move: tiles slide one board
 // cell per repaint instead of teleporting. Memory.RAM is a build-time fact
@@ -40,9 +42,17 @@ function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
         stepLines(start, step, stride);
         if (stepped) {
             moved = true;
-            Tiles();
+            Board();
             for (let f: utinyint = 0; f < ANIM_STEP_FRAMES; f++) {
                 waitFrame();
+                // The same guard as wobble.step() itself. Written out here
+                // so a build that never takes the effect does not keep the
+                // call: step() already has a second caller in 2048.8bs, and
+                // a function with two callers is not folded away even when
+                // its body is empty.
+                if (#fact(video.raster) && !screen.RESIZABLE && text.COLUMNS == 40 && #fact(video.palette) == 16) {
+                    wobble.step();
+                }
                 // Every waitFrame() needs a poll() right behind it (see
                 // @8bitscript/pet/input.8bs and index.8bs's pia1PortB note):
                 // reading the keyboard matrix is what clears the PET's
@@ -73,8 +83,7 @@ function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
 export function turn(): void {
     if (over) {
         if (input.confirm()) {
-            // Clear the screen first, the same way starting the first
-            // game does. The game-over message every skin draws sits in
+            // Clear the screen first. The game-over message every skin draws sits in
             // the board's own gap rows, and a gap row is the one thing
             // <Tile /> never paints over — so without this the message
             // would survive into the next game. One blank here costs
@@ -82,7 +91,7 @@ export function turn(): void {
             // what lets the narrowest of them carry the message at all.
             screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
             resetGame();
-            Board();
+            Screen();
         }
     } else {
         moved = false;
@@ -113,7 +122,7 @@ export function turn(): void {
             if (!hasMoves()) {
                 over = true;
             }
-            Board();
+            Screen();
         }
     }
 }

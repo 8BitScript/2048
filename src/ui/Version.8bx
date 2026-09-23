@@ -1,5 +1,6 @@
 // The version, flush right on the last row: a "v" and then package.json's
-// number, on the last row for the build's width.
+// number. On the PET that row is also the status line; the status text
+// starts at the board's left and does not reach this field.
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { Video } from "@8bitscript/system";

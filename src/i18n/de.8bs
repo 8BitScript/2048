@@ -8,9 +8,6 @@ export namespace Game {
 }
 
 export namespace Prompt {
-    const START: string = "{control} DRÜCKEN";
-    const START_EITHER: string = "{control} ODER {other}";
-    const TOUCH_START: string = "TIPPEN ZUM START";
     const RETRY: string = "{control}: NEUES SPIEL";
     const RETRY_COMPACT: string = "{control}: NEUES SPIEL";
     const TOUCH_RETRY: string = "TIPPEN: NEUES SPIEL";

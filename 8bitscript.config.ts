@@ -1,6 +1,6 @@
 export default {
   // One program for every target — see README.md. The entry is the .8bs
-  // that drives the game; ui/Game.8bx and lib/game/rules.8bs reach it by
+  // that drives the game; ui/Screen.8bx and lib/game/rules.8bs reach it by
   // import.
   entry: 'src/2048.8bs',
   // The system the game is designed on: the build every fact it tests is
@@ -17,16 +17,18 @@ export default {
   targets: {
     vic20: {},
     c64: {},
-    // The game is 2876 bytes of program on a 2001/4K English build
-    // (3056 German, still under the 3071-byte ceiling), measured
-    // 2026-09-18 after catalogs, with the PET printing through
+    // The game is 2826 bytes of program on a 2001/4K English build
+    // (3003 German, still under the 3071-byte ceiling; 62 bytes of RAM
+    // either way), measured 2026-09-23 once the copyright and the version
+    // moved onto the playing screen (2876 and 3056 on 2026-09-18, when
+    // those lines lived on a title screen), with the PET printing through
     // @8bitscript/text like every other machine and its look in two lib/
     // twins (layout.pet.8bs, tile.pet.8bs): 2779 with the elements'
     // `#system() == System.PET` arms of baked screen codes it had before,
     // the 97 bytes those arms bought. Before that: 2759 on 0.11.0 with
     // the screen as ui/ elements over lib/ (#50–#56), 2763 before that
     // restructure, the same functions at the same sizes at every step of
-    // it but four bytes, a title trampoline that went. The title screen's
+    // it but four bytes, a title trampoline that went. The header's
     // raster wobble folds away entirely here and on the unexpanded VIC-20
     // (3415 bytes on 0.13.0; 3482 on 0.11.0): #fact(video.raster) is
     // false on both.

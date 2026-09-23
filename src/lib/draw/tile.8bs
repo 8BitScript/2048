@@ -133,7 +133,7 @@ export function drawDigit(cell: usmallint, value: utinyint): void {
 //   falls to the right — `>> 1` truncates, never rounds up); the top and
 //   bottom rows are blank on purpose — they are the rest of the square.
 //
-// ui/board/Tile.8bx is this call. A function with one caller is written
+// ui/Tile.8bx is this call. A function with one caller is written
 // into it (8bitscript #184), so the element costs what the inline drawing
 // did.
 export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {

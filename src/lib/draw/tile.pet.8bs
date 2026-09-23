@@ -103,7 +103,7 @@ function stampDigit(cell: usmallint, value: utinyint): void {
 
 // One tile: the 8×5 solid square at the board square's origin
 // (lib/layout/layout.pet.8bs's table), and the value as 2×3 block digits
-// stamped right-aligned on its second row. ui/board/Tile.8bx is this call
+// stamped right-aligned on its second row. ui/Tile.8bx is this call
 // on the PET, and lib/draw/tile.8bs's on every other machine.
 export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
     let origin: usmallint = tileCell(row, col);

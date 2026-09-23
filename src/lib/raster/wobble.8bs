@@ -1,23 +1,23 @@
-// The title's raster showpiece, shared by the real C64 and the web's C64
+// The header's raster showpiece, shared by the real C64 and the web's C64
 // skin — the fancy example's treatment (packages/examples/fancy in the
 // 8bitscript repository) scaled to one text row: background and border
-// switch colour a row above "2048" and back a row below it, and the title
+// switch colour a row above "2048" and back a row below it, and the header
 // row itself rides a sine-driven SCROLL_X wobble, one entry per TWO
 // scanlines. That pitch is fancy's measured C64 constraint (a per-line
 // cascade collapses the effect — see that example's header), not a choice
 // made here.
 //
-// ui/title/TitleWobble.8bx builds the list from these tables; wobble.step()
-// below animates it, once per title-screen frame from 2048.8bs, and
-// wobble.stop() tears the list down the moment the game starts.
-// Whether a build takes the effect is TAKES_WOBBLE below: a per-scanline
+// ui/TitleWobble.8bx builds the list from these tables; wobble.step()
+// below animates it, once a frame from 2048.8bs and once per step of an
+// animated slide from lib/game/play.8bs, for as long as the program runs.
+// Whether a build takes the effect is the guard in step(): a per-scanline
 // hook, on the 40-column, 16-colour picture the band was drawn for — the
 // real C64, and the web's C64 replica, which answers #fact(video.raster)
 // true too. Never the fluid host: the band's own row is a build-time
 // fact, and a resize would leave it behind. Every term is a fact, so
 // every branch on it folds: where it is false this file costs the image
 // nothing — the 4K PET and the unexpanded VIC-20 are byte-identical with
-// and without it. (Written out again in ui/title/TitleScreen.8bx: a const may
+// and without it. (Written out again in ui/Screen.8bx: a const may
 // not be initialized by an expression, and a function called from two
 // places is not folded into either today.)
 import { raster } from "@8bitscript/raster";
@@ -33,7 +33,7 @@ export const SINE: array<utinyint, 32> = [
 
 // The wobble covers the title's one text row: eight scanlines, four
 // SCROLL_X entries at the two-line pitch. The colour band opens one text
-// row above it and closes one below. A namespace so ui/title/TitleWobble.8bx can
+// row above it and closes one below. A namespace so ui/TitleWobble.8bx can
 // import them: an imported bare number const does not survive the linker
 // today, a namespace member does.
 export namespace band {
@@ -45,6 +45,12 @@ export namespace band {
 // The wobble's walk through the sine table. Only ever touched inside
 // wobble.step()'s guard.
 export let wobblePhase: utinyint = 0;
+
+// ui/TitleWobble.8bx builds the list once. Screen() redraws after every
+// move; a second clear() would reset the wave. Zero until that first
+// build, and unread — so folded away — where the skin never takes the
+// effect.
+export let wobbleBuilt: bool;
 
 export namespace wobble {
     // One step: rewrite only the four SCROLL_X value bytes, right after
@@ -67,13 +73,5 @@ export namespace wobble {
             }
         }
         return;
-    }
-
-    // The title's splits do not survive into the board. Same guard as
-    // step(), so a build that never built the list carries no disable.
-    function stop(): void {
-        if (#fact(video.raster) && !screen.RESIZABLE && text.COLUMNS == 40 && #fact(video.palette) == 16) {
-            raster.disable();
-        }
     }
 }

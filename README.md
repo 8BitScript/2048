@@ -18,13 +18,15 @@ machine lacks, and `8bs build --release` says what (see
 frame until the machine is turned off. [`src/lib/game/play.8bs`](src/lib/game/play.8bs) is a turn, and
 [`src/ui/`](src/ui) is what goes on the screen,
 as [8BX](https://github.com/8BitScript/8bitscript/blob/trunk/docs/project/8bx.md)
-elements — `Game.8bx` is the root, `ui/board/` the game and `ui/title/`
-the front door, one file per element; and [`src/lib/`](src/lib) is the
+elements — `Screen.8bx` is the root, and it composes a `ScoreBar`, a
+`Copyright`, a `Version`, a `GameOver` once the game has ended, a
+`Board` of sixteen `Tile`s, and a `TitleWobble` on the header where
+there is a raster to ride. One file per element, all in `ui/`. [`src/lib/`](src/lib) is the
 `.8bs` underneath, by what it is: `lib/game/` the rules, the board, and a turn,
 `lib/layout/` where everything goes, `lib/draw/` how a tile is painted
 and the tables it is painted from, `lib/text/` the version, `src/i18n/` every line the game
 prints, `lib/host/` what the machine is like, and
-`lib/raster/` the title's wobble. No element names a machine: what
+`lib/raster/` the header's wobble. No element names a machine: what
 differs between builds is a fact the element tests, or a machine twin
 in `lib/` that the build picks by filename. There are five twins — the
 PET's layout, the PET's tile and its font, the web's PET replica, and
@@ -53,7 +55,7 @@ the original lives at
 affiliated with or endorsed by the original author.
 
 The port is copyright (c) 2026 8BitScript contributors, MIT-licensed; see
-[LICENSE](LICENSE). The title screen carries that line; the attribution above
+[LICENSE](LICENSE). The playing screen carries that line; the attribution above
 is deliberately here rather than on a 22-column screen.
 
 Play it in a browser at [2048.8bitscript.com](https://2048.8bitscript.com)
@@ -88,7 +90,7 @@ Then, from this directory:
 | --- | --- |
 | `pnpm start` | C64 — the baseline: plain `8bs run`, which reads `baseline` in `8bitscript.config.ts` |
 | `pnpm run start:vic20` | VIC-20 (NTSC) |
-| `pnpm run start:pet` | PET (a 32K 4032 by default; `--profile 2001 --hardware ram=4` for a stock 4K 2001 — the game is 2876 bytes of program, inside that machine's ~3K of usable RAM; `--profile 8032` for 80 columns) |
+| `pnpm run start:pet` | PET (a 32K 4032 by default; `--profile 2001 --hardware ram=4` for a stock 4K 2001 — the game is 2826 bytes of program, inside that machine's ~3K of usable RAM; `--profile 8032` for 80 columns) |
 | `pnpm run start:c128` | C128 |
 | `pnpm run start:atari8` | Atari 8-bit |
 | `pnpm run start:nes` | NES |
@@ -133,8 +135,8 @@ prints the same strings through
 baked screen codes in a `codes.8bs` of their own, and a second table for
 the German build — see "the PET is the same program" below). The
 version is `package.json`'s, read at compile time by
-`#package("version")` (`src/lib/text/version.8bs`), and the title
-screen prints a `v` and then the number.
+`#package("version")` (`src/lib/text/version.8bs`), and the screen
+prints a `v` and then the number on the last row.
 
 ## How it's built
 
@@ -187,11 +189,11 @@ screen prints a `v` and then the number.
   explicitly optional import and the bare `@8bitscript/random` stays
   deterministic (see the package's README).
 - **What is on the screen is composition, and it costs nothing.**
-  `ui/Game.8bx` is the arrangement — a `<TitleScreen />` (a `<Logo />`, a
-  `<StartMessage />` in the words of this machine's controls, the
-  `<Copyright />`, the `<Version />`, and a `<TitleWobble />` where there
-  is a raster to ride), or a `<Board />` that is a `<ScoreBar />`, a
-  `<GameOver />` once the game has ended, and sixteen `<Tile />`s —
+  `ui/Screen.8bx` is the arrangement — a `<ScoreBar />`, the
+  `<Copyright />`, the `<Version />`, a `<GameOver />` once the game has
+  ended, a `<Board />` of sixteen `<Tile />`s, and a `<TitleWobble />`
+  on the header where there is a raster to ride. The game is dealt as
+  the program starts; there is no separate title screen. It is
   written as 8BX elements over the positions `lib/layout/` works out
   and the tables `lib/draw/palette.8bs` and `lib/draw/font.8bs` keep,
   with none of the screen addresses those files are made of. Each
@@ -199,7 +201,7 @@ screen prints a `v` and then the number.
   4K PET: what differs between them is a fact (`screen.RESIZABLE`,
   `#system()`, `Input.*`), and the arm a build cannot take folds away —
   measured, one element at a time, at exactly the bytes the per-machine
-  twins cost. `ui/board/Tile.8bx` is one call, `drawTile()` in
+  twins cost. `ui/Tile.8bx` is one call, `drawTile()` in
   `lib/draw/tile.8bs`, and the PET's `tile.pet.8bs` beside it is what
   that call is there; each element's words are `src/i18n/<locale>.8bs`'s;
   the elements are the arrangement, and `lib/` is the how. That is free
@@ -215,7 +217,7 @@ screen prints a `v` and then the number.
   screen became elements, the four bytes a title trampoline that went;
   2779 and 3415 on 0.13.0, whose inliner took the VIC-20's 67) — and
   60 bytes *less* on every build that animates, because the between-steps
-  repaint and the settled board now share one `<Tiles />` where the
+  repaint and the settled board now share one `<Board />` where the
   hand-written version kept a second copy of the loop. It also drew two
   improvements out of the compiler's inliner along the way (8bitscript
   #175) — a dogfood ladder is for that.
@@ -263,11 +265,11 @@ screen prints a `v` and then the number.
   `lib/draw/font.pet.8bs` as screen codes. The fluid web host uses a
   square tile instead, and prints the number until the side is wide
   enough for those digits (8 cells).
-- **RAM is tiny everywhere.** `8bs build` reports 65 bytes of RAM on a
-  PET 2001 and 109 on the web — the board, a 16-byte copy of what is on
+- **RAM is tiny everywhere.** `8bs build` reports 62 bytes of RAM on a
+  PET 2001 and 107 on the web — the board, a 16-byte copy of what is on
   screen (so a tile that did not move is never erased and redrawn), the
   scratch row, the animated builds' merge-lock mask, the score, and a
-  handful of flags. The PET program itself is **2876 bytes** on a
+  handful of flags. The PET program itself is **2826 bytes** on a
   2001/4K (2440 when it was first fitted, 2983 before the four move
   helpers collapsed into one start/step/stride walk, and 4005 before the
   compiler's 0.2.3 leaner 6502 codegen; helpers that would otherwise be
@@ -284,7 +286,7 @@ screen prints a `v` and then the number.
 ## The baseline, and what each build is short of
 
 2048 is designed on the C64: 40 columns, sixteen colours, a raster list
-behind the title, a SID to draw entropy from, and RAM enough to animate
+behind the header, a SID to draw entropy from, and RAM enough to animate
 a slide. It builds for eight other machines from the same source, and
 `8bitscript.config.ts` says so — `baseline: 'c64'` — so the toolchain
 can say the rest. The floor is `requires`' business (a 4K PET 2001
@@ -349,9 +351,9 @@ baseline is how they would come in. `@8bitscript/sprites` moves objects
 on every machine — hardware sprites on the C64, up to twenty-four reused
 down the frame, and a glyph per object on the character grid elsewhere —
 so the slide could move tiles by the pixel on the baseline and by the
-cell everywhere else, from one `<Tiles />`; the report above would then
+cell everywhere else, from one `<Board />`; the report above would then
 list `video.sprites 0 of 8` on the builds that fold it. `@8bitscript/timeline`
-is frame-counted cues, pure on every target: a title that assembles
+is frame-counted cues, pure on every target: a header that assembles
 itself, a merge that lingers a beat. Both wait on the same rule as the
 bitmap board: measured on the C64 first, then the byte counts on the 4K
 PET decide whether the 4K PET carries a single byte of it.
