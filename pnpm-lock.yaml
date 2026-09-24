@@ -166,12 +166,6 @@ importers:
 
   .:
     dependencies:
-      '@8bitscript/atari8':
-        specifier: 0.22.0
-        version: 0.22.0
-      '@8bitscript/c128':
-        specifier: 0.22.0
-        version: 0.22.0
       '@8bitscript/c64':
         specifier: 0.22.0
         version: 0.22.0
@@ -182,12 +176,6 @@ importers:
         specifier: 0.22.0
         version: 0.22.0
       '@8bitscript/input':
-        specifier: 0.22.0
-        version: 0.22.0
-      '@8bitscript/mega65':
-        specifier: 0.22.0
-        version: 0.22.0
-      '@8bitscript/nes':
         specifier: 0.22.0
         version: 0.22.0
       '@8bitscript/pet':

@@ -13,9 +13,10 @@ export default {
   imports: {
     '@lib': 'src/lib',
     '@ui': 'src/ui',
+    '@media': 'src/media',
   },
   targets: {
-    vic20: {},
+    vic20: { hardware: { ram: '8k' } },
     c64: {},
     // The game is 2826 bytes of program on a 2001/4K English build
     // (3003 German, still under the 3071-byte ceiling; 62 bytes of RAM
@@ -46,26 +47,29 @@ export default {
     // on-board RAM a PET shipped with. `--profile 8032` still builds
     // the 80-column version.
     //
+    // Four-pillar media (title.8bg, tile.8bg, game.8ba move + theme),
+    // measured 2026-09-24 with the workspace toolchain: the 4K 2001 build
+    // no longer links — the image ends $2984 past the $1000 RAM ceiling.
+    // The 4032/32K default is 6281 program (88 RAM); German 6458 program
+    // (90 RAM); C64 8341 program (111 RAM); unexpanded VIC-20 8K 5368
+    // program (100 RAM); CX16 6542 program (170 RAM). Historical 4K
+    // figures above are kept for comparison only.
+    //
     // `release` is what `8bs build --release` (the GitHub Release
-    // workflow) builds for this target: '2001' for the stock-4K
-    // download, and {} for this target's own default above (the 32K
-    // 4032 build) — not the '4032' catalog preset, which also sets a
-    // speaker option this project doesn't.
-    pet: { hardware: { model: '4032', ram: '32' }, release: ['2001', {}, { profile: '2001', locale: 'de' }] },
-    c128: {},
-    atari8: { hardware: { textmode: 'gr1' } },
-    nes: {},
+    // workflow) builds for this target: {} for the 4032/32K default
+    // (and German via locale), not the stock-4K 2001 download — media
+    // no longer fits that machine.
+    pet: {
+      hardware: { model: '4032', ram: '32' },
+      release: [{}, { locale: 'de' }],
+    },
     cx16: {},
-    mega65: {},
     web: {
       release: [
         {},
         { hardware: { machine: 'c64' } },
         { hardware: { machine: 'pet-2001' } },
         { hardware: { machine: 'vic20' } },
-        // The German one: src/i18n/de.8bs in place of src/i18n/en.8bs,
-        // and nothing else. Any target builds it with `--locale de`;
-        // the release ships it for the web and the 4K PET.
         { locale: 'de' },
       ],
     },

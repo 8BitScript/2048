@@ -21,10 +21,12 @@ import { Version } from "./Version.8bx";
 import { GameOver } from "./GameOver.8bx";
 import { Board } from "./Board.8bx";
 import { TitleWobble } from "./TitleWobble.8bx";
+import { HeaderArt } from "./HeaderArt.8bx";
 
 export component Screen() {
     return (
         <>
+            <HeaderArt />
             <ScoreBar score={score} over={over} won={won} />
             <Copyright />
             <Version />

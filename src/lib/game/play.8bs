@@ -9,6 +9,8 @@ import { input } from "@8bitscript/input";
 import { Memory } from "@8bitscript/system";
 import { wobble } from "@lib/raster/wobble.8bs";
 import { merged, stepped, moved, over, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "@lib/game/rules.8bs";
+import { audio } from "@8bitscript/audio";
+import { move } from "@media/game.8ba";
 import { Screen } from "@ui/Screen.8bx";
 import { Board } from "@ui/Board.8bx";
 
@@ -118,6 +120,7 @@ export function turn(): void {
         }
 
         if (moved) {
+            audio.play(move);
             spawnTile();
             if (!hasMoves()) {
                 over = true;

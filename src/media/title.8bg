@@ -1,0 +1,5 @@
+sprite title {
+  source "./title.png"
+  size 16x16
+  transparent auto
+}

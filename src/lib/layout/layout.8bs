@@ -180,6 +180,9 @@ export let scoreLabelAt: usmallint;
 export let scoreValueAt: usmallint;
 export let hintTopAt: usmallint;
 export let hintBottomAt: usmallint;
+// Stage pixels for HeaderArt's .8bg marks (the printed name is beside them).
+export let titleArtX: usmallint;
+export let titleArtY: usmallint;
 
 // Once, before the loop, on a fixed grid; again on every resize on the
 // fluid host. Both arms in one function rather than a call into each:
@@ -228,19 +231,23 @@ export function computeLayout(): void {
     // to the footer. The Commander X16's 12×12 tiles fill 51 of 56 rows,
     // so that picture gives up the same blank row and starts the header
     // on row 0 — headerAt is left unstored there and folds to zero.
+    let headerRow: usmallint = 0;
     if (#fact(video.raster) && text.COLUMNS == 40 && #fact(video.palette) == 16) {
         boardTop = 3;
+        headerRow = 1;
         headerAt = ROW;
         statusAt = (boardTop + height) * ROW + boardLeft;
     } else if (#system() == System.CX16) {
         boardTop = 2;
         statusAt = (boardTop + height) * ROW + boardLeft;
     } else {
-        let headerRow: usmallint = (Video.ROWS - (height + 6)) >> 1;
+        headerRow = (Video.ROWS - (height + 6)) >> 1;
         boardTop = headerRow + 2;
         headerAt = headerRow * ROW;
         statusAt = (boardTop + height + 1) * ROW + boardLeft;
     }
+    titleArtX = boardLeft * Video.BLOCK_WIDTH;
+    titleArtY = headerRow * Video.BLOCK_HEIGHT;
     // A gap row is the row directly above the tile row that follows it, so
     // tileCell() — which already knows where a tile row lands — gives both
     // without a second copy of that arithmetic, and without a second
@@ -352,6 +359,8 @@ function fluidLayout(): void {
             }
         }
         titleNameAt = boardTop * rowWidth + 1;
+        titleArtX = Video.BLOCK_WIDTH;
+        titleArtY = boardTop * Video.BLOCK_HEIGHT;
         scoreLabelAt = boardTop * rowWidth + rightAt;
         scoreValueAt = (boardTop + 1) * rowWidth + rightAt;
         // The hint rows are the board's last two; a grid shorter than the
@@ -382,6 +391,8 @@ function fluidLayout(): void {
         }
         headerAt = headerRow * rowWidth;
         boardTop = headerRow + 2;
+        titleArtX = boardLeft * Video.BLOCK_WIDTH;
+        titleArtY = headerRow * Video.BLOCK_HEIGHT;
         let statusRow: usmallint = boardTop + boardHeight + 1;
         if (statusRow >= usable) {
             statusRow = usable - 1;

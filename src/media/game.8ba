@@ -1,0 +1,22 @@
+instrument pad {
+  waveform pulse
+  polyphony 1
+}
+
+sample move {
+  source "./move.wav"
+  fallback { synth noise }
+}
+
+song theme {
+  tempo 96
+  speed 8
+  order { main }
+  pattern main length 32 {
+    track pad {
+      row 0 { note C3; instrument pad; }
+      row 12 { note G3; }
+      row 24 { note C4; }
+    }
+  }
+}
