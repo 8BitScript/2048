@@ -31,22 +31,24 @@
     "changeset:version": "changeset version && pnpm install --no-frozen-lockfile"
   },
   "devDependencies": {
-    "@8bitscript/cli": "0.22.0",
+    "@8bitscript/cli": "0.23.0",
     "@changesets/cli": "^3.0.2",
     "wrangler": "4.127.1"
   },
   "dependencies": {
-    "@8bitscript/i18n": "0.22.0",
-    "@8bitscript/screen": "0.22.0",
-    "@8bitscript/text": "0.22.0",
-    "@8bitscript/input": "0.22.0",
-    "@8bitscript/random": "0.22.0",
-    "@8bitscript/raster": "0.22.0",
-    "@8bitscript/system": "0.22.0",
-    "@8bitscript/pet": "0.22.0",
-    "@8bitscript/vic20": "0.22.0",
-    "@8bitscript/c64": "0.22.0",
-    "@8bitscript/cx16": "0.22.0",
-    "@8bitscript/web": "0.22.0"
+    "@8bitscript/audio": "0.23.0",
+    "@8bitscript/graphics": "0.23.0",
+    "@8bitscript/i18n": "0.23.0",
+    "@8bitscript/screen": "0.23.0",
+    "@8bitscript/text": "0.23.0",
+    "@8bitscript/input": "0.23.0",
+    "@8bitscript/random": "0.23.0",
+    "@8bitscript/raster": "0.23.0",
+    "@8bitscript/system": "0.23.0",
+    "@8bitscript/pet": "0.23.0",
+    "@8bitscript/vic20": "0.23.0",
+    "@8bitscript/c64": "0.23.0",
+    "@8bitscript/cx16": "0.23.0",
+    "@8bitscript/web": "0.23.0"
   }
 }
