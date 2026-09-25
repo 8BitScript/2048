@@ -1,6 +1,6 @@
 {
   "name": "2048",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "private": true,
   "description": "2048, in 8BitScript, from one source tree, on the VIC-20, C64, PET, Commander X16, and the web.",
   "license": "MIT",
