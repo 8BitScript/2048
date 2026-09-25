@@ -7,9 +7,9 @@ on:
 
 jobs:
   compile:
-    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@99aa830910b75771cc0187549625a2b65572c040 # v0.7.1
+    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@2405573e32f9e3c3d5212c93ddb986d4e32f3c60 # @8bitscript/* release-age exclude
     with:
       # No `targets`: builds whatever 8bitscript.config.ts declares for a
       # release (both PET RAM tiers, plus web), so CI catches a variant
       # that stops fitting before a release does.
-      cli-version: 0.22.0
+      cli-version: 0.23.0

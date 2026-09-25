@@ -41,12 +41,12 @@ jobs:
 
   compile:
     needs: create-release
-    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@99aa830910b75771cc0187549625a2b65572c040 # v0.7.1
+    uses: 8BitScript/8bitscript/.github/workflows/compile.yml@2405573e32f9e3c3d5212c93ddb986d4e32f3c60 # @8bitscript/* release-age exclude
     with:
       # No `targets`: compile.yml runs `8bs build --release`, which reads
       # this project's own 8bitscript.config.ts — the PET 4K/32K matrix and
       # the web build — so the release matrix lives in one place.
-      cli-version: 0.22.0
+      cli-version: 0.23.0
       attach-release: true
 
   # The release is out — the GitHub Release exists and compile.yml has

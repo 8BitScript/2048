@@ -91,6 +91,8 @@ export let scoreLabelAt: usmallint;
 export let scoreValueAt: usmallint;
 export let hintTopAt: usmallint;
 export let hintBottomAt: usmallint;
+export let titleArtX: usmallint;
+export let titleArtY: usmallint;
 
 // Only the four a PET build reads and that are not zero are stored.
 // A store to a let nothing reads is still a store, and keeps the let in
@@ -105,6 +107,8 @@ export let hintBottomAt: usmallint;
 // bytes and 2 of RAM.
 export function computeLayout(): void {
     boardLeft = (ROW - BOARD_WIDTH) >> 1; // 2, or 22 on 80 columns
+    titleArtX = boardLeft * Video.BLOCK_WIDTH;
+    titleArtY = 0;
     statusAt = 24 * ROW + ((ROW - BOARD_WIDTH) >> 1);
     // Centred on the screen, from the length of the string a build prints,
     // so a translation moves the line with the words.

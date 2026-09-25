@@ -69,6 +69,8 @@ export let scoreLabelAt: usmallint = 0;
 export let scoreValueAt: usmallint = 0;
 export let hintTopAt: usmallint = 0;
 export let hintBottomAt: usmallint = 0;
+export let titleArtX: usmallint = 16;
+export let titleArtY: usmallint = 0;
 
 // Every number above is the build's. The three game-over lines are the
 // only ones worked out here, and only because their length is the

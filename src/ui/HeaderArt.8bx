@@ -1,0 +1,13 @@
+// Portable header marks from .8bg: a 16×16 title mosaic and an 8×8 tile
+// face beside the printed name. Placed in stage pixels from layout's
+// titleArtX/Y; the text line still comes from <ScoreBar />.
+import { title } from "@media/title.8bg";
+import { tile } from "@media/tile.8bg";
+import { graphics } from "@8bitscript/graphics";
+import { sprites } from "@8bitscript/sprites";
+import { titleArtX, titleArtY } from "@lib/layout/layout.8bs";
+
+export component HeaderArt() {
+    graphics.place(title, sprites.ORIGIN_X + titleArtX, sprites.ORIGIN_Y + titleArtY);
+    graphics.place(tile, sprites.ORIGIN_X + titleArtX + 18, sprites.ORIGIN_Y + titleArtY + 4);
+}

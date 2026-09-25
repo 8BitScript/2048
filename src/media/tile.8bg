@@ -1,0 +1,5 @@
+sprite tile {
+  source "./tile.png"
+  size 8x8
+  transparent auto
+}

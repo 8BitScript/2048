@@ -1,5 +1,5 @@
-// 2048 — for every 8BitScript target: VIC-20, C64, PET, C128, Atari 8-bit,
-// NES, Commander X16, MEGA65, and the web. This is the program: it deals
+// 2048 — for the five release targets (PET 4032 32K, C64, unexpanded
+// VIC-20 8K, Commander X16, and the web). This is the program: it deals
 // a game, and runs a frame until the machine is turned off. A turn is
 // lib/game/play.8bs's, the rules and the board are lib/game/rules.8bs's,
 // what goes on the screen is ui/'s — Screen.8bx is the root — and where
@@ -7,7 +7,10 @@
 // Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see lib/game/rules.8bs.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
+import { audio } from "@8bitscript/audio";
+import { graphics } from "@8bitscript/graphics";
 import { entropy } from "@8bitscript/random/entropy";
+import { theme } from "@media/game.8ba";
 import { computeLayout } from "@lib/layout/layout.8bs";
 import { wobble } from "@lib/raster/wobble.8bs";
 import { shown, resetGame } from "@lib/game/rules.8bs";
@@ -52,6 +55,7 @@ function begin(): void {
     waitFrame();
     input.poll();
     resetGame();
+    audio.music(theme);
     Screen();
 }
 
@@ -63,6 +67,8 @@ function frame(): void {
     // the compiler, everywhere the skin does not take the effect (see
     // lib/raster/wobble.8bs).
     wobble.step();
+    graphics.update();
+    audio.update();
 
     // The window resized or the phone rotated: every position lib/layout/
     // computed depends on the grid computeLayout() read, so
