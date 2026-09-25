@@ -1,3 +1,8 @@
+# Single-package repo; `packages` keeps pnpm from treating the parent
+# Development folder as the workspace when the editor opens that path.
+packages:
+  - '.'
+
 # esbuild and workerd belong to wrangler: workerd is the Workers runtime
 # used by `wrangler dev`/`deploy`, and esbuild is its bundler. Their
 # postinstall scripts unpack platform binaries, so without this the deploy
@@ -5,7 +10,7 @@
 allowBuilds:
   esbuild: true
   workerd: true
-# Own org: we publish these and pin them the same day. A version glob
-# (`@8bitscript/*@0.23.0`) does not match; the scope glob does.
+
+# Own org: we publish these and pin them the same day.
 minimumReleaseAgeExclude:
   - '@8bitscript/*'
