@@ -62,7 +62,7 @@ Play it in a browser at [2048.8bitscript.com](https://2048.8bitscript.com)
 (swipe on a phone, arrows on a keyboard). The site's picker loads a
 separate wasm per look — the default 16:9 host, or a PET 2001 / C64 /
 VIC-20 skin. [GitHub Releases](https://github.com/8BitScript/2048/releases)
-attach every build `8bitscript.config.ts` declares: the VIC-20, C64, C128,
+attach every build `8bitscript.config.8bs` declares: the VIC-20, C64, C128,
 Atari 8-bit (GR.1), NES, Commander X16 and MEGA65 programs, three PETs — a
 stock 4K 2001, the 32K 4032, and the German 2001 — and the web bundle
 (every skin and the German build, zipped). One source, fifteen builds,
@@ -88,7 +88,7 @@ Then, from this directory:
 
 | Command | Machine |
 | --- | --- |
-| `pnpm start` | C64 — the baseline: plain `8bs run`, which reads `baseline` in `8bitscript.config.ts` |
+| `pnpm start` | C64 — the baseline: plain `8bs run`, which reads `baseline` in `8bitscript.config.8bs` |
 | `pnpm run start:vic20` | VIC-20 (NTSC) |
 | `pnpm run start:pet` | PET (a 32K 4032 by default; `--profile 2001 --hardware ram=4` for a stock 4K 2001 — the game is 2826 bytes of program, inside that machine's ~3K of usable RAM; `--profile 8032` for 80 columns) |
 | `pnpm run start:c128` | C128 |
@@ -288,7 +288,7 @@ prints a `v` and then the number on the last row.
 2048 is designed on the C64: 40 columns, sixteen colours, a raster list
 behind the header, a SID to draw entropy from, and RAM enough to animate
 a slide. It builds for eight other machines from the same source, and
-`8bitscript.config.ts` says so — `baseline: 'c64'` — so the toolchain
+`8bitscript.config.8bs` says so — `baseline: 'c64'` — so the toolchain
 can say the rest. The floor is `requires`' business (a 4K PET 2001
 clears it); the baseline is where every fact the program tests answers
 yes; and each other build is the same program with the branches on the

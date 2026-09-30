@@ -44,13 +44,13 @@ jobs:
     uses: 8BitScript/8bitscript/.github/workflows/compile.yml@2405573e32f9e3c3d5212c93ddb986d4e32f3c60 # @8bitscript/* release-age exclude
     with:
       # No `targets`: compile.yml runs `8bs build --release`, which reads
-      # this project's own 8bitscript.config.ts — the PET 4K/32K matrix and
+      # this project's own 8bitscript.config.8bs — the PET 4K/32K matrix and
       # the web build — so the release matrix lives in one place.
       cli-version: 0.23.0
       attach-release: true
 
   # The release is out — the GitHub Release exists and compile.yml has
-  # attached every artifact 8bitscript.config.ts declares. Only now does
+  # attached every artifact 8bitscript.config.8bs declares. Only now does
   # `release` move, and only to the commit this tag names.
   #
   # The branch answers what a tag cannot: what is actually downloadable
