@@ -1,8 +1,10 @@
-// The port's own line. On every skin but the PET it is centred on the
-// second-to-last row, so the version keeps the last one. On the PET the
-// 8×5 board already uses every other row, so the line sits on the header
-// between the name and the score (COPYRIGHT_ON_HEADER). The original
-// game's author and repo are credited in README.md rather than on screen.
+// The port's own line, up from the first frame until the first move that
+// changes the board, when lib/text/copyright.8bs sweeps it away. On every
+// skin but the PET it is centred on the second-to-last row, so the version
+// keeps the last one. On the PET the 8×5 board already uses every other
+// row, so the line sits on the header between the name and the score
+// (COPYRIGHT_ON_HEADER). The original game's author and repo are credited
+// in README.md rather than on screen.
 //
 // "(" and ")" are not in the portable character set, so the line is printed
 // with spaces where they go and the two glyphs poked in after — putChar
@@ -18,42 +20,27 @@
 // the same reason: if a machine ever did drop the poke, the line degrades
 // to "C 2026 8BITSCRIPT" rather than showing punctuation nobody meant.
 import { text } from "@8bitscript/text";
-import { screen } from "@8bitscript/screen";
-import { System, Video } from "@8bitscript/system";
-import { Game, Copyright as Copy } from "@8bitscript/i18n/catalog";
-import { COPYRIGHT_ON_HEADER, boardLeft, headerAt } from "@lib/layout/layout.8bs";
+import { System } from "@8bitscript/system";
+import { Copyright as Copy } from "@8bitscript/i18n/catalog";
+import { copyrightAt, copyrightFits } from "@lib/text/copyright.8bs";
 
-const FLUID: bool = screen.RESIZABLE;
-const ROW: usmallint = text.COLUMNS;
 const PAREN_OPEN: utinyint = 40;
 const PAREN_CLOSE: utinyint = 41;
 
-// On a fixed grid the address is a compile-time constant and is written
-// out at each of the three uses rather than hoisted into a local: a local
-// is a variable to the folder, and the add it saves in the source costs a
-// 16-bit add and a slot in the image (+35 bytes on the VIC-20). The PET's
-// header placement is the one that cannot fold that way — boardLeft is a
-// let — so that arm keeps the address in one local.
+// Where the line goes is lib/text/copyright.8bs's, shared with the sweep
+// that takes it down after the first move; whether it is still up is
+// ui/Screen.8bx's test, so this element only ever prints. On a fixed grid
+// copyrightAt() folds to one literal; on the PET's header and the fluid
+// host it is a short computation, kept in one local.
 export component Copyright() {
-    if (COPYRIGHT_ON_HEADER) {
-        let at: usmallint = headerAt + boardLeft + Game.NAME.length + 1;
-        text.print(at, Copy.LINE);
-        text.putChar(at, PAREN_OPEN);
-        text.putChar(at + 2, PAREN_CLOSE);
-    } else if (FLUID) {
-        let cols: usmallint = text.columns();
-        let rows: usmallint = text.rows();
-        if (rows >= 2 && cols >= Copy.LINE.length) {
-            let at: usmallint = (rows - 2) * cols + ((cols - Copy.LINE.length) >> 1);
+    if (copyrightFits()) {
+        let at: usmallint = copyrightAt();
+        if (#system() == System.NES) {
+            text.print(at, Copy.WORD);
+        } else {
             text.print(at, Copy.LINE);
             text.putChar(at, PAREN_OPEN);
             text.putChar(at + 2, PAREN_CLOSE);
         }
-    } else if (#system() == System.NES) {
-        text.print((Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.WORD.length) >> 1), Copy.WORD);
-    } else {
-        text.print((Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.LINE.length) >> 1), Copy.LINE);
-        text.putChar((Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.LINE.length) >> 1), PAREN_OPEN);
-        text.putChar((Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.LINE.length) >> 1) + 2, PAREN_CLOSE);
     }
 }
