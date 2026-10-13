@@ -41,6 +41,12 @@ export const ENTER_KEY: bool = false;
 // not reach it). layout.8bs's own is false — two rows under the status.
 export const COPYRIGHT_ON_HEADER: bool = true;
 
+// No header art: the header row is all text and the board starts on the
+// row under it, so the marks (quadrant blocks here) could only land on
+// the name or the first tile — which is where they were, a stray block
+// left of the top-left tile. Off, the build is 436 bytes smaller.
+export const HEADER_ART: bool = false;
+
 // Always block digits — an 8-wide tile has room for four of them, which
 // is the whole point of this arrangement. lib/draw/tile.pet.8bs stamps
 // them into video RAM, so neither of these is read on a PET build.
