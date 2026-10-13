@@ -63,41 +63,60 @@ function roundCorners(origin: usmallint, stride: usmallint): void {
     return;
 }
 
-// Code 137 punches the top-left and bottom-right quadrants, so those two
-// corners of an empty tile are already notched. The other two still have
-// their outer quadrant filled; these two glyphs punch that quadrant and
-// keep the same diagonal, so the empty tile stays half-density.
-function roundDimCorners(origin: usmallint, stride: usmallint): void {
+// The empty tile on the web's PET replica: the real PET's checkerboard
+// (lib/draw/tile.pet.8bs), quadrant for quadrant. Every glyph here is
+// drawn under reverse, so each code is 128 + the quadrants it leaves
+// dark: 134 lights top-left and bottom-right, 135 top-left only, 142
+// bottom-right only, 143 nothing. A tileW × tileH tile is an even 16×10
+// quadrants, and a checkerboard on an even grid puts two of its corners
+// on dark squares, where a chamfer cannot show — so, as on the PET, the
+// board stops one quadrant short, at 15×9, with every corner on a lit
+// square, and each corner loses that one quadrant the same way.
+const DIM_FILL: utinyint = 134;
+const DIM_EDGE: utinyint = 135;
+const DIM_CORNER_TL: utinyint = 142;
+const DIM_BLANK: utinyint = 143;
+
+function fillDim(origin: usmallint, stride: usmallint): void {
     let right: usmallint = tileW - 1;
-    let bottom: usmallint = origin + (tileH - 1) * stride;
-    text.putChar(origin + right, 141);
-    text.putChar(bottom, 139);
+    let rowCell: usmallint = origin;
+    let line: usmallint = 0;
+    while (line < tileH - 1) {
+        // The whole row first, then its last glyph: putChar writes the
+        // glyph and nothing else, and the reverse bit every one of these
+        // codes is drawn under lives in the colour byte fill() writes.
+        text.fill(rowCell, tileW, DIM_FILL);
+        text.putChar(rowCell + right, DIM_EDGE);
+        rowCell = rowCell + stride;
+        line++;
+    }
+    text.fill(rowCell, tileW, DIM_EDGE);
+    text.putChar(origin, DIM_CORNER_TL);
+    text.putChar(origin + right, DIM_BLANK);
+    text.putChar(rowCell, DIM_BLANK);
+    text.putChar(rowCell + right, DIM_BLANK);
     return;
 }
 
 // A tileW × tileH square of reverse video in the tile's colour, at origin.
 // An empty tile on a host with no per-cell color (the web's PET replica)
-// is a 50% block instead of a solid one, which is the grey that host can
-// draw. Code 137 is the web's top-left + bottom-right quadrants.
+// is a checkerboard instead of a solid one (fillDim), which is the grey
+// that host can draw.
 export function fillTile(origin: usmallint, exponent: utinyint): void {
     text.setColor(tileColor(exponent));
     text.setReverse(true);
-    let ink: utinyint = 32;
-    if (exponent == 0 && !Video.COLOR_PER_CELL && #system() == System.WEB) {
-        ink = 137;
+    if (#system() == System.WEB && !Video.COLOR_PER_CELL && exponent == 0) {
+        fillDim(origin, rowWidth);
+        return;
     }
     let rowCell: usmallint = origin;
     let line: usmallint = 0;
     while (line < tileH) {
-        text.fill(rowCell, tileW, ink);
+        text.fill(rowCell, tileW, 32);
         rowCell = rowCell + rowWidth;
         line++;
     }
-    if (ink == 137) {
-        roundDimCorners(origin, rowWidth);
-    } else {
-        roundCorners(origin, rowWidth);
-    }
+    roundCorners(origin, rowWidth);
     return;
 }
 

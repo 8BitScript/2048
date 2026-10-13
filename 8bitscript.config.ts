@@ -64,6 +64,11 @@ export default {
     // 9247 (114) from 9031 (113); VIC-20 8K 5951 (106) from 5735 (105);
     // CX16 7249 (191) from 7033 (191).
     //
+    // The empty tile's checkerboard cut to 15×9 quadrants so all four
+    // corners round alike (lib/draw/tile.pet.8bs, 2026-10-13): 6894
+    // program (94 RAM) from 6769 (91), German 7071 (96) from 6946 (93);
+    // no other build changes.
+    //
     // `release` is what `8bs build --release` (the GitHub Release
     // workflow) builds for this target: {} for the 4032/32K default
     // (and German via locale), not the stock-4K 2001 download — media
