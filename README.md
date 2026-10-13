@@ -55,8 +55,9 @@ the original lives at
 affiliated with or endorsed by the original author.
 
 The port is copyright (c) 2026 8BitScript contributors, MIT-licensed; see
-[LICENSE](LICENSE). The playing screen carries that line; the attribution above
-is deliberately here rather than on a 22-column screen.
+[LICENSE](LICENSE). The playing screen carries that line until the first move,
+when a cursor sweeps it away; the attribution above is deliberately here rather
+than on a 22-column screen.
 
 Play it in a browser at [2048.8bitscript.com](https://2048.8bitscript.com)
 (swipe on a phone, arrows on a keyboard). The site's picker loads a

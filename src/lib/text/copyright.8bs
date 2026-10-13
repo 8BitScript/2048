@@ -1,0 +1,107 @@
+// The port's copyright line: where it is on this skin, that it is up only
+// until the first move, and how it goes. In lib/ rather than in the
+// element so a turn (lib/game/play.8bs) can take it down without
+// importing an element, and so the element and the effect agree on the
+// cell — ui/Copyright.8bx prints it where copyrightAt() says.
+//
+// The line is the program's greeting, not every game's: it is on screen
+// from the first frame until the first move that changes the board, and
+// then it goes the way a PET erases a line — a reverse-video cursor runs
+// along it, one cell a frame, and leaves nothing behind. After that no
+// Screen() prints it again (ui/Screen.8bx tests copyrightDismissed), a
+// resize or a new game included, and the header is the name and the score.
+//
+// One cell a frame is nineteen frames, a third of a second at 60 Hz, which
+// is long enough to read as a cursor and short enough not to hold the
+// next move up. Every waitFrame() here has an input.poll() right behind
+// it: on the PET reading the keyboard matrix is what clears the retrace
+// flag (see lib/game/play.8bs's animateMove). A press during the sweep is
+// dropped, not kept for the turn after — each poll() replaces what began
+// — the same as a press during a slide.
+import { text } from "@8bitscript/text";
+import { screen } from "@8bitscript/screen";
+import { input } from "@8bitscript/input";
+import { System, Video } from "@8bitscript/system";
+import { Game, Copyright as Copy } from "@8bitscript/i18n/catalog";
+import { COPYRIGHT_ON_HEADER, boardLeft, headerAt } from "@lib/layout/layout.8bs";
+
+const FLUID: bool = screen.RESIZABLE;
+const ROW: usmallint = text.COLUMNS;
+const SPACE: utinyint = 32;
+
+// Set once, by dismissCopyright(), and never cleared. No initializer: a
+// let's zero initialization is "still up", and an initializer would be a
+// store in the image for a value the let already has.
+export let copyrightDismissed: bool;
+
+// How wide the line this build prints is: the NES spells COPYRIGHT out
+// (its font draws "(" and ")" blank — see ui/Copyright.8bx), every other
+// machine prints the short line. #system() folds, so one return survives.
+export function copyrightWidth(): utinyint {
+    if (#system() == System.NES) {
+        return Copy.WORD.length;
+    }
+    return Copy.LINE.length;
+}
+
+// Whether there is room for it: always on a fixed grid, and on the fluid
+// host when the window is at least two rows tall and as wide as the line.
+export function copyrightFits(): bool {
+    if (FLUID) {
+        return text.rows() >= 2 && text.columns() >= Copy.LINE.length;
+    }
+    return true;
+}
+
+// The line's first cell. On the PET's header it follows the name
+// (COPYRIGHT_ON_HEADER); on the fluid host it is centred on the
+// second-to-last row of whatever grid the window has now; on every other
+// fixed grid it is centred on the second-to-last row, which folds to one
+// literal per build.
+export function copyrightAt(): usmallint {
+    if (COPYRIGHT_ON_HEADER) {
+        return headerAt + boardLeft + Game.NAME.length + 1;
+    }
+    if (FLUID) {
+        let cols: usmallint = text.columns();
+        let rows: usmallint = text.rows();
+        return (rows - 2) * cols + ((cols - Copy.LINE.length) >> 1);
+    }
+    if (#system() == System.NES) {
+        return (Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.WORD.length) >> 1);
+    }
+    return (Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.LINE.length) >> 1);
+}
+
+// Takes the line down: a reverse-video block runs along it from the left,
+// one cell a frame, blanking the cell it just left, and runs one cell off
+// the end — into the blank every skin keeps after the line — so the loop
+// has no first or last case to test for. The flag is set first, so a
+// Screen() during or after the sweep never puts the line back. One
+// counting cell and one countdown rather than `at + i`: three 16-bit
+// adds a frame were 60 bytes on the PET (measured 2026-10-12, 189 → the
+// figure in 8bitscript.config.ts).
+export function dismissCopyright(): void {
+    copyrightDismissed = true;
+    if (!copyrightFits()) {
+        return;
+    }
+    let cell: usmallint = copyrightAt();
+    let left: utinyint = copyrightWidth();
+    text.setReverse(true);
+    text.putChar(cell, SPACE);
+    while (left > 0) {
+        waitFrame();
+        input.poll();
+        text.setReverse(false);
+        text.putChar(cell, SPACE);
+        cell = cell + 1;
+        text.setReverse(true);
+        text.putChar(cell, SPACE);
+        left = left - 1;
+    }
+    waitFrame();
+    input.poll();
+    text.setReverse(false);
+    text.putChar(cell, SPACE);
+}

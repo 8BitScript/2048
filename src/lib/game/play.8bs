@@ -11,6 +11,7 @@ import { wobble } from "@lib/raster/wobble.8bs";
 import { merged, stepped, moved, over, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "@lib/game/rules.8bs";
 import { audio } from "@8bitscript/audio";
 import { move } from "@media/game.8ba";
+import { copyrightDismissed, dismissCopyright } from "@lib/text/copyright.8bs";
 import { Screen } from "@ui/Screen.8bx";
 import { Board } from "@ui/Board.8bx";
 
@@ -126,6 +127,12 @@ export function turn(): void {
                 over = true;
             }
             Screen();
+            // The first move that changed the board is the end of the
+            // greeting: the copyright line goes, after the board the
+            // move earned is up, and stays gone for the rest of the run.
+            if (!copyrightDismissed) {
+                dismissCopyright();
+            }
         }
     }
 }

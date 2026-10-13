@@ -55,6 +55,15 @@ export default {
     // program (100 RAM); CX16 6542 program (170 RAM). Historical 4K
     // figures above are kept for comparison only.
     //
+    // With the copyright line taken down by a sweep after the first move
+    // (lib/text/copyright.8bs, 2026-10-12, workspace toolchain): the
+    // 4032/32K default is 6769 program (91 RAM), 221 bytes and 2 of RAM
+    // over the 6548 (89) measured the same day before it — 162 of them
+    // dismissCopyright() itself, the rest Copyright's placement as a
+    // function the element and the sweep share. German 6946 (93); C64
+    // 9247 (114) from 9031 (113); VIC-20 8K 5951 (106) from 5735 (105);
+    // CX16 7249 (191) from 7033 (191).
+    //
     // `release` is what `8bs build --release` (the GitHub Release
     // workflow) builds for this target: {} for the 4032/32K default
     // (and German via locale), not the stock-4K 2001 download — media
