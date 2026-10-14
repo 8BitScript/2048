@@ -61,22 +61,22 @@ export namespace board {
 
 // ---- the positions -------------------------------------------------------
 
-const BOARD_WIDTH: usmallint = 35; // 4 tiles × 8 + 3 gaps
+const BOARD_WIDTH: usmallint = 36; // 4 tiles × 8 + gaps of 1, 2, 1 — even, so it centres exactly
 
 // Top-left cell of each board square: (1 + row×6)×COLUMNS + boardLeft +
-// col×9, for each width. Compile-time data; the other width's table is
+// col×9 (+1 past the middle gap), for each width. Compile-time data; the other width's table is
 // pruned.
 const ORIGIN_40: array<usmallint, 16> = [
-    42, 51, 60, 69,
-    282, 291, 300, 309,
-    522, 531, 540, 549,
-    762, 771, 780, 789,
+    42, 51, 61, 70,
+    282, 291, 301, 310,
+    522, 531, 541, 550,
+    762, 771, 781, 790,
 ];
 const ORIGIN_80: array<usmallint, 16> = [
-    102, 111, 120, 129,
-    582, 591, 600, 609,
-    1062, 1071, 1080, 1089,
-    1542, 1551, 1560, 1569,
+    102, 111, 121, 130,
+    582, 591, 601, 610,
+    1062, 1071, 1081, 1090,
+    1542, 1551, 1561, 1570,
 ];
 
 export let tileW: usmallint;
