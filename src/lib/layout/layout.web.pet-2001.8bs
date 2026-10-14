@@ -39,23 +39,23 @@ export namespace board {
 
 // ---- the positions -------------------------------------------------------
 //
-// Top-left cell of each board square: (1 + row×6)×40 + 2 + col×9 (+1 past the middle gap, which is 2 wide). Data,
-// so an index replaces the multiply; boardTop 1, 8×5 tiles, gaps of 1, 2, 1.
+// Top-left cell of each board square: (1 + row×6)×40 + 1 + col×10. Data,
+// so an index replaces the multiply; boardTop 1, 8×5 tiles, 2-cell gaps across.
 const ORIGIN: array<usmallint, 16> = [
-    42, 51, 61, 70,
-    282, 291, 301, 310,
-    522, 531, 541, 550,
-    762, 771, 781, 790,
+    41, 51, 61, 71,
+    281, 291, 301, 311,
+    521, 531, 541, 551,
+    761, 771, 781, 791,
 ];
 
 export let tileW: usmallint = 8;
 export let tileH: utinyint = 5;
 export let rowWidth: usmallint = 40;
-export let boardLeft: usmallint = 2;
+export let boardLeft: usmallint = 1;
 export let boardTop: usmallint = 1;
-export let boardWidth: usmallint = 36;
-export let headerAt: usmallint = 0;    // row 0: "2048" at col 2, SCORE at col 29
-export let statusAt: usmallint = 962;  // row 24, col 2 — directly under the board
+export let boardWidth: usmallint = 38;
+export let headerAt: usmallint = 0;    // row 0: "2048" at col 1, SCORE at col 29
+export let statusAt: usmallint = 961;  // row 24, col 1 — directly under the board
 // "GAME OVER" in the blank row between the first and second rows of
 // tiles (row 6), how to play again in the row between the third and
 // fourth (row 18) — the rows the 4K PET puts them on, each centred:
