@@ -14,6 +14,8 @@
 // a tile sets the text colour, and these lines are not a tile. The
 // copyright is the program's greeting: up until the first move, when a
 // turn sweeps it away (lib/text/copyright.8bs), and never printed again.
+// The header art is left out where the layout has no room for it
+// (HEADER_ART, false on the PET).
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { score, over, won } from "@lib/game/rules.8bs";
@@ -25,11 +27,12 @@ import { GameOver } from "./GameOver.8bx";
 import { Board } from "./Board.8bx";
 import { TitleWobble } from "./TitleWobble.8bx";
 import { HeaderArt } from "./HeaderArt.8bx";
+import { HEADER_ART } from "@lib/layout/layout.8bs";
 
 export component Screen() {
     return (
         <>
-            <HeaderArt />
+            {HEADER_ART && <HeaderArt />}
             <ScoreBar score={score} over={over} won={won} />
             {!copyrightDismissed && <Copyright />}
             <Version />

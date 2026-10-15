@@ -41,6 +41,17 @@ export const ENTER_KEY: bool = false;
 // not reach it). layout.8bs's own is false — two rows under the status.
 export const COPYRIGHT_ON_HEADER: bool = true;
 
+// Columns between the score's last digit and the screen's right edge: the
+// board's own right margin, so the score ends over the last tile instead
+// of running past it.
+export const HEADER_INSET: usmallint = 1; // 40 columns (a const cannot do arithmetic, 8BS3001); the 8032's 80 are not inset yet
+
+// No header art: the header row is all text and the board starts on the
+// row under it, so the marks (quadrant blocks here) could only land on
+// the name or the first tile — which is where they were, a stray block
+// left of the top-left tile. Off, the build is 436 bytes smaller.
+export const HEADER_ART: bool = false;
+
 // Always block digits — an 8-wide tile has room for four of them, which
 // is the whole point of this arrangement. lib/draw/tile.pet.8bs stamps
 // them into video RAM, so neither of these is read on a PET build.
@@ -55,22 +66,22 @@ export namespace board {
 
 // ---- the positions -------------------------------------------------------
 
-const BOARD_WIDTH: usmallint = 35; // 4 tiles × 8 + 3 gaps
+const BOARD_WIDTH: usmallint = 38; // 4 tiles × 8 + 3 gaps of 2 — even, so it centres exactly
 
 // Top-left cell of each board square: (1 + row×6)×COLUMNS + boardLeft +
-// col×9, for each width. Compile-time data; the other width's table is
+// col×10, for each width. Compile-time data; the other width's table is
 // pruned.
 const ORIGIN_40: array<usmallint, 16> = [
-    42, 51, 60, 69,
-    282, 291, 300, 309,
-    522, 531, 540, 549,
-    762, 771, 780, 789,
+    41, 51, 61, 71,
+    281, 291, 301, 311,
+    521, 531, 541, 551,
+    761, 771, 781, 791,
 ];
 const ORIGIN_80: array<usmallint, 16> = [
-    102, 111, 120, 129,
-    582, 591, 600, 609,
-    1062, 1071, 1080, 1089,
-    1542, 1551, 1560, 1569,
+    101, 111, 121, 131,
+    581, 591, 601, 611,
+    1061, 1071, 1081, 1091,
+    1541, 1551, 1561, 1571,
 ];
 
 export let tileW: usmallint;
@@ -106,7 +117,7 @@ export let titleArtY: usmallint;
 // ui/ScoreBar.8bx becomes `boardLeft`, and the one store cost 63
 // bytes and 2 of RAM.
 export function computeLayout(): void {
-    boardLeft = (ROW - BOARD_WIDTH) >> 1; // 2, or 22 on 80 columns
+    boardLeft = (ROW - BOARD_WIDTH) >> 1; // 1, or 21 on 80 columns — equal margins
     titleArtX = boardLeft * Video.BLOCK_WIDTH;
     titleArtY = 0;
     statusAt = 24 * ROW + ((ROW - BOARD_WIDTH) >> 1);

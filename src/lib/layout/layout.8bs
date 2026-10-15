@@ -50,6 +50,15 @@ export const ENTER_KEY: bool = true;
 // has two rows under the status line.
 export const COPYRIGHT_ON_HEADER: bool = false;
 
+// Columns between the score's last digit and the screen's right edge on a
+// fixed grid: none, the score is flush right. (The PET twins inset it to the
+// board's own edge.)
+export const HEADER_INSET: usmallint = 0;
+
+// ui/HeaderArt.8bx's title and tile marks, placed above the board beside
+// the name. The PET twins have no room for them — see layout.pet.8bs.
+export const HEADER_ART: bool = true;
+
 // Whether a tile's value may be stamped as block digits (lib/draw/font.8bs)
 // rather than printed as a number: this skin's answer is "when the grid
 // can change" — the fluid host decides per resize in blockDigitsFit()

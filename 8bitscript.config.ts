@@ -69,6 +69,12 @@ export default {
     // program (94 RAM) from 6769 (91), German 7071 (96) from 6946 (93);
     // no other build changes.
     //
+    // With the header art off on the PET (HEADER_ART, 2026-10-13,
+    // workspace toolchain), on top of the checkerboard change above: the
+    // 4032/32K default is 6458 program (94 RAM) from 6894, German 6635 (96)
+    // from 7071 — the two .8bg marks and the quadrant-block sprite layer
+    // they pulled in. Other machines unchanged.
+    //
     // `release` is what `8bs build --release` (the GitHub Release
     // workflow) builds for this target: {} for the 4032/32K default
     // (and German via locale), not the stock-4K 2001 download — media
