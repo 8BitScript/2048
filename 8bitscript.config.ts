@@ -75,6 +75,10 @@ export default {
     // from 7071 — the two .8bg marks and the quadrant-block sprite layer
     // they pulled in. Other machines unchanged.
     //
+    // The empty tile back to the numbered tile's full 8×5 cells
+    // (lib/draw/tile.pet.8bs, 2026-10-14): the 4032/32K default is 6343
+    // program (90 RAM) from 6458 (94).
+    //
     // `release` is what `8bs build --release` (the GitHub Release
     // workflow) builds for this target: {} for the 4032/32K default
     // (and German via locale), not the stock-4K 2001 download — media
