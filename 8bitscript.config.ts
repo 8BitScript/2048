@@ -64,10 +64,16 @@ export default {
     // 9247 (114) from 9031 (113); VIC-20 8K 5951 (106) from 5735 (105);
     // CX16 7249 (191) from 7033 (191).
     //
+    // The empty tile's checkerboard cut to 15×9 quadrants so all four
+    // corners round alike (lib/draw/tile.pet.8bs, 2026-10-13): 6894
+    // program (94 RAM) from 6769 (91), German 7071 (96) from 6946 (93);
+    // no other build changes.
+    //
     // With the header art off on the PET (HEADER_ART, 2026-10-13,
-    // workspace toolchain): the 4032/32K default is 6333 program (91 RAM)
-    // from 6769, German 6510 (93) from 6946 — the two .8bg marks and the
-    // quadrant-block sprite layer they pulled in. Other machines unchanged.
+    // workspace toolchain), on top of the checkerboard change above: the
+    // 4032/32K default is 6458 program (94 RAM) from 6894, German 6635 (96)
+    // from 7071 — the two .8bg marks and the quadrant-block sprite layer
+    // they pulled in. Other machines unchanged.
     //
     // `release` is what `8bs build --release` (the GitHub Release
     // workflow) builds for this target: {} for the 4032/32K default

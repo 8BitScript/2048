@@ -41,6 +41,11 @@ export const ENTER_KEY: bool = false;
 // not reach it). layout.8bs's own is false — two rows under the status.
 export const COPYRIGHT_ON_HEADER: bool = true;
 
+// Columns between the score's last digit and the screen's right edge: the
+// board's own right margin, so the score ends over the last tile instead
+// of running past it.
+export const HEADER_INSET: usmallint = 1; // 40 columns (a const cannot do arithmetic, 8BS3001); the 8032's 80 are not inset yet
+
 // No header art: the header row is all text and the board starts on the
 // row under it, so the marks (quadrant blocks here) could only land on
 // the name or the first tile — which is where they were, a stray block
