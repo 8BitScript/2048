@@ -47,13 +47,13 @@ const TILE_H: utinyint = 5;
 const SOLID: utinyint = 160;
 const DIM: utinyint = 127;
 
-// The empty tile's right column and bottom row: the top-left quadrant
-// only (QUAD index 8). See fillSquare for why the checkerboard stops one
-// quadrant short of the cell grid, and 108 (bottom-right only) and 32
-// (nothing) for what its corners become.
-const DIM_EDGE: utinyint = 126;
+// The empty tile's two notched corners: on the full 16×10 checkerboard the
+// top-left and bottom-right quadrants are the lit ones at a corner (the
+// other two corners are already dark), so those two lose their corner
+// quadrant — 108 is bottom-right only, 126 top-left only. Every corner
+// then reads as rounded, and the tile is the numbered tile's size.
 const DIM_CORNER_TL: utinyint = 108;
-const BLANK: utinyint = 32;
+const DIM_CORNER_BR: utinyint = 126;
 
 // Three quadrants on, the outer one off — a chamfer, which is as round as
 // the ROM's 2×2 blocks get. Same codes as @8bitscript/pet/blocks's QUAD
@@ -64,36 +64,17 @@ const CORNER_TR: utinyint = 252;
 const CORNER_BL: utinyint = 251;
 const CORNER_BR: utinyint = 236;
 
-// One tile's square. `ink` fills it; `edge` is what its last column and
-// last row get — the same as `ink` for a numbered tile, and DIM_EDGE for
-// the empty one.
-//
-// The empty tile is a checkerboard of quadrants, top-left lit. A tile is
-// 8×5 cells, 16×10 quadrants, and a checkerboard on an even grid puts
-// opposite corners on opposite squares — top-left and bottom-right lit,
-// the other two already dark — so a chamfer could only ever show on two
-// of the four (a notch in a corner that was dark is no notch at all). So
-// the empty tile's board stops one quadrant short of the cell grid, at
-// 15×9: an odd count each way puts all four corners on a lit square, and
-// taking that one quadrant out rounds each the same, the pattern mirrored
-// corner to corner. Its last column and last row are the top-left
-// quadrant of their cells (126); its corners are 108 (top-left gone,
-// bottom-right kept) and three blanks, because the corner quadrant was
-// the only lit one in those three cells.
-function fillSquare(origin: usmallint, ink: utinyint, edge: utinyint): void {
+// One tile's square, 8×5 cells filled with `ink`: solid for a numbered
+// tile, the dither for the empty one — the same footprint either way.
+function fillSquare(origin: usmallint, ink: utinyint): void {
     let rowCell: usmallint = origin;
     let row: utinyint = 0;
-    let rowInk: utinyint = ink;
     while (row < TILE_H) {
-        if (row == TILE_H - 1) {
-            rowInk = edge;
-        }
         let col: utinyint = 0;
-        while (col < TILE_W - 1) {
-            memory.write(SCREEN + rowCell + col, rowInk);
+        while (col < TILE_W) {
+            memory.write(SCREEN + rowCell + col, ink);
             col++;
         }
-        memory.write(SCREEN + rowCell + col, edge);
         rowCell = rowCell + ROW;
         row++;
     }
@@ -105,9 +86,7 @@ function fillSquare(origin: usmallint, ink: utinyint, edge: utinyint): void {
         let bottom: usmallint = origin + ROW + ROW + ROW + ROW;
         if (ink == DIM) {
             memory.write(SCREEN + origin, DIM_CORNER_TL);
-            memory.write(SCREEN + origin + 7, BLANK);
-            memory.write(SCREEN + bottom, BLANK);
-            memory.write(SCREEN + bottom + 7, BLANK);
+            memory.write(SCREEN + bottom + 7, DIM_CORNER_BR);
         } else {
             memory.write(SCREEN + origin, CORNER_TL);
             memory.write(SCREEN + origin + 7, CORNER_TR);
@@ -139,9 +118,9 @@ function stampDigit(cell: usmallint, value: utinyint): void {
 export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
     let origin: usmallint = tileCell(row, col);
     if (exponent == 0) {
-        fillSquare(origin, DIM, DIM_EDGE);
+        fillSquare(origin, DIM);
     } else {
-        fillSquare(origin, SOLID, SOLID);
+        fillSquare(origin, SOLID);
     }
     let base: utinyint = TILE_DIGIT_AT[exponent];
     let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
