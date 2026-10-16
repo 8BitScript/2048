@@ -42,7 +42,7 @@ below.
   16
    2    2    4
 --------------------
-ARROWS TO MOVE
+USE ARROWS   v0.8.6
 ```
 
 ## Credits

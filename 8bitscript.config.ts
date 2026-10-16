@@ -99,6 +99,12 @@ export default {
     // from 4363 (the score's space); PET unchanged. The unexpanded
     // VIC-20 does not link: $1EFC, 252 bytes past $1E00 ($1E15 before).
     //
+    // Every skin but the PET as a header and one footer row (2026-10-15,
+    // workspace toolchain): the copyright on the footer until the first
+    // move, then the move hint and the version; the score on the board's
+    // right edge. C64 5704 program (106 RAM) from 5470; CX16 4657 (170)
+    // from 4357; VIC-20 8K 3977 (95) from 3874; PET unchanged at 3326.
+    //
     // `release` is what `8bs build --release` (the GitHub Release
     // workflow) builds for this target: {} for the 4032/32K default
     // (and German via locale), not the stock-4K 2001 download — it is
