@@ -16,7 +16,7 @@ import { number } from "@8bitscript/i18n/number";
 import { messages } from "@8bitscript/i18n/messages";
 import { Game, Hint, Status } from "@8bitscript/i18n/catalog";
 import { System } from "@8bitscript/system";
-import { HEADER_INSET, headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "@lib/layout/layout.8bs";
+import { HEADER_INSET, SCORE_GAP, headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "@lib/layout/layout.8bs";
 import { host } from "@lib/host/host.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
@@ -83,10 +83,10 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
             }
         } else {
             if (#locale("de") && #system() != System.VIC20) {
-                text.print(headerAt + text.COLUMNS - HEADER_INSET - (Game.SCORE.length + SCORE_GROUP), Game.SCORE);
+                text.print(headerAt + text.COLUMNS - HEADER_INSET - (Game.SCORE.length + SCORE_GAP + SCORE_GROUP), Game.SCORE);
                 number.print(headerAt + text.COLUMNS - HEADER_INSET - SCORE_GROUP, score, SCORE_GROUP);
             } else {
-                text.print(headerAt + text.COLUMNS - HEADER_INSET - (Game.SCORE.length + SCORE_PAD), Game.SCORE);
+                text.print(headerAt + text.COLUMNS - HEADER_INSET - (Game.SCORE.length + SCORE_GAP + SCORE_PAD), Game.SCORE);
                 text.print(headerAt + text.COLUMNS - HEADER_INSET - SCORE_PAD, `${score:5}`);
             }
         }

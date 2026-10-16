@@ -46,6 +46,9 @@ export const COPYRIGHT_ON_HEADER: bool = true;
 // of running past it.
 export const HEADER_INSET: usmallint = 1; // 40 columns (a const cannot do arithmetic, 8BS3001); the 8032's 80 are not inset yet
 
+// A blank cell between the word SCORE and the number, on the header.
+export const SCORE_GAP: usmallint = 1;
+
 // No header art: the header row is all text and the board starts on the
 // row under it, so the marks (quadrant blocks here) could only land on
 // the name or the first tile — which is where they were, a stray block
