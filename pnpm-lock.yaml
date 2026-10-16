@@ -166,16 +166,10 @@ importers:
 
   .:
     dependencies:
-      '@8bitscript/audio':
-        specifier: 0.23.0
-        version: 0.23.0
       '@8bitscript/c64':
         specifier: 0.23.0
         version: 0.23.0
       '@8bitscript/cx16':
-        specifier: 0.23.0
-        version: 0.23.0
-      '@8bitscript/graphics':
         specifier: 0.23.0
         version: 0.23.0
       '@8bitscript/i18n':
@@ -194,9 +188,6 @@ importers:
         specifier: 0.23.0
         version: 0.23.0
       '@8bitscript/screen':
-        specifier: 0.23.0
-        version: 0.23.0
-      '@8bitscript/sprites':
         specifier: 0.23.0
         version: 0.23.0
       '@8bitscript/system':

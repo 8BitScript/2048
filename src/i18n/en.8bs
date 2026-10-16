@@ -20,6 +20,10 @@ export namespace Status {
     const MOVE: string = "ARROWS TO MOVE";
     const MOVE_TOUCH: string = "SWIPE OR ARROWS";
     const MOVE_SWIPE: string = "SWIPE TO MOVE";
+    // The VIC-20's footer: twelve cells beside the version.
+    const MOVE_SHORT: string = "USE ARROWS";
+    const MOVE_TOUCH_SHORT: string = "SWIPE, ARROW";
+    const MOVE_SWIPE_SHORT: string = "SWIPE";
 }
 
 export namespace Hint {

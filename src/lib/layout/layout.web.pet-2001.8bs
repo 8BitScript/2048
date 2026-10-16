@@ -33,10 +33,9 @@ export const COPYRIGHT_ON_HEADER: bool = true;
 export const HEADER_INSET: usmallint = 1; // the score ends over the last tile column (board: cols 1-38)
 export const SCORE_GAP: usmallint = 1; // SCORE 00000
 
-// Same as the PET: no room for the header art. See layout.pet.8bs.
-export const HEADER_ART: bool = false;
 export namespace board {
     const FULL_WIDTH: usmallint = 23;
+    const NARROW_WIDTH: usmallint = 19; // the VIC-20's board, read only where text.COLUMNS < FULL_WIDTH
 }
 
 // ---- the positions -------------------------------------------------------
@@ -74,8 +73,6 @@ export let scoreLabelAt: usmallint = 0;
 export let scoreValueAt: usmallint = 0;
 export let hintTopAt: usmallint = 0;
 export let hintBottomAt: usmallint = 0;
-export let titleArtX: usmallint = 16;
-export let titleArtY: usmallint = 0;
 
 // Every number above is the build's. The three game-over lines are the
 // only ones worked out here, and only because their length is the

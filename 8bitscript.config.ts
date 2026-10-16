@@ -13,7 +13,6 @@ export default {
   imports: {
     '@lib': 'src/lib',
     '@ui': 'src/ui',
-    '@media': 'src/media',
   },
   targets: {
     vic20: { hardware: { ram: '8k' } },
@@ -85,10 +84,25 @@ export default {
     // [earlier figure measured before the empty-tile change]; C64 9263,
     // VIC-20 5967, CX16 7239.
     //
+    // No sound and no header art (2026-10-15, workspace toolchain): the
+    // move sample and theme song (game.8ba) and the .8bg title and tile
+    // marks are gone, and with them the audio driver and the sprite
+    // layer. The 4032/32K default is 3326 program (78 RAM) from 6333 (93);
+    // German 3503 (80) from 6510 (95); C64 5484 (103) from 9263; VIC-20
+    // 8K 3639 (94) from 5967; CX16 4363 (170) from 7239. The stock-4K
+    // 2001 build is back within 26 bytes of fitting: it ends at $101A.
+    //
+    // The VIC-20 as a header and one footer row (2026-10-15, workspace
+    // toolchain): 4×4 tiles, rounded, empty ones blue, and the copyright
+    // handing the footer to the move hint and the version. VIC-20 8K 3874
+    // program (93 RAM) from 3639 (94); C64 5470 from 5484 and CX16 4357
+    // from 4363 (the score's space); PET unchanged. The unexpanded
+    // VIC-20 does not link: $1EFC, 252 bytes past $1E00 ($1E15 before).
+    //
     // `release` is what `8bs build --release` (the GitHub Release
     // workflow) builds for this target: {} for the 4032/32K default
-    // (and German via locale), not the stock-4K 2001 download — media
-    // no longer fits that machine.
+    // (and German via locale), not the stock-4K 2001 download — it is
+    // still 26 bytes too big for that machine.
     pet: {
       hardware: { model: '4032', ram: '32' },
       release: [{}, { locale: 'de' }],

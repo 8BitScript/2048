@@ -16,8 +16,10 @@ import { number } from "@8bitscript/i18n/number";
 import { messages } from "@8bitscript/i18n/messages";
 import { Game, Hint, Status } from "@8bitscript/i18n/catalog";
 import { System } from "@8bitscript/system";
-import { HEADER_INSET, SCORE_GAP, headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "@lib/layout/layout.8bs";
+import { HEADER_INSET, SCORE_GAP, board, headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "@lib/layout/layout.8bs";
 import { host } from "@lib/host/host.8bs";
+import { footerFree } from "@lib/text/copyright.8bs";
+import { VERSION } from "@lib/text/version.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const SCORE_PAD: utinyint = 5;
@@ -78,9 +80,15 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
                 text.print(headerAt + boardLeft + boardWidth - (Game.SCORE.length + SCORE_GROUP), Game.SCORE);
                 number.print(headerAt + boardLeft + boardWidth - SCORE_GROUP, score, SCORE_GROUP);
             } else {
-                text.print(headerAt + boardLeft + boardWidth - (Game.SCORE.length + SCORE_PAD), Game.SCORE);
+                text.print(headerAt + boardLeft + boardWidth - (Game.SCORE.length + 1 + SCORE_PAD), Game.SCORE);
                 text.print(headerAt + boardLeft + boardWidth - SCORE_PAD, `${score:5}`);
             }
+        } else if (text.COLUMNS < board.FULL_WIDTH) {
+            // The VIC-20's 22 columns: "SCORE 00000" ending on the board's
+            // right edge, over the last tile column, as the name starts on
+            // its left one.
+            text.print(headerAt + boardLeft + board.NARROW_WIDTH - (Game.SCORE.length + 1 + SCORE_PAD), Game.SCORE);
+            text.print(headerAt + boardLeft + board.NARROW_WIDTH - SCORE_PAD, `${score:5}`);
         } else {
             if (#locale("de") && #system() != System.VIC20) {
                 text.print(headerAt + text.COLUMNS - HEADER_INSET - (Game.SCORE.length + SCORE_GAP + SCORE_GROUP), Game.SCORE);
@@ -114,6 +122,31 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
                 }
             } else {
                 messages.clearLine(statusAt, FLUID_STATUS_WIDTH);
+            }
+        } else if (text.COLUMNS < board.FULL_WIDTH) {
+            // The VIC-20's footer, shared with the version, which ends on
+            // the board's right edge: the status gets the board's width
+            // less the version and a space between them, so short forms
+            // of every line. Nothing until the copyright has given the row
+            // up (lib/text/copyright.8bs) — the sweep's end prints it.
+            if (footerFree()) {
+                if (won) {
+                    messages.printLine(statusAt, Status.WON_COMPACT, board.NARROW_WIDTH - VERSION.length - 2);
+                } else if (!over) {
+                    if (#system() == System.WEB) {
+                        if (!host.touch()) {
+                            messages.printLine(statusAt, Status.MOVE_SHORT, board.NARROW_WIDTH - VERSION.length - 2);
+                        } else if (host.keyboard()) {
+                            messages.printLine(statusAt, Status.MOVE_TOUCH_SHORT, board.NARROW_WIDTH - VERSION.length - 2);
+                        } else {
+                            messages.printLine(statusAt, Status.MOVE_SWIPE_SHORT, board.NARROW_WIDTH - VERSION.length - 2);
+                        }
+                    } else {
+                        messages.printLine(statusAt, Status.MOVE_SHORT, board.NARROW_WIDTH - VERSION.length - 2);
+                    }
+                } else {
+                    messages.clearLine(statusAt, board.NARROW_WIDTH - VERSION.length - 2);
+                }
             }
         } else if (#system() == System.WEB) {
             if (won) {

@@ -19,6 +19,10 @@ export namespace Status {
     const MOVE: string = "PFEILE BEWEGEN";
     const MOVE_TOUCH: string = "WISCHEN, PFEILE";
     const MOVE_SWIPE: string = "WISCHEN BEWEGT";
+    // Die Fußzeile des VIC-20: zwölf Zellen neben der Version.
+    const MOVE_SHORT: string = "PFEILTASTEN";
+    const MOVE_TOUCH_SHORT: string = "WISCH, PFEIL";
+    const MOVE_SWIPE_SHORT: string = "WISCHEN";
 }
 
 export namespace Hint {

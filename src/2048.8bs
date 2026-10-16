@@ -7,15 +7,14 @@
 // Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see lib/game/rules.8bs.
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
-import { audio } from "@8bitscript/audio";
-import { graphics } from "@8bitscript/graphics";
 import { entropy } from "@8bitscript/random/entropy";
-import { theme } from "@media/game.8ba";
 import { computeLayout } from "@lib/layout/layout.8bs";
 import { wobble } from "@lib/raster/wobble.8bs";
 import { shown, resetGame } from "@lib/game/rules.8bs";
 import { turn } from "@lib/game/play.8bs";
-import { stepCopyright } from "@lib/text/copyright.8bs";
+import { text } from "@8bitscript/text";
+import { board } from "@lib/layout/layout.8bs";
+import { stepCopyright, footerDue } from "@lib/text/copyright.8bs";
 import { Screen } from "@ui/Screen.8bx";
 
 export function main(): void {
@@ -56,7 +55,6 @@ function begin(): void {
     waitFrame();
     input.poll();
     resetGame();
-    audio.music(theme);
     Screen();
 }
 
@@ -64,13 +62,20 @@ function frame(): void {
     waitFrame();
     input.poll();
     stepCopyright();
+    // The VIC-20's one footer row, handed from the copyright to the status
+    // line and the version the frame the sweep runs off its end (see
+    // lib/text/copyright.8bs). A build fact, so no other image tests it.
+    if (!screen.RESIZABLE && text.COLUMNS < board.FULL_WIDTH) {
+        if (footerDue) {
+            footerDue = false;
+            Screen();
+        }
+    }
     entropy.tick(); // keep the generator moving between moves — see spawnTile()
     // One step of the header's raster wobble — an empty call, deleted by
     // the compiler, everywhere the skin does not take the effect (see
     // lib/raster/wobble.8bs).
     wobble.step();
-    graphics.update();
-    audio.update();
 
     // The window resized or the phone rotated: every position lib/layout/
     // computed depends on the grid computeLayout() read, so
