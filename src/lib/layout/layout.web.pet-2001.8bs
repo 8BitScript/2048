@@ -65,13 +65,6 @@ export let statusAt: usmallint = 961;  // row 24, col 1 — directly under the b
 export let overAt: usmallint;        // row 6
 export let overPromptAt: usmallint;  // row 18 — "PRESS RETURN TO TRY AGAIN"
 export let overTouchAt: usmallint;   // row 18 — "TOUCH TO TRY AGAIN"
-// The fluid host's own: never WIDE here, and never read.
-export let wide: bool = true;
-export let titleNameAt: usmallint = 0;
-export let scoreLabelAt: usmallint = 0;
-export let scoreValueAt: usmallint = 0;
-export let hintTopAt: usmallint = 0;
-export let hintBottomAt: usmallint = 0;
 
 // Every number above is the build's. The three game-over lines are the
 // only ones worked out here, and only because their length is the

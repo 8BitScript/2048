@@ -122,37 +122,24 @@ export namespace board {
 
 // ---- the board on the fluid host ------------------------------------------
 //
-// A landscape window has columns to spare and rows are the scarce thing:
-// the WIDE arrangement (a HUD down the side margins) spends those spare
-// columns on the HUD so every row goes to the board. It holds at any
-// width the WIDE board plus its margins fits in — 48 columns and up, this
-// host's original baseline. A portrait phone inverts that: the live grid
-// can drop to 24 columns while rows are plentiful, so below the threshold
-// the NARROW arrangement takes over — the fixed grids' own shape, a
-// header row above the board and a status row below.
-//
-// Neither arrangement's tile size is fixed: fluidLayout() takes the
-// biggest square that fits four of it plus gaps on both axes, after that
-// arrangement's HUD. The side stays even — a block digit is two cells
-// wide, and a printed "2048" is four — so every digit count from one to
-// four centres. An odd side would park "2048" against the left edge of
-// the square (the leftover cell falls to the right).
-const WIDE_MIN_COLUMNS: usmallint = 48;
-// Columns reserved outside the WIDE board for the side margins — 6 for
-// the widest field (the grouped score) plus a gap column on the right,
-// 6 on the left for symmetry: 13, exactly what the original 48-wide,
-// 35-board design left over. The wide arrangement spends no rows on the
-// HUD but the footer under the board — the copyright, then the version —
-// so the board is measured above it.
-const WIDE_MARGIN_COLUMNS: usmallint = 13;
+// One arrangement at every shape the window takes, the fixed grids' own: a
+// header row, a blank row, the board, a blank row, the footer. (There was
+// a second, for landscape windows, with the name, the score and a hint
+// stacked two lines apiece in the side margins; it went on 2026-10-15 so
+// no screen anywhere carries text two lines deep.) The tile size is not
+// fixed: fluidLayout() takes the biggest square that fits four of it plus
+// gaps on both axes, after the header and the footer. The side stays even
+// — a block digit is two cells wide, and a printed "2048" is four — so
+// every digit count from one to four centres. An odd side would park
+// "2048" against the left edge of the square (the leftover cell falls to
+// the right).
 // The smallest square that still holds "2048" as four printed digits, and
-// the largest either arrangement will pick, so a huge window doesn't get
+// the largest the host will pick, so a huge window doesn't get
 // a comically large board. Below 8 the block-digit font does not fit and
 // the tile prints its number instead — see blockDigitsFit().
 const SQUARE_MIN: usmallint = 4;
 const SQUARE_MAX: usmallint = 14;
 const BLOCK_DIGIT_MIN: usmallint = 8;
-const RIGHT_HUD_WIDTH: utinyint = 6; // the grouped score — the widest field rightAt anchors
 
 // ---- the positions -------------------------------------------------------
 //
@@ -180,20 +167,10 @@ export let overAt: usmallint;
 export let overPromptAt: usmallint;
 export let overTouchAt: usmallint; // the web's "TOUCH TO TRY AGAIN" — a different length
 
-// The fluid host alone. Which arrangement this frame is in — a `let`, not
-// a `const`: it depends on the live rowWidth.
-export let wide: bool;
+// The fluid host alone.
 export let rowWidth: usmallint; // this frame's row width, so cell = y * rowWidth + x
 let gridRows: usmallint;        // this frame's row count
 let boardHeight: usmallint;
-// WIDE-only HUD positions (the side margins): the name level with the
-// board's top and left of it, the score label and value right of it, and
-// two 5-column hint lines against the board's last two rows.
-export let titleNameAt: usmallint;
-export let scoreLabelAt: usmallint;
-export let scoreValueAt: usmallint;
-export let hintTopAt: usmallint;
-export let hintBottomAt: usmallint;
 
 // Once, before the loop, on a fixed grid; again on every resize on the
 // fluid host. Both arms in one function rather than a call into each:
@@ -308,24 +285,13 @@ function fluidLayout(): void {
     let rows: usmallint = text.rows();
     gridRows = rows;
 
-    wide = rowWidth >= WIDE_MIN_COLUMNS;
-    // One side for both axes. The HUD sits beside the board in the wide
-    // arrangement and above and below it in the narrow one, so only that
-    // axis gives up cells before the square is measured. Both keep a
-    // footer row under the board, a blank row between — the copyright,
-    // then the version (and the move hint, in the narrow one) — and the
-    // narrow one a header row and a blank row above it too.
+    // One side for both axes. The header and the footer, each with a
+    // blank row between it and the board, take four rows before the
+    // square is measured; the columns are all the board's.
     let wBudget: usmallint = rowWidth;
     let hBudget: usmallint = rows;
-    if (rows > 2) {
-        hBudget = rows - 2;
-    }
-    if (wide) {
-        if (rowWidth > WIDE_MARGIN_COLUMNS) {
-            wBudget = rowWidth - WIDE_MARGIN_COLUMNS;
-        }
-    } else if (hBudget > 2) {
-        hBudget = hBudget - 2;
+    if (rows > 4) {
+        hBudget = rows - 4;
     }
     let wFit: usmallint = SQUARE_MIN;
     if (wBudget > 3) {
@@ -364,53 +330,17 @@ function fluidLayout(): void {
         boardWidth = rowWidth;
     }
 
-    if (wide) {
-        boardTop = 0;
-        if (hBudget > boardHeight) {
-            boardTop = (hBudget - boardHeight) >> 1;
-        }
-        statusAt = footerRow(boardTop + boardHeight + 1, rows) * rowWidth + boardLeft;
-        // One clear column past the board's right edge, where the HUD's
-        // right half lives — clamped so the widest field anchored there
-        // (the grouped score, 6 characters) never writes past the row's
-        // own right edge; at the 48-column baseline it lands exactly on 48.
-        let rightAt: usmallint = boardLeft + boardWidth + 1;
-        if (rightAt + RIGHT_HUD_WIDTH > rowWidth) {
-            if (rowWidth > RIGHT_HUD_WIDTH) {
-                rightAt = rowWidth - RIGHT_HUD_WIDTH;
-            } else {
-                rightAt = 0;
-            }
-        }
-        titleNameAt = boardTop * rowWidth + 1;
-        scoreLabelAt = boardTop * rowWidth + rightAt;
-        scoreValueAt = (boardTop + 1) * rowWidth + rightAt;
-        // The hint rows are the board's last two; a grid shorter than the
-        // board's footprint pushes both onto the last live row instead of
-        // past it.
-        let hintTopRow: usmallint = boardTop + boardHeight - 2;
-        if (hintTopRow >= rows) {
-            hintTopRow = rows - 1;
-        }
-        let hintBottomRow: usmallint = boardTop + boardHeight - 1;
-        if (hintBottomRow >= rows) {
-            hintBottomRow = rows - 1;
-        }
-        hintTopAt = hintTopRow * rowWidth + rightAt;
-        hintBottomAt = hintBottomRow * rowWidth + rightAt;
-    } else {
-        // The fixed grids' own shape: a header row, a blank row, the board,
-        // a blank row, the footer — centred, packed from the top when the
-        // grid is shorter than the stack.
-        let totalHeight: usmallint = boardHeight + 4;
-        let headerRow: usmallint = 0;
-        if (rows > totalHeight) {
-            headerRow = (rows - totalHeight) >> 1;
-        }
-        headerAt = headerRow * rowWidth;
-        boardTop = headerRow + 2;
-        statusAt = footerRow(boardTop + boardHeight + 1, rows) * rowWidth + boardLeft;
+    // The fixed grids' own shape: a header row, a blank row, the board,
+    // a blank row, the footer — centred, packed from the top when the
+    // grid is shorter than the stack.
+    let totalHeight: usmallint = boardHeight + 4;
+    let headerRow: usmallint = 0;
+    if (rows > totalHeight) {
+        headerRow = (rows - totalHeight) >> 1;
     }
+    headerAt = headerRow * rowWidth;
+    boardTop = headerRow + 2;
+    statusAt = footerRow(boardTop + boardHeight + 1, rows) * rowWidth + boardLeft;
 
     // The game-over lines, in the gap rows tileCell() already knows.
     overAt = tileCell(1, 0) - rowWidth - boardLeft + ((rowWidth - Game.GAME_OVER.length) >> 1);
