@@ -49,12 +49,6 @@ export const HEADER_INSET: usmallint = 1; // 40 columns (a const cannot do arith
 // A blank cell between the word SCORE and the number, on the header.
 export const SCORE_GAP: usmallint = 1;
 
-// No header art: the header row is all text and the board starts on the
-// row under it, so the marks (quadrant blocks here) could only land on
-// the name or the first tile — which is where they were, a stray block
-// left of the top-left tile. Off, the build is 436 bytes smaller.
-export const HEADER_ART: bool = false;
-
 // Always block digits — an 8-wide tile has room for four of them, which
 // is the whole point of this arrangement. lib/draw/tile.pet.8bs stamps
 // them into video RAM, so neither of these is read on a PET build.
@@ -105,8 +99,6 @@ export let scoreLabelAt: usmallint;
 export let scoreValueAt: usmallint;
 export let hintTopAt: usmallint;
 export let hintBottomAt: usmallint;
-export let titleArtX: usmallint;
-export let titleArtY: usmallint;
 
 // Only the four a PET build reads and that are not zero are stored.
 // A store to a let nothing reads is still a store, and keeps the let in
@@ -121,8 +113,6 @@ export let titleArtY: usmallint;
 // bytes and 2 of RAM.
 export function computeLayout(): void {
     boardLeft = (ROW - BOARD_WIDTH) >> 1; // 1, or 21 on 80 columns — equal margins
-    titleArtX = boardLeft * Video.BLOCK_WIDTH;
-    titleArtY = 0;
     statusAt = 24 * ROW + ((ROW - BOARD_WIDTH) >> 1);
     // Centred on the screen, from the length of the string a build prints,
     // so a translation moves the line with the words.
