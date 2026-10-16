@@ -4,19 +4,17 @@
 // where the lines land is the layout's (lib/layout/, and its PET and
 // PET-replica twins).
 //
-// Two arrangements, and lib/layout/layout.8bs says which: a header row above the
-// board and a status row below it — every fixed grid, and the fluid web
-// host when its window is narrow — or, when the fluid host is WIDE, the
-// name, the score and a two-line hint in the margins beside the board,
-// where the spare columns are. FLUID is a build-time constant, so a fixed
-// grid's image carries only the header/status arm.
+// One arrangement on every skin: the name and the score on a header row
+// above the board, and the status on the footer row below it — which the
+// PET shares with the version from the first frame, and every other skin
+// only once the copyright has left it (lib/text/copyright.8bs).
 import { screen, BorderColor } from "@8bitscript/screen";
 import { text, TextColor } from "@8bitscript/text";
 import { number } from "@8bitscript/i18n/number";
 import { messages } from "@8bitscript/i18n/messages";
-import { Game, Hint, Status } from "@8bitscript/i18n/catalog";
+import { Game, Status } from "@8bitscript/i18n/catalog";
 import { System } from "@8bitscript/system";
-import { COPYRIGHT_ON_HEADER, HEADER_INSET, SCORE_GAP, headerAt, statusAt, boardLeft, boardWidth, wide, titleNameAt, scoreLabelAt, scoreValueAt, hintTopAt, hintBottomAt } from "@lib/layout/layout.8bs";
+import { COPYRIGHT_ON_HEADER, HEADER_INSET, SCORE_GAP, headerAt, statusAt, boardLeft, boardWidth } from "@lib/layout/layout.8bs";
 import { host } from "@lib/host/host.8bs";
 import { footerFree } from "@lib/text/copyright.8bs";
 
@@ -24,7 +22,6 @@ const FLUID: bool = screen.RESIZABLE;
 const SCORE_PAD: utinyint = 5;
 const SCORE_GROUP: utinyint = 6;
 const REPLICA_STATUS_WIDTH: utinyint = 19;
-const HINT_WIDTH: utinyint = 5;
 // The footer's status field: the VIC-20's 19-column board less "v0.8.6"
 // and a space. Every short line in src/i18n/ fits it.
 const FOOTER_STATUS_WIDTH: utinyint = 12;
@@ -33,135 +30,100 @@ const FOOTER_STATUS_WIDTH: utinyint = 12;
 // the unexpanded VIC-20 does not, so it keeps `${score:5}` like English.
 
 export component ScoreBar(score: usmallint, over: bool, won: bool) {
-    if (FLUID && wide) {
+    if (FLUID) {
         text.setReverse(false);
-        text.setColor(TextColor.WHITE);
-        text.print(titleNameAt, Game.NAME);
-        text.print(scoreLabelAt, Game.SCORE);
+    }
+    text.setColor(TextColor.WHITE);
+    text.print(headerAt + boardLeft, Game.NAME);
+    if (COPYRIGHT_ON_HEADER) {
+        // The PET arrangement: the score against the screen's edge,
+        // inset by HEADER_INSET to the board's.
         if (#locale("de") && #system() != System.VIC20) {
-            number.print(scoreValueAt, score, SCORE_GROUP);
+            text.print(headerAt + text.COLUMNS - HEADER_INSET - (Game.SCORE.length + SCORE_GAP + SCORE_GROUP), Game.SCORE);
+            number.print(headerAt + text.COLUMNS - HEADER_INSET - SCORE_GROUP, score, SCORE_GROUP);
         } else {
-            text.print(scoreValueAt, `${score:5}`);
-        }
-        // Always write both hint lines, never just leave them: the branch
-        // that printed nothing is what used to strand "YOU MADE 2048" on
-        // screen across a restart, and would now strand the move hint
-        // through a game over. Both input methods are real possibilities
-        // on this host (a touchscreen laptop has both; a mouse drags a
-        // swipe too), so the hint names both — unless the host says there
-        // is nothing to press an arrow on (a tablet in the hands), and
-        // then it names the one there is. Asked at every print, not once:
-        // the answer changes the moment a plugged-in keyboard sends a key.
-        if (won) {
-            messages.printLine(hintTopAt, Hint.SWIPE, HINT_WIDTH);
-            messages.printLine(hintBottomAt, Hint.WIN, HINT_WIDTH);
-        } else if (!over) {
-            messages.printLine(hintTopAt, Hint.SWIPE, HINT_WIDTH);
-            if (host.keyboard()) {
-                messages.printLine(hintBottomAt, Hint.ARROW, HINT_WIDTH);
-            } else {
-                messages.clearLine(hintBottomAt, HINT_WIDTH);
-            }
-        } else {
-            messages.clearLine(hintTopAt, HINT_WIDTH);
-            messages.clearLine(hintBottomAt, HINT_WIDTH);
+            text.print(headerAt + text.COLUMNS - HEADER_INSET - (Game.SCORE.length + SCORE_GAP + SCORE_PAD), Game.SCORE);
+            text.print(headerAt + text.COLUMNS - HEADER_INSET - SCORE_PAD, `${score:5}`);
         }
     } else {
-        if (FLUID) {
-            text.setReverse(false);
+        // Every other skin: "SCORE 00000" ending on the board's right
+        // edge, over the last tile column, as the name starts on its
+        // left one — on the fluid host too, whatever margin a wide
+        // window happens to have.
+        if (#locale("de") && #system() != System.VIC20) {
+            text.print(headerAt + boardLeft + boardWidth - (Game.SCORE.length + 1 + SCORE_GROUP), Game.SCORE);
+            number.print(headerAt + boardLeft + boardWidth - SCORE_GROUP, score, SCORE_GROUP);
+        } else {
+            text.print(headerAt + boardLeft + boardWidth - (Game.SCORE.length + 1 + SCORE_PAD), Game.SCORE);
+            text.print(headerAt + boardLeft + boardWidth - SCORE_PAD, `${score:5}`);
         }
-        text.setColor(TextColor.WHITE);
-        text.print(headerAt + boardLeft, Game.NAME);
-        if (COPYRIGHT_ON_HEADER) {
-            // The PET arrangement: the score against the screen's edge,
-            // inset by HEADER_INSET to the board's.
-            if (#locale("de") && #system() != System.VIC20) {
-                text.print(headerAt + text.COLUMNS - HEADER_INSET - (Game.SCORE.length + SCORE_GAP + SCORE_GROUP), Game.SCORE);
-                number.print(headerAt + text.COLUMNS - HEADER_INSET - SCORE_GROUP, score, SCORE_GROUP);
+    }
+    // The status line does not announce the end of the game —
+    // <GameOver /> does — so it goes blank rather than keeping the move
+    // hint up under a board that cannot move. Always write it, never
+    // just leave it: the branch that printed nothing is what strands
+    // a message across a restart. Widths are the layout's, not a
+    // translated blank. The wording is the machine's: on the web it
+    // is the host's — both swipe and arrows wherever both work (a
+    // mouse drags a swipe too), swipe alone on a phone or a tablet in
+    // the hands, where there are no arrows to press. Asked at every
+    // print: a keyboard plugged into a tablet changes the answer.
+    if (COPYRIGHT_ON_HEADER) {
+        // The PET arrangement, and the web's replica of it.
+        if (#system() == System.WEB) {
+            if (won) {
+                messages.printLine(statusAt, Status.WON, REPLICA_STATUS_WIDTH);
+            } else if (!over) {
+                if (!host.touch()) {
+                    messages.printLine(statusAt, Status.MOVE, REPLICA_STATUS_WIDTH);
+                } else if (host.keyboard()) {
+                    messages.printLine(statusAt, Status.MOVE_TOUCH, REPLICA_STATUS_WIDTH);
+                } else {
+                    messages.printLine(statusAt, Status.MOVE_SWIPE, REPLICA_STATUS_WIDTH);
+                }
             } else {
-                text.print(headerAt + text.COLUMNS - HEADER_INSET - (Game.SCORE.length + SCORE_GAP + SCORE_PAD), Game.SCORE);
-                text.print(headerAt + text.COLUMNS - HEADER_INSET - SCORE_PAD, `${score:5}`);
+                messages.clearLine(statusAt, REPLICA_STATUS_WIDTH);
             }
         } else {
-            // Every other skin: "SCORE 00000" ending on the board's right
-            // edge, over the last tile column, as the name starts on its
-            // left one — on the fluid host too, whatever margin a wide
-            // window happens to have.
-            if (#locale("de") && #system() != System.VIC20) {
-                text.print(headerAt + boardLeft + boardWidth - (Game.SCORE.length + 1 + SCORE_GROUP), Game.SCORE);
-                number.print(headerAt + boardLeft + boardWidth - SCORE_GROUP, score, SCORE_GROUP);
+            // One print, no printLine. The 4K PET cannot afford the
+            // helper; WON and MOVE are the same width (14).
+            if (won) {
+                text.print(statusAt, Status.WON);
+            } else if (!over) {
+                text.print(statusAt, Status.MOVE);
             } else {
-                text.print(headerAt + boardLeft + boardWidth - (Game.SCORE.length + 1 + SCORE_PAD), Game.SCORE);
-                text.print(headerAt + boardLeft + boardWidth - SCORE_PAD, `${score:5}`);
+                text.print(statusAt, "              ");
             }
         }
-        // The status line does not announce the end of the game —
-        // <GameOver /> does — so it goes blank rather than keeping the move
-        // hint up under a board that cannot move. Always write it, never
-        // just leave it: the branch that printed nothing is what strands
-        // a message across a restart. Widths are the layout's, not a
-        // translated blank. The wording is the machine's: on the web it
-        // is the host's — both swipe and arrows wherever both work (a
-        // mouse drags a swipe too), swipe alone on a phone or a tablet in
-        // the hands, where there are no arrows to press. Asked at every
-        // print: a keyboard plugged into a tablet changes the answer.
-        if (COPYRIGHT_ON_HEADER) {
-            // The PET arrangement, and the web's replica of it.
-            if (#system() == System.WEB) {
-                if (won) {
-                    messages.printLine(statusAt, Status.WON, REPLICA_STATUS_WIDTH);
-                } else if (!over) {
-                    if (!host.touch()) {
-                        messages.printLine(statusAt, Status.MOVE, REPLICA_STATUS_WIDTH);
-                    } else if (host.keyboard()) {
-                        messages.printLine(statusAt, Status.MOVE_TOUCH, REPLICA_STATUS_WIDTH);
-                    } else {
-                        messages.printLine(statusAt, Status.MOVE_SWIPE, REPLICA_STATUS_WIDTH);
-                    }
+    } else if (footerFree()) {
+        // The footer, shared with the version, which ends on the
+        // board's right edge: the status gets the narrowest board's
+        // width (the VIC-20's 19) less the version and a space, so
+        // short forms of every line. Nothing until the copyright has
+        // given the row up (lib/text/copyright.8bs) — the sweep's end
+        // prints it.
+        if (won) {
+            messages.printLine(statusAt, Status.WON_COMPACT, FOOTER_STATUS_WIDTH);
+        } else if (!over) {
+            if (FLUID) {
+                if (host.keyboard()) {
+                    messages.printLine(statusAt, Status.MOVE_TOUCH_SHORT, FOOTER_STATUS_WIDTH);
                 } else {
-                    messages.clearLine(statusAt, REPLICA_STATUS_WIDTH);
+                    messages.printLine(statusAt, Status.MOVE_SWIPE_SHORT, FOOTER_STATUS_WIDTH);
                 }
-            } else {
-                // One print, no printLine. The 4K PET cannot afford the
-                // helper; WON and MOVE are the same width (14).
-                if (won) {
-                    text.print(statusAt, Status.WON);
-                } else if (!over) {
-                    text.print(statusAt, Status.MOVE);
-                } else {
-                    text.print(statusAt, "              ");
-                }
-            }
-        } else if (footerFree()) {
-            // The footer, shared with the version, which ends on the
-            // board's right edge: the status gets the narrowest board's
-            // width (the VIC-20's 19) less the version and a space, so
-            // short forms of every line. Nothing until the copyright has
-            // given the row up (lib/text/copyright.8bs) — the sweep's end
-            // prints it.
-            if (won) {
-                messages.printLine(statusAt, Status.WON_COMPACT, FOOTER_STATUS_WIDTH);
-            } else if (!over) {
-                if (FLUID) {
-                    if (host.keyboard()) {
-                        messages.printLine(statusAt, Status.MOVE_TOUCH_SHORT, FOOTER_STATUS_WIDTH);
-                    } else {
-                        messages.printLine(statusAt, Status.MOVE_SWIPE_SHORT, FOOTER_STATUS_WIDTH);
-                    }
-                } else if (#system() == System.WEB) {
-                    if (!host.touch()) {
-                        messages.printLine(statusAt, Status.MOVE_SHORT, FOOTER_STATUS_WIDTH);
-                    } else if (host.keyboard()) {
-                        messages.printLine(statusAt, Status.MOVE_TOUCH_SHORT, FOOTER_STATUS_WIDTH);
-                    } else {
-                        messages.printLine(statusAt, Status.MOVE_SWIPE_SHORT, FOOTER_STATUS_WIDTH);
-                    }
-                } else {
+            } else if (#system() == System.WEB) {
+                if (!host.touch()) {
                     messages.printLine(statusAt, Status.MOVE_SHORT, FOOTER_STATUS_WIDTH);
+                } else if (host.keyboard()) {
+                    messages.printLine(statusAt, Status.MOVE_TOUCH_SHORT, FOOTER_STATUS_WIDTH);
+                } else {
+                    messages.printLine(statusAt, Status.MOVE_SWIPE_SHORT, FOOTER_STATUS_WIDTH);
                 }
             } else {
-                messages.clearLine(statusAt, FOOTER_STATUS_WIDTH);
+                messages.printLine(statusAt, Status.MOVE_SHORT, FOOTER_STATUS_WIDTH);
             }
+        } else {
+            messages.clearLine(statusAt, FOOTER_STATUS_WIDTH);
         }
     }
     if (FLUID) {

@@ -26,12 +26,6 @@ export namespace Status {
     const MOVE_SWIPE_SHORT: string = "SWIPE";
 }
 
-export namespace Hint {
-    const SWIPE: string = "SWIPE";
-    const ARROW: string = "ARROW";
-    const WIN: string = "WIN!";
-}
-
 export namespace Copyright {
     const LINE: string = " C  2026 8BITSCRIPT";
     const WORD: string = "COPYRIGHT 2026 8BITSCRIPT";

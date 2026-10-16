@@ -8,8 +8,8 @@
 //
 // The same surface as layout.8bs — the elements in ui/ import these
 // names and never a twin's own — and only the ones a PET build reads
-// are assigned: the fluid host's own lets (wide, rowWidth, the WIDE
-// arrangement's HUD cells) exist so the imports resolve, and are pruned
+// are assigned: the fluid host's own let (rowWidth) exists so the
+// imports resolve, and is pruned
 // because nothing this build takes ever reads them. No let carries an
 // initializer: an initializer is a store in the image whether or not
 // the let survives, and computeLayout() runs before anything reads one.
@@ -92,13 +92,7 @@ export let overAt: usmallint;        // row 6: "GAME OVER", centred
 export let overPromptAt: usmallint;  // row 18: "PRESS RETURN TO TRY AGAIN", centred
 export let overTouchAt: usmallint;   // the web's; never read here
 // The fluid host's own: never read on a PET build.
-export let wide: bool;
 export let rowWidth: usmallint;
-export let titleNameAt: usmallint;
-export let scoreLabelAt: usmallint;
-export let scoreValueAt: usmallint;
-export let hintTopAt: usmallint;
-export let hintBottomAt: usmallint;
 
 // Only the four a PET build reads and that are not zero are stored.
 // A store to a let nothing reads is still a store, and keeps the let in
