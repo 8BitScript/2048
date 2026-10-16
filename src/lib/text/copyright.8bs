@@ -12,12 +12,9 @@
 // resize or a new game included, and the header is the name and the score.
 //
 // One cell a frame is nineteen frames, a third of a second at 60 Hz, which
-// is long enough to read as a cursor and short enough not to hold the
-// next move up. Every waitFrame() here has an input.poll() right behind
-// it: on the PET reading the keyboard matrix is what clears the retrace
-// flag (see lib/game/play.8bs's animateMove). A press during the sweep is
-// dropped, not kept for the turn after — each poll() replaces what began
-// — the same as a press during a slide.
+// is long enough to read as a cursor. It runs alongside the game, not in
+// front of it: a move during the sweep is taken, and the slide does not
+// wait for the cursor (stepCopyright() is one frame of it).
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
@@ -73,35 +70,46 @@ export function copyrightAt(): usmallint {
     return (Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.LINE.length) >> 1);
 }
 
-// Takes the line down: a reverse-video block runs along it from the left,
-// one cell a frame, blanking the cell it just left, and runs one cell off
-// the end — into the blank every skin keeps after the line — so the loop
-// has no first or last case to test for. The flag is set first, so a
-// Screen() during or after the sweep never puts the line back. One
-// counting cell and one countdown rather than `at + i`: three 16-bit
-// adds a frame were 60 bytes on the PET (measured 2026-10-12, 189 → the
-// figure in 8bitscript.config.ts).
+// Takes the line down, a frame at a time: a reverse-video block runs along
+// it from the left, one cell a frame, blanking the cell it just left, and
+// runs one cell off the end — into the blank every skin keeps after the
+// line — so the sweep has no first or last case to test for.
+// dismissCopyright() only starts it; stepCopyright() is one frame of it,
+// called from the frame loop (2048.8bs) and from the slide's own frames
+// (lib/game/play.8bs), so the player can keep moving while it runs. The
+// flag is set first, so a Screen() during or after the sweep never puts
+// the line back. Reverse video is switched off again after every cell,
+// because the board is drawn between frames. One counting cell and one
+// countdown rather than `at + i`: three 16-bit adds a frame were 60 bytes
+// on the PET (measured 2026-10-12, 189 → the figure in
+// 8bitscript.config.ts).
+//
+// No initializer on either: zero is "not sweeping".
+let sweepCell: usmallint;
+let sweepLeft: utinyint;
+
 export function dismissCopyright(): void {
     copyrightDismissed = true;
     if (!copyrightFits()) {
         return;
     }
-    let cell: usmallint = copyrightAt();
-    let left: utinyint = copyrightWidth();
+    sweepCell = copyrightAt();
+    sweepLeft = copyrightWidth() + 1;
     text.setReverse(true);
-    text.putChar(cell, SPACE);
-    while (left > 0) {
-        waitFrame();
-        input.poll();
-        text.setReverse(false);
-        text.putChar(cell, SPACE);
-        cell = cell + 1;
-        text.setReverse(true);
-        text.putChar(cell, SPACE);
-        left = left - 1;
-    }
-    waitFrame();
-    input.poll();
+    text.putChar(sweepCell, SPACE);
     text.setReverse(false);
-    text.putChar(cell, SPACE);
+}
+
+export function stepCopyright(): void {
+    if (sweepLeft == 0) {
+        return;
+    }
+    text.putChar(sweepCell, SPACE);
+    sweepLeft = sweepLeft - 1;
+    if (sweepLeft > 0) {
+        sweepCell = sweepCell + 1;
+        text.setReverse(true);
+        text.putChar(sweepCell, SPACE);
+        text.setReverse(false);
+    }
 }

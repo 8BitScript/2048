@@ -79,6 +79,12 @@ export default {
     // (lib/draw/tile.pet.8bs, 2026-10-14): the 4032/32K default is 6343
     // program (90 RAM) from 6458 (94).
     //
+    // The copyright sweep a frame at a time instead of blocking
+    // (lib/text/copyright.8bs, 2026-10-15): the 4032/32K default is 6333
+    // program (93 RAM) from 6343 (90), German 6510 (95) from 6635 (96)
+    // [earlier figure measured before the empty-tile change]; C64 9263,
+    // VIC-20 5967, CX16 7239.
+    //
     // `release` is what `8bs build --release` (the GitHub Release
     // workflow) builds for this target: {} for the 4032/32K default
     // (and German via locale), not the stock-4K 2001 download — media
