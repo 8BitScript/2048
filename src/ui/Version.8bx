@@ -1,12 +1,14 @@
 // The version, flush right on the last row (to the board's right edge where
-// the layout insets the score, HEADER_INSET): a "v" and then package.json's
+// the layout insets the score, HEADER_INSET, and on the VIC-20's narrow
+// board, after the copyright has left the row): a "v" and then package.json's
 // number. On the PET that row is also the status line; the status text
 // starts at the board's left and does not reach this field.
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { Video } from "@8bitscript/system";
 import { VERSION } from "@lib/text/version.8bs";
-import { HEADER_INSET } from "@lib/layout/layout.8bs";
+import { HEADER_INSET, board, boardLeft } from "@lib/layout/layout.8bs";
+import { footerFree } from "@lib/text/copyright.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
@@ -18,6 +20,14 @@ export component Version() {
         let cell: usmallint = (rows - 1) * cols + cols - VERSION.length - 1;
         text.print(cell, "v");
         text.print(cell + 1, VERSION);
+    } else if (text.COLUMNS < board.FULL_WIDTH) {
+        // The VIC-20's footer: ending on the board's right edge, once the
+        // copyright has given the row up (lib/text/copyright.8bs).
+        if (footerFree()) {
+            let cell: usmallint = (Video.ROWS - 1) * ROW + boardLeft + board.NARROW_WIDTH - VERSION.length - 1;
+            text.print(cell, "v");
+            text.print(cell + 1, VERSION);
+        }
     } else {
         let cell: usmallint = (Video.ROWS - 1) * ROW + text.COLUMNS - HEADER_INSET - VERSION.length - 1;
         text.print(cell, "v");

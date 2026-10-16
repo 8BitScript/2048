@@ -1,7 +1,9 @@
 // The port's own line, up from the first frame until the first move that
 // changes the board, when lib/text/copyright.8bs sweeps it away. On every
-// skin but the PET it is centred on the second-to-last row, so the version
-// keeps the last one. On the PET the 8×5 board already uses every other
+// skin but the PET and the VIC-20 it is centred on the second-to-last row,
+// so the version keeps the last one. On the VIC-20 it holds the one footer
+// row alone, from the board's left edge to its right, until the sweep
+// hands the row to the status line and the version. On the PET the 8×5 board already uses every other
 // row, so the line sits on the header between the name and the score
 // (COPYRIGHT_ON_HEADER). The original game's author and repo are credited
 // in README.md rather than on screen.

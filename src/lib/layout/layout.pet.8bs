@@ -59,6 +59,7 @@ export function blockDigitsFit(): bool {
 
 export namespace board {
     const FULL_WIDTH: usmallint = 23; // ui/GameOver.8bx's narrow test — never narrow here
+    const NARROW_WIDTH: usmallint = 19; // the VIC-20's board, read only where text.COLUMNS < FULL_WIDTH
 }
 
 // ---- the positions -------------------------------------------------------

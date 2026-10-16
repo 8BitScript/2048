@@ -276,8 +276,10 @@ prints a `v` and then the number on the last row.
   compiler's 0.2.3 leaner 6502 codegen; helpers that would otherwise be
   inlined into `main` four times stay as calls). That is what fits a
   stock 4K 2001.
-- **Nothing is wider than a VIC-20's 22 columns.** The HUD line is 17
-  characters, the board's widest row 19, the dashed rule 20 — checked by
+- **Nothing is wider than a VIC-20's 22 columns.** The header is 19
+  characters, the board's widest row 19, and the one footer row 19 —
+  the copyright until the first move, then the move hint and the
+  version — checked by
   actually running it there (`pnpm run start:vic20`). The VIC-20 is the
   floor of width the way the 4K PET is the floor of RAM: a layout is
   checked against the narrowest grid first, and then it fits every

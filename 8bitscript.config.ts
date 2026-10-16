@@ -92,6 +92,13 @@ export default {
     // 8K 3639 (94) from 5967; CX16 4363 (170) from 7239. The stock-4K
     // 2001 build is back within 26 bytes of fitting: it ends at $101A.
     //
+    // The VIC-20 as a header and one footer row (2026-10-15, workspace
+    // toolchain): 4×4 tiles, rounded, empty ones blue, and the copyright
+    // handing the footer to the move hint and the version. VIC-20 8K 3874
+    // program (93 RAM) from 3639 (94); C64 5470 from 5484 and CX16 4357
+    // from 4363 (the score's space); PET unchanged. The unexpanded
+    // VIC-20 does not link: $1EFC, 252 bytes past $1E00 ($1E15 before).
+    //
     // `release` is what `8bs build --release` (the GitHub Release
     // workflow) builds for this target: {} for the 4032/32K default
     // (and German via locale), not the stock-4K 2001 download — it is

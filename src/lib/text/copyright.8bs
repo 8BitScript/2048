@@ -20,7 +20,7 @@ import { screen } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
 import { System, Video } from "@8bitscript/system";
 import { Game, Copyright as Copy } from "@8bitscript/i18n/catalog";
-import { COPYRIGHT_ON_HEADER, boardLeft, headerAt } from "@lib/layout/layout.8bs";
+import { COPYRIGHT_ON_HEADER, board, boardLeft, headerAt } from "@lib/layout/layout.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
@@ -51,13 +51,17 @@ export function copyrightFits(): bool {
 }
 
 // The line's first cell. On the PET's header it follows the name
-// (COPYRIGHT_ON_HEADER); on the fluid host it is centred on the
+// (COPYRIGHT_ON_HEADER); on the VIC-20's one footer row it starts at the
+// board's left edge and, at 19 cells, ends on its right one; on the fluid host it is centred on the
 // second-to-last row of whatever grid the window has now; on every other
 // fixed grid it is centred on the second-to-last row, which folds to one
 // literal per build.
 export function copyrightAt(): usmallint {
     if (COPYRIGHT_ON_HEADER) {
         return headerAt + boardLeft + Game.NAME.length + 1;
+    }
+    if (!FLUID && text.COLUMNS < board.FULL_WIDTH) {
+        return (Video.ROWS - 1) * ROW + boardLeft;
     }
     if (FLUID) {
         let cols: usmallint = text.columns();
@@ -88,6 +92,18 @@ export function copyrightAt(): usmallint {
 let sweepCell: usmallint;
 let sweepLeft: utinyint;
 
+// The VIC-20's footer is one row: the copyright's until the sweep has run
+// off its end, the status line's and the version's after. ui/ScoreBar.8bx
+// and ui/Version.8bx print there only once footerFree(), and the sweep's
+// last step raises footerDue so the frame loop (2048.8bs) puts them up —
+// a Screen() during the sweep would have them erased by the cursor. Never
+// raised anywhere else; the test that raises it is a build fact.
+export let footerDue: bool;
+
+export function footerFree(): bool {
+    return copyrightDismissed && sweepLeft == 0;
+}
+
 export function dismissCopyright(): void {
     copyrightDismissed = true;
     if (!copyrightFits()) {
@@ -111,5 +127,7 @@ export function stepCopyright(): void {
         text.setReverse(true);
         text.putChar(sweepCell, SPACE);
         text.setReverse(false);
+    } else if (!FLUID && text.COLUMNS < board.FULL_WIDTH) {
+        footerDue = true;
     }
 }

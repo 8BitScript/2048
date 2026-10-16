@@ -46,8 +46,9 @@ const ROW: usmallint = text.COLUMNS;
 export const ENTER_KEY: bool = true;
 
 // The copyright sits on the header row, between the name and the score,
-// only on the PET arrangement — see the file header. Every other skin
-// has two rows under the status line.
+// only on the PET arrangement — see the file header. The VIC-20's 22
+// columns put it on their one footer row instead (lib/text/copyright.8bs);
+// every other skin has two rows under the status line.
 export const COPYRIGHT_ON_HEADER: bool = false;
 
 // Columns between the score's last digit and the screen's right edge on a
@@ -55,9 +56,10 @@ export const COPYRIGHT_ON_HEADER: bool = false;
 // board's own edge.)
 export const HEADER_INSET: usmallint = 0;
 
-// Blank cells between the word SCORE and the number: none off the PET,
-// where the header has no room to spare on the smallest grids.
-export const SCORE_GAP: usmallint = 0;
+// Blank cells between the word SCORE and the number on a fixed grid's
+// header — "SCORE 00000". (The VIC-20's narrow header places its own,
+// in ui/ScoreBar.8bx's narrow arm, against the board's right edge.)
+export const SCORE_GAP: usmallint = 1;
 
 // Whether a tile's value may be stamped as block digits (lib/draw/font.8bs)
 // rather than printed as a number: this skin's answer is "when the grid
@@ -84,12 +86,15 @@ export const BLOCK_DIGITS: bool = screen.RESIZABLE;
 // one spare cell to centre a number in; four was tried first and rejected
 // (2026-09-07, screenshots). But four tiles five wide plus three gaps is
 // 23 columns, one past the VIC-20's 22, so the VIC-20 alone keeps the
-// narrower 4-wide tile (gap intact) and lives with tighter centring; the
+// narrower 4-wide tile (gap intact) and lives with tighter centring —
+// and takes a fourth row instead, since its one-header, one-footer
+// screen (see computeLayout()) has 19 rows between them to fill; the
 // C64 and the X16 take a larger tile that fills their own grids (6×4,
 // and 12×12 — the X16's cells are square, so the tile is too) and everyone
 // else keeps five.
 const FULL_TILE_W: utinyint = 5;
 const NARROW_TILE_W: utinyint = 4; // the VIC-20's own width — see above
+const NARROW_TILE_H: utinyint = 4; // 4 * 4 + 3 gaps = 19, rows 2-20 of 23
 const DEFAULT_TILE_H: utinyint = 3;
 // C64 text mode is 40×25 with the stock border; four 6×4 tiles plus gaps
 // is 27×19, which still leaves a header row, status row, and margins
@@ -112,8 +117,8 @@ const ROW_GAP: utinyint = 1; // between tile rows — never contended for room
 // import it.
 export namespace board {
     const FULL_WIDTH: usmallint = 23; // 4 tiles * 5 + 3 gaps * 1
+    const NARROW_WIDTH: usmallint = 19; // 4 tiles * 4 + 3 gaps * 1
 }
-const NARROW_BOARD_WIDTH: usmallint = 19; // 4 tiles * 4 + 3 gaps * 1
 
 // ---- the board on the fluid host ------------------------------------------
 //
@@ -205,10 +210,10 @@ export function computeLayout(): void {
     // one in the image, but assignments AHEAD of the branch are not dead to
     // the folder. The narrow test comes first because the C64 arm is 40
     // columns and could never reach it anyway.
-    let width: usmallint = NARROW_BOARD_WIDTH;
+    let width: usmallint = board.NARROW_WIDTH;
     if (text.COLUMNS < board.FULL_WIDTH) {
         tileW = NARROW_TILE_W;
-        tileH = DEFAULT_TILE_H;
+        tileH = NARROW_TILE_H;
     } else if (#fact(video.raster) && text.COLUMNS == 40 && #fact(video.palette) == 16) {
         tileW = C64_TILE_W;
         tileH = C64_TILE_H;
@@ -223,7 +228,11 @@ export function computeLayout(): void {
         width = board.FULL_WIDTH;
     }
     let height: usmallint = 4 * tileH + 3 * ROW_GAP;
-    boardLeft = (text.COLUMNS - width) >> 1;
+    if (text.COLUMNS < board.FULL_WIDTH) {
+        boardLeft = (text.COLUMNS - width + 1) >> 1; // the odd column on the left — see below
+    } else {
+        boardLeft = (text.COLUMNS - width) >> 1;
+    }
     // The last two rows are the copyright and the version. Above them:
     // header, a gap, the board, a gap, the status row — centred in what
     // remains. One expression per picture, the same shape as the centring
@@ -237,17 +246,28 @@ export function computeLayout(): void {
     // to the footer. The Commander X16's 12×12 tiles fill 51 of 56 rows,
     // so that picture gives up the same blank row and starts the header
     // on row 0 — headerAt is left unstored there and folds to zero.
-    let headerRow: usmallint = 0;
-    if (#fact(video.raster) && text.COLUMNS == 40 && #fact(video.palette) == 16) {
+    //
+    // The VIC-20's 22×23 (and the web's VIC-20 skin) has no rows to give
+    // two lines of text at the foot, so it keeps exactly two: the header
+    // on row 0 and one footer on the last row, which the copyright holds
+    // until the first move and the status line and the version share
+    // after it (lib/text/copyright.8bs). The 4×4 tiles fill rows 2-20
+    // between them, a blank row either side. The board's 19 columns leave
+    // three of 22, and the odd one goes on the left: with it on the right
+    // the board read as sitting left of centre (2026-10-15, screenshot),
+    // and the header and footer end on the board's right edge either way.
+    if (text.COLUMNS < board.FULL_WIDTH) {
+        boardTop = 2;
+        statusAt = (Video.ROWS - 1) * ROW + boardLeft;
+    } else if (#fact(video.raster) && text.COLUMNS == 40 && #fact(video.palette) == 16) {
         boardTop = 3;
-        headerRow = 1;
         headerAt = ROW;
         statusAt = (boardTop + height) * ROW + boardLeft;
     } else if (#system() == System.CX16) {
         boardTop = 2;
         statusAt = (boardTop + height) * ROW + boardLeft;
     } else {
-        headerRow = (Video.ROWS - (height + 6)) >> 1;
+        let headerRow: usmallint = (Video.ROWS - (height + 6)) >> 1;
         boardTop = headerRow + 2;
         headerAt = headerRow * ROW;
         statusAt = (boardTop + height + 1) * ROW + boardLeft;

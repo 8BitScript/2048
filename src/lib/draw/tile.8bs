@@ -6,7 +6,7 @@
 // lib/draw/font.8bs (the fluid web host, the web's PET replica); a fixed
 // grid paints its square inline in drawTile()'s other arm, the cheapest
 // form there, and never links these two.
-import { text } from "@8bitscript/text";
+import { text, TextColor } from "@8bitscript/text";
 import { System, Video } from "@8bitscript/system";
 import { POW2, GREY, TILE_COLOR, TILE_DIGITS } from "./palette.8bs";
 import { DIGIT_TILES, TILE_DIGIT_AT, TILE_DIGIT } from "./font.8bs";
@@ -22,6 +22,9 @@ const ROW: usmallint = text.COLUMNS;
 // fact, so neither image pays for a test.
 function tileColor(exponent: utinyint): utinyint {
     if (#system() == System.VIC20 || (#system() == System.WEB && text.COLUMNS == 22)) {
+        if (exponent == 0) {
+            return TextColor.BLUE;
+        }
         return TILE_COLOR[exponent];
     }
     if (exponent == 0) {
@@ -210,7 +213,7 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
         // color), and four corner pokes put the unexpanded build 61 bytes
         // past $1E00 (measured 2026-09-21). The chamfer needs a glyph the
         // Atari, NES, and X16 text modes do not have either.
-        if (#system() == System.WEB || #system() == System.C64 || #system() == System.C128 || #system() == System.MEGA65) {
+        if (#system() == System.WEB || #system() == System.C64 || #system() == System.C128 || #system() == System.MEGA65 || #system() == System.VIC20) {
             roundCorners(origin, ROW);
         }
         if (value != 0) {
