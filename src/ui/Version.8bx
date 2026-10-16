@@ -1,10 +1,12 @@
-// The version, flush right on the last row: a "v" and then package.json's
+// The version, flush right on the last row (to the board's right edge where
+// the layout insets the score, HEADER_INSET): a "v" and then package.json's
 // number. On the PET that row is also the status line; the status text
 // starts at the board's left and does not reach this field.
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { Video } from "@8bitscript/system";
 import { VERSION } from "@lib/text/version.8bs";
+import { HEADER_INSET } from "@lib/layout/layout.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
 const ROW: usmallint = text.COLUMNS;
@@ -17,7 +19,7 @@ export component Version() {
         text.print(cell, "v");
         text.print(cell + 1, VERSION);
     } else {
-        let cell: usmallint = (Video.ROWS - 1) * ROW + text.COLUMNS - VERSION.length - 1;
+        let cell: usmallint = (Video.ROWS - 1) * ROW + text.COLUMNS - HEADER_INSET - VERSION.length - 1;
         text.print(cell, "v");
         text.print(cell + 1, VERSION);
     }
