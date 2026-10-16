@@ -11,7 +11,7 @@ import { wobble } from "@lib/raster/wobble.8bs";
 import { merged, stepped, moved, over, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "@lib/game/rules.8bs";
 import { audio } from "@8bitscript/audio";
 import { move } from "@media/game.8ba";
-import { copyrightDismissed, dismissCopyright } from "@lib/text/copyright.8bs";
+import { copyrightDismissed, dismissCopyright, stepCopyright } from "@lib/text/copyright.8bs";
 import { Screen } from "@ui/Screen.8bx";
 import { Board } from "@ui/Board.8bx";
 
@@ -69,6 +69,7 @@ function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
                 // progress cannot be interrupted) still keeps the matrix and
                 // the frame clock in sync for the next real move.
                 input.poll();
+                stepCopyright();
             }
         }
     }
