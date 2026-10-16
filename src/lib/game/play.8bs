@@ -6,7 +6,7 @@
 import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
 import { text } from "@8bitscript/text";
 import { input } from "@8bitscript/input";
-import { Memory } from "@8bitscript/system";
+import { Memory, Input } from "@8bitscript/system";
 import { wobble } from "@lib/raster/wobble.8bs";
 import { merged, stepped, moved, over, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "@lib/game/rules.8bs";
 import { copyrightDismissed, dismissCopyright, stepCopyright } from "@lib/text/copyright.8bs";
@@ -74,8 +74,15 @@ function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
     return;
 }
 
-// A confirm on a finished game deals again. Otherwise one direction, if
-// the player asked for one: the instant slide on a build under
+// Deal again: blank, reset, redraw. One function for the two ways to ask.
+function deal(): void {
+    screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
+    resetGame();
+    Screen();
+}
+
+// A confirm (or, with a mouse, a click) on a finished game deals again.
+// Otherwise one direction, if the player asked for one: the instant slide on a build under
 // ANIM_MIN_RAM, the animated one above it. Two copies of the dispatch,
 // one per mover, rather than one dispatch into a move(start, step, stride)
 // wrapper that branches on Memory.RAM inside: the fold keeps whichever
@@ -85,15 +92,18 @@ function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
 export function turn(): void {
     if (over) {
         if (input.confirm()) {
-            // Clear the screen first. The game-over message every skin draws sits in
-            // the board's own gap rows, and a gap row is the one thing
-            // <Tile /> never paints over — so without this the message
-            // would survive into the next game. One blank here costs
-            // every target less than an erase in every skin, and it is
-            // what lets the narrowest of them carry the message at all.
-            screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
-            resetGame();
-            Screen();
+            deal();
+        }
+        // A click or a tap deals again too, where the build has a mouse: there a
+        // tap is a pointer press, not a confirm, so a finished game would
+        // otherwise wait for a key a phone does not have. Input.MOUSE is the
+        // build's fact, so a build without one carries none of this.
+        if (Input.MOUSE) {
+            if (over) {
+                if (input.pointerButton()) {
+                    deal();
+                }
+            }
         }
     } else {
         moved = false;
