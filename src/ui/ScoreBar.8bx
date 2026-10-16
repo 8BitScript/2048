@@ -65,7 +65,8 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
     // a message across a restart. Widths are the layout's, not a
     // translated blank. The wording is the machine's: on the web it
     // is the host's — both swipe and arrows wherever both work (a
-    // mouse drags a swipe too), swipe alone on a phone or a tablet in
+    // mouse does not swipe: its click is a pointer press, which only retries a
+    // finished game), swipe alone on a phone or a tablet in
     // the hands, where there are no arrows to press. Asked at every
     // print: a keyboard plugged into a tablet changes the answer.
     if (COPYRIGHT_ON_HEADER) {
