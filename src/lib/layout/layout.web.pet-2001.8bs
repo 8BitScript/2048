@@ -35,7 +35,6 @@ export const SCORE_GAP: usmallint = 1; // SCORE 00000
 
 export namespace board {
     const FULL_WIDTH: usmallint = 23;
-    const NARROW_WIDTH: usmallint = 19; // the VIC-20's board, read only where text.COLUMNS < FULL_WIDTH
 }
 
 // ---- the positions -------------------------------------------------------

@@ -12,11 +12,13 @@
 // never a twin's own. A position is a `let` the fluid host recomputes on
 // every resize and a fixed grid works out once before the loop — never a
 // `const`, because a const folds only a literal or another const's bare
-// name, and centring needs arithmetic on text.COLUMNS. The copyright and
-// the version are the exception: the last two rows, pure grid arithmetic
-// the elements write out in place, where a fixed grid folds them to a
-// literal — a `let` would cost the unexpanded VIC-20 twelve bytes apiece
-// (measured 2026-09-17). The PET twins set COPYRIGHT_ON_HEADER instead:
+// name, and centring needs arithmetic on text.COLUMNS. Every skin here is
+// a header row and one footer row around the board: the name and the
+// score above it, and below it the copyright until the first move, then
+// the move hint and the version (lib/text/copyright.8bs) — statusAt is
+// the footer's first cell, at the board's left edge, and everything on
+// either row ends on the board's right edge (boardLeft + boardWidth).
+// The PET twins set COPYRIGHT_ON_HEADER instead:
 // an 8×5 board already uses every row but the header and the status line,
 // so the copyright sits between the name and the score, and the version
 // shares the status row.
@@ -46,19 +48,17 @@ const ROW: usmallint = text.COLUMNS;
 export const ENTER_KEY: bool = true;
 
 // The copyright sits on the header row, between the name and the score,
-// only on the PET arrangement — see the file header. The VIC-20's 22
-// columns put it on their one footer row instead (lib/text/copyright.8bs);
-// every other skin has two rows under the status line.
+// only on the PET arrangement — see the file header. Every other skin
+// puts it on the footer row (lib/text/copyright.8bs).
 export const COPYRIGHT_ON_HEADER: bool = false;
 
-// Columns between the score's last digit and the screen's right edge on a
-// fixed grid: none, the score is flush right. (The PET twins inset it to the
-// board's own edge.)
+// Read only on the PET arrangement (COPYRIGHT_ON_HEADER), where the score
+// is placed against the screen's edge. Every skin of this file ends it on
+// the board's right edge instead — see ui/ScoreBar.8bx.
 export const HEADER_INSET: usmallint = 0;
 
-// Blank cells between the word SCORE and the number on a fixed grid's
-// header — "SCORE 00000". (The VIC-20's narrow header places its own,
-// in ui/ScoreBar.8bx's narrow arm, against the board's right edge.)
+// Likewise only the PET arrangement's: every skin of this file prints
+// "SCORE 00000", one blank between them.
 export const SCORE_GAP: usmallint = 1;
 
 // Whether a tile's value may be stamped as block digits (lib/draw/font.8bs)
@@ -142,8 +142,8 @@ const WIDE_MIN_COLUMNS: usmallint = 48;
 // the widest field (the grouped score) plus a gap column on the right,
 // 6 on the left for symmetry: 13, exactly what the original 48-wide,
 // 35-board design left over. The wide arrangement spends no rows on the
-// HUD. The copyright and the version take the last two rows on every
-// arrangement, wide or narrow, so the board is measured above them.
+// HUD but the footer under the board — the copyright, then the version —
+// so the board is measured above it.
 const WIDE_MARGIN_COLUMNS: usmallint = 13;
 // The smallest square that still holds "2048" as four printed digits, and
 // the largest either arrangement will pick, so a huge window doesn't get
@@ -228,50 +228,43 @@ export function computeLayout(): void {
         width = board.FULL_WIDTH;
     }
     let height: usmallint = 4 * tileH + 3 * ROW_GAP;
+    boardWidth = width;
     if (text.COLUMNS < board.FULL_WIDTH) {
         boardLeft = (text.COLUMNS - width + 1) >> 1; // the odd column on the left — see below
     } else {
         boardLeft = (text.COLUMNS - width) >> 1;
     }
-    // The last two rows are the copyright and the version. Above them:
-    // header, a gap, the board, a gap, the status row — centred in what
-    // remains. One expression per picture, the same shape as the centring
-    // it replaces, so each folds to a literal. A compare against
-    // Video.ROWS does not fold: it cost the unexpanded VIC-20 108 bytes
-    // for an answer the build already knew.
+    // Every picture is the header, a blank row, the board, a blank row and
+    // the footer — the copyright until the first move, then the move hint
+    // and the version (lib/text/copyright.8bs) — so the footer is always
+    // the second row under the board. Where each picture puts its header
+    // is the only difference:
     //
-    // The 40×25, 16-colour picture (the real C64 and the web's C64 skin)
-    // pins the header on row 1 instead of centring it, so the raster band
-    // has a row above the name, and gives the blank row under the board
-    // to the footer. The Commander X16's 12×12 tiles fill 51 of 56 rows,
-    // so that picture gives up the same blank row and starts the header
-    // on row 0 — headerAt is left unstored there and folds to zero.
-    //
-    // The VIC-20's 22×23 (and the web's VIC-20 skin) has no rows to give
-    // two lines of text at the foot, so it keeps exactly two: the header
-    // on row 0 and one footer on the last row, which the copyright holds
-    // until the first move and the status line and the version share
-    // after it (lib/text/copyright.8bs). The 4×4 tiles fill rows 2-20
-    // between them, a blank row either side. The board's 19 columns leave
-    // three of 22, and the odd one goes on the left: with it on the right
-    // the board read as sitting left of centre (2026-10-15, screenshot),
-    // and the header and footer end on the board's right edge either way.
+    // - The VIC-20's 22×23 (and the web's VIC-20 skin): row 0, with the
+    //   4×4 tiles on rows 2-20 and the footer on the last row. The
+    //   board's 19 columns leave three of 22, and the odd one goes on the
+    //   left: with it on the right the board read as sitting left of
+    //   centre (2026-10-15, screenshot).
+    // - The 40×25, 16-colour picture (the real C64 and the web's C64
+    //   skin): row 1, so the raster band has a row above the name; the
+    //   footer lands on row 23, and a blank row frames each end.
+    // - The Commander X16: its 12×12 tiles fill 51 of 56 rows, so row 0,
+    //   and the one row to spare is the last — headerAt is left unstored
+    //   there and folds to zero.
+    // - Any other fixed grid: the stack centred.
     if (text.COLUMNS < board.FULL_WIDTH) {
         boardTop = 2;
-        statusAt = (Video.ROWS - 1) * ROW + boardLeft;
     } else if (#fact(video.raster) && text.COLUMNS == 40 && #fact(video.palette) == 16) {
         boardTop = 3;
         headerAt = ROW;
-        statusAt = (boardTop + height) * ROW + boardLeft;
     } else if (#system() == System.CX16) {
         boardTop = 2;
-        statusAt = (boardTop + height) * ROW + boardLeft;
     } else {
-        let headerRow: usmallint = (Video.ROWS - (height + 6)) >> 1;
+        let headerRow: usmallint = (Video.ROWS - (height + 4)) >> 1;
         boardTop = headerRow + 2;
         headerAt = headerRow * ROW;
-        statusAt = (boardTop + height + 1) * ROW + boardLeft;
     }
+    statusAt = (boardTop + height + 1) * ROW + boardLeft;
     // A gap row is the row directly above the tile row that follows it, so
     // tileCell() — which already knows where a tile row lands — gives both
     // without a second copy of that arithmetic, and without a second
@@ -318,8 +311,10 @@ function fluidLayout(): void {
     wide = rowWidth >= WIDE_MIN_COLUMNS;
     // One side for both axes. The HUD sits beside the board in the wide
     // arrangement and above and below it in the narrow one, so only that
-    // axis gives up cells before the square is measured. The last two
-    // rows are the copyright and the version on both arrangements.
+    // axis gives up cells before the square is measured. Both keep a
+    // footer row under the board, a blank row between — the copyright,
+    // then the version (and the move hint, in the narrow one) — and the
+    // narrow one a header row and a blank row above it too.
     let wBudget: usmallint = rowWidth;
     let hBudget: usmallint = rows;
     if (rows > 2) {
@@ -329,8 +324,8 @@ function fluidLayout(): void {
         if (rowWidth > WIDE_MARGIN_COLUMNS) {
             wBudget = rowWidth - WIDE_MARGIN_COLUMNS;
         }
-    } else if (hBudget > 4) {
-        hBudget = hBudget - 4;
+    } else if (hBudget > 2) {
+        hBudget = hBudget - 2;
     }
     let wFit: usmallint = SQUARE_MIN;
     if (wBudget > 3) {
@@ -363,6 +358,10 @@ function fluidLayout(): void {
     boardLeft = 0;
     if (rowWidth > boardWidth) {
         boardLeft = (rowWidth - boardWidth) >> 1;
+    } else {
+        // A grid narrower than the board: what the header and the footer
+        // end against is the row's edge, not a board column past it.
+        boardWidth = rowWidth;
     }
 
     if (wide) {
@@ -370,6 +369,7 @@ function fluidLayout(): void {
         if (hBudget > boardHeight) {
             boardTop = (hBudget - boardHeight) >> 1;
         }
+        statusAt = footerRow(boardTop + boardHeight + 1, rows) * rowWidth + boardLeft;
         // One clear column past the board's right edge, where the HUD's
         // right half lives — clamped so the widest field anchored there
         // (the grouped score, 6 characters) never writes past the row's
@@ -400,24 +400,16 @@ function fluidLayout(): void {
         hintBottomAt = hintBottomRow * rowWidth + rightAt;
     } else {
         // The fixed grids' own shape: a header row, a blank row, the board,
-        // a blank row, a status row — centred above the footer, packed from
-        // the top when the grid is shorter than the stack.
+        // a blank row, the footer — centred, packed from the top when the
+        // grid is shorter than the stack.
         let totalHeight: usmallint = boardHeight + 4;
-        let usable: usmallint = rows;
-        if (rows > 2) {
-            usable = rows - 2;
-        }
         let headerRow: usmallint = 0;
-        if (usable > totalHeight) {
-            headerRow = (usable - totalHeight) >> 1;
+        if (rows > totalHeight) {
+            headerRow = (rows - totalHeight) >> 1;
         }
         headerAt = headerRow * rowWidth;
         boardTop = headerRow + 2;
-        let statusRow: usmallint = boardTop + boardHeight + 1;
-        if (statusRow >= usable) {
-            statusRow = usable - 1;
-        }
-        statusAt = statusRow * rowWidth + boardLeft;
+        statusAt = footerRow(boardTop + boardHeight + 1, rows) * rowWidth + boardLeft;
     }
 
     // The game-over lines, in the gap rows tileCell() already knows.
@@ -425,6 +417,18 @@ function fluidLayout(): void {
     overTouchAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - Prompt.TOUCH_RETRY.length) >> 1);
     overPromptAt = tileCell(3, 0) - rowWidth - boardLeft + ((rowWidth - i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }).length) >> 1);
     return;
+}
+
+// The footer's row on the fluid host: the second under the board, or the
+// grid's last row when the board runs that far.
+function footerRow(row: usmallint, rows: usmallint): usmallint {
+    if (row >= rows) {
+        if (rows > 0) {
+            return rows - 1;
+        }
+        return 0;
+    }
+    return row;
 }
 
 // The screen cell a tile's top-left corner starts at. On the fluid host y

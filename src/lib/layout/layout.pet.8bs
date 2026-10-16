@@ -38,7 +38,7 @@ export const ENTER_KEY: bool = false;
 // The 8×5 board uses every row but the header and the status line, so
 // the copyright sits on the header between the name and the score, and
 // the version shares the status row (flush right; the status text does
-// not reach it). layout.8bs's own is false — two rows under the status.
+// not reach it). layout.8bs's own is false — the copyright on the footer.
 export const COPYRIGHT_ON_HEADER: bool = true;
 
 // Columns between the score's last digit and the screen's right edge: the
@@ -59,7 +59,6 @@ export function blockDigitsFit(): bool {
 
 export namespace board {
     const FULL_WIDTH: usmallint = 23; // ui/GameOver.8bx's narrow test — never narrow here
-    const NARROW_WIDTH: usmallint = 19; // the VIC-20's board, read only where text.COLUMNS < FULL_WIDTH
 }
 
 // ---- the positions -------------------------------------------------------

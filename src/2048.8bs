@@ -12,8 +12,7 @@ import { computeLayout } from "@lib/layout/layout.8bs";
 import { wobble } from "@lib/raster/wobble.8bs";
 import { shown, resetGame } from "@lib/game/rules.8bs";
 import { turn } from "@lib/game/play.8bs";
-import { text } from "@8bitscript/text";
-import { board } from "@lib/layout/layout.8bs";
+import { COPYRIGHT_ON_HEADER } from "@lib/layout/layout.8bs";
 import { stepCopyright, footerDue } from "@lib/text/copyright.8bs";
 import { Screen } from "@ui/Screen.8bx";
 
@@ -62,10 +61,10 @@ function frame(): void {
     waitFrame();
     input.poll();
     stepCopyright();
-    // The VIC-20's one footer row, handed from the copyright to the status
-    // line and the version the frame the sweep runs off its end (see
-    // lib/text/copyright.8bs). A build fact, so no other image tests it.
-    if (!screen.RESIZABLE && text.COLUMNS < board.FULL_WIDTH) {
+    // The footer row, handed from the copyright to the status line and the
+    // version the frame the sweep runs off its end (see
+    // lib/text/copyright.8bs). A build fact: the PET's image never tests it.
+    if (!COPYRIGHT_ON_HEADER) {
         if (footerDue) {
             footerDue = false;
             Screen();

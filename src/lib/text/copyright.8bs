@@ -18,12 +18,11 @@
 import { text } from "@8bitscript/text";
 import { screen } from "@8bitscript/screen";
 import { input } from "@8bitscript/input";
-import { System, Video } from "@8bitscript/system";
+import { System } from "@8bitscript/system";
 import { Game, Copyright as Copy } from "@8bitscript/i18n/catalog";
-import { COPYRIGHT_ON_HEADER, board, boardLeft, headerAt } from "@lib/layout/layout.8bs";
+import { COPYRIGHT_ON_HEADER, boardLeft, boardWidth, headerAt, statusAt } from "@lib/layout/layout.8bs";
 
 const FLUID: bool = screen.RESIZABLE;
-const ROW: usmallint = text.COLUMNS;
 const SPACE: utinyint = 32;
 
 // Set once, by dismissCopyright(), and never cleared. No initializer: a
@@ -51,27 +50,22 @@ export function copyrightFits(): bool {
 }
 
 // The line's first cell. On the PET's header it follows the name
-// (COPYRIGHT_ON_HEADER); on the VIC-20's one footer row it starts at the
-// board's left edge and, at 19 cells, ends on its right one; on the fluid host it is centred on the
-// second-to-last row of whatever grid the window has now; on every other
-// fixed grid it is centred on the second-to-last row, which folds to one
-// literal per build.
+// (COPYRIGHT_ON_HEADER); on every other skin it is centred on the board on
+// the footer row (statusAt, the footer's first cell), and on the VIC-20,
+// at 19 cells, it runs exactly from the board's left edge to its right.
+// The NES's spelled-out line is wider than its board, so it is centred
+// on the screen instead.
 export function copyrightAt(): usmallint {
     if (COPYRIGHT_ON_HEADER) {
         return headerAt + boardLeft + Game.NAME.length + 1;
     }
-    if (!FLUID && text.COLUMNS < board.FULL_WIDTH) {
-        return (Video.ROWS - 1) * ROW + boardLeft;
-    }
-    if (FLUID) {
-        let cols: usmallint = text.columns();
-        let rows: usmallint = text.rows();
-        return (rows - 2) * cols + ((cols - Copy.LINE.length) >> 1);
-    }
     if (#system() == System.NES) {
-        return (Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.WORD.length) >> 1);
+        return statusAt - boardLeft + ((text.COLUMNS - Copy.WORD.length) >> 1);
     }
-    return (Video.ROWS - 2) * ROW + ((text.COLUMNS - Copy.LINE.length) >> 1);
+    if (boardWidth < Copy.LINE.length) {
+        return statusAt - boardLeft;
+    }
+    return statusAt + ((boardWidth - Copy.LINE.length) >> 1);
 }
 
 // Takes the line down, a frame at a time: a reverse-video block runs along
@@ -92,12 +86,13 @@ export function copyrightAt(): usmallint {
 let sweepCell: usmallint;
 let sweepLeft: utinyint;
 
-// The VIC-20's footer is one row: the copyright's until the sweep has run
+// The footer is one row: the copyright's until the sweep has run
 // off its end, the status line's and the version's after. ui/ScoreBar.8bx
 // and ui/Version.8bx print there only once footerFree(), and the sweep's
 // last step raises footerDue so the frame loop (2048.8bs) puts them up —
 // a Screen() during the sweep would have them erased by the cursor. Never
-// raised anywhere else; the test that raises it is a build fact.
+// raised on the PET, whose copyright is on the header; the test that
+// raises it is a build fact.
 export let footerDue: bool;
 
 export function footerFree(): bool {
@@ -127,7 +122,7 @@ export function stepCopyright(): void {
         text.setReverse(true);
         text.putChar(sweepCell, SPACE);
         text.setReverse(false);
-    } else if (!FLUID && text.COLUMNS < board.FULL_WIDTH) {
+    } else if (!COPYRIGHT_ON_HEADER) {
         footerDue = true;
     }
 }
