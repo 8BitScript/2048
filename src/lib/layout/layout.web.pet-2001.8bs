@@ -31,6 +31,7 @@ export const ENTER_KEY: bool = false;
 // name and the score. See layout.pet.8bs.
 export const COPYRIGHT_ON_HEADER: bool = true;
 export const HEADER_INSET: usmallint = 1; // the score ends over the last tile column (board: cols 1-38)
+export const SCORE_GAP: usmallint = 1; // SCORE 00000
 
 // Same as the PET: no room for the header art. See layout.pet.8bs.
 export const HEADER_ART: bool = false;

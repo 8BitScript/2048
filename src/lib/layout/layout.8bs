@@ -55,6 +55,10 @@ export const COPYRIGHT_ON_HEADER: bool = false;
 // board's own edge.)
 export const HEADER_INSET: usmallint = 0;
 
+// Blank cells between the word SCORE and the number: none off the PET,
+// where the header has no room to spare on the smallest grids.
+export const SCORE_GAP: usmallint = 0;
+
 // ui/HeaderArt.8bx's title and tile marks, placed above the board beside
 // the name. The PET twins have no room for them — see layout.pet.8bs.
 export const HEADER_ART: bool = true;
