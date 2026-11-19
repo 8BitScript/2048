@@ -8,17 +8,17 @@
 // above the board, and the status on the footer row below it — which the
 // PET shares with the version from the first frame, and every other skin
 // only once the copyright has left it (lib/text/copyright.8bs).
-import { screen, BorderColor } from "@8bitscript/screen";
-import { text, TextColor } from "@8bitscript/text";
-import { number } from "@8bitscript/i18n/number";
-import { messages } from "@8bitscript/i18n/messages";
-import { Game, Status } from "@8bitscript/i18n/catalog";
-import { System } from "@8bitscript/system";
-import { COPYRIGHT_ON_HEADER, HEADER_INSET, SCORE_GAP, headerAt, statusAt, boardLeft, boardWidth } from "@lib/layout/layout.8bs";
-import { host } from "@lib/host/host.8bs";
-import { footerFree } from "@lib/text/copyright.8bs";
+use @8bitscript::screen::{screen, BorderColor};
+use @8bitscript::text::{text, TextColor};
+use @8bitscript::i18n::number::number;
+use @8bitscript::i18n::messages::messages;
+use @8bitscript::i18n::catalog::{Game, Status};
+use @8bitscript::system::System;
+use "@lib/layout/layout.8bs"::{COPYRIGHT_ON_HEADER, HEADER_INSET, SCORE_GAP, headerAt, statusAt, boardLeft, boardWidth};
+use "@lib/host/host.8bs"::host;
+use "@lib/text/copyright.8bs"::footerFree;
 
-const FLUID: bool = screen.RESIZABLE;
+const FLUID: bool = screen::RESIZABLE;
 const SCORE_PAD: utinyint = 5;
 const SCORE_GROUP: utinyint = 6;
 const REPLICA_STATUS_WIDTH: utinyint = 19;
@@ -29,33 +29,33 @@ const FOOTER_STATUS_WIDTH: utinyint = 12;
 // German scores use @8bitscript/i18n/number everywhere the image has room;
 // the unexpanded VIC-20 does not, so it keeps `${score:5}` like English.
 
-export component ScoreBar(score: usmallint, over: bool, won: bool) {
-    if (FLUID) {
-        text.setReverse(false);
+pub component ScoreBar(score: usmallint, over: bool, won: bool) {
+    if FLUID {
+        text::setReverse(false);
     }
-    text.setColor(TextColor.WHITE);
-    text.print(headerAt + boardLeft, Game.NAME);
-    if (COPYRIGHT_ON_HEADER) {
+    text::setColor(TextColor::WHITE);
+    text::print(headerAt + boardLeft, Game::NAME);
+    if COPYRIGHT_ON_HEADER {
         // The PET arrangement: the score against the screen's edge,
         // inset by HEADER_INSET to the board's.
-        if (#locale("de") && #system() != System.VIC20) {
-            text.print(headerAt + text.COLUMNS - HEADER_INSET - (Game.SCORE.length + SCORE_GAP + SCORE_GROUP), Game.SCORE);
-            number.print(headerAt + text.COLUMNS - HEADER_INSET - SCORE_GROUP, score, SCORE_GROUP);
+        if #locale("de") && #system() != System::VIC20 {
+            text::print(headerAt + text::COLUMNS - HEADER_INSET - (Game::SCORE.length + SCORE_GAP + SCORE_GROUP), Game::SCORE);
+            number::print(headerAt + text::COLUMNS - HEADER_INSET - SCORE_GROUP, score, SCORE_GROUP);
         } else {
-            text.print(headerAt + text.COLUMNS - HEADER_INSET - (Game.SCORE.length + SCORE_GAP + SCORE_PAD), Game.SCORE);
-            text.print(headerAt + text.COLUMNS - HEADER_INSET - SCORE_PAD, `${score:5}`);
+            text::print(headerAt + text::COLUMNS - HEADER_INSET - (Game::SCORE.length + SCORE_GAP + SCORE_PAD), Game::SCORE);
+            text::print(headerAt + text::COLUMNS - HEADER_INSET - SCORE_PAD, `${score:5}`);
         }
     } else {
         // Every other skin: "SCORE 00000" ending on the board's right
         // edge, over the last tile column, as the name starts on its
         // left one — on the fluid host too, whatever margin a wide
         // window happens to have.
-        if (#locale("de") && #system() != System.VIC20) {
-            text.print(headerAt + boardLeft + boardWidth - (Game.SCORE.length + 1 + SCORE_GROUP), Game.SCORE);
-            number.print(headerAt + boardLeft + boardWidth - SCORE_GROUP, score, SCORE_GROUP);
+        if #locale("de") && #system() != System::VIC20 {
+            text::print(headerAt + boardLeft + boardWidth - (Game::SCORE.length + 1 + SCORE_GROUP), Game::SCORE);
+            number::print(headerAt + boardLeft + boardWidth - SCORE_GROUP, score, SCORE_GROUP);
         } else {
-            text.print(headerAt + boardLeft + boardWidth - (Game.SCORE.length + 1 + SCORE_PAD), Game.SCORE);
-            text.print(headerAt + boardLeft + boardWidth - SCORE_PAD, `${score:5}`);
+            text::print(headerAt + boardLeft + boardWidth - (Game::SCORE.length + 1 + SCORE_PAD), Game::SCORE);
+            text::print(headerAt + boardLeft + boardWidth - SCORE_PAD, `${score:5}`);
         }
     }
     // The status line does not announce the end of the game —
@@ -69,68 +69,68 @@ export component ScoreBar(score: usmallint, over: bool, won: bool) {
     // finished game), swipe alone on a phone or a tablet in
     // the hands, where there are no arrows to press. Asked at every
     // print: a keyboard plugged into a tablet changes the answer.
-    if (COPYRIGHT_ON_HEADER) {
+    if COPYRIGHT_ON_HEADER {
         // The PET arrangement, and the web's replica of it.
-        if (#system() == System.WEB) {
-            if (won) {
-                messages.printLine(statusAt, Status.WON, REPLICA_STATUS_WIDTH);
-            } else if (!over) {
-                if (!host.touch()) {
-                    messages.printLine(statusAt, Status.MOVE, REPLICA_STATUS_WIDTH);
-                } else if (host.keyboard()) {
-                    messages.printLine(statusAt, Status.MOVE_TOUCH, REPLICA_STATUS_WIDTH);
+        if #system() == System::WEB {
+            if won {
+                messages::printLine(statusAt, Status::WON, REPLICA_STATUS_WIDTH);
+            } else if !over {
+                if !host::touch() {
+                    messages::printLine(statusAt, Status::MOVE, REPLICA_STATUS_WIDTH);
+                } else if host::keyboard() {
+                    messages::printLine(statusAt, Status::MOVE_TOUCH, REPLICA_STATUS_WIDTH);
                 } else {
-                    messages.printLine(statusAt, Status.MOVE_SWIPE, REPLICA_STATUS_WIDTH);
+                    messages::printLine(statusAt, Status::MOVE_SWIPE, REPLICA_STATUS_WIDTH);
                 }
             } else {
-                messages.clearLine(statusAt, REPLICA_STATUS_WIDTH);
+                messages::clearLine(statusAt, REPLICA_STATUS_WIDTH);
             }
         } else {
             // One print, no printLine. The 4K PET cannot afford the
             // helper; WON and MOVE are the same width (14).
-            if (won) {
-                text.print(statusAt, Status.WON);
-            } else if (!over) {
-                text.print(statusAt, Status.MOVE);
+            if won {
+                text::print(statusAt, Status::WON);
+            } else if !over {
+                text::print(statusAt, Status::MOVE);
             } else {
-                text.print(statusAt, "              ");
+                text::print(statusAt, "              ");
             }
         }
-    } else if (footerFree()) {
+    } else if footerFree() {
         // The footer, shared with the version, which ends on the
         // board's right edge: the status gets the narrowest board's
         // width (the VIC-20's 19) less the version and a space, so
         // short forms of every line. Nothing until the copyright has
         // given the row up (lib/text/copyright.8bs) — the sweep's end
         // prints it.
-        if (won) {
-            messages.printLine(statusAt, Status.WON_COMPACT, FOOTER_STATUS_WIDTH);
-        } else if (!over) {
-            if (FLUID) {
-                if (host.keyboard()) {
-                    messages.printLine(statusAt, Status.MOVE_TOUCH_SHORT, FOOTER_STATUS_WIDTH);
+        if won {
+            messages::printLine(statusAt, Status::WON_COMPACT, FOOTER_STATUS_WIDTH);
+        } else if !over {
+            if FLUID {
+                if host::keyboard() {
+                    messages::printLine(statusAt, Status::MOVE_TOUCH_SHORT, FOOTER_STATUS_WIDTH);
                 } else {
-                    messages.printLine(statusAt, Status.MOVE_SWIPE_SHORT, FOOTER_STATUS_WIDTH);
+                    messages::printLine(statusAt, Status::MOVE_SWIPE_SHORT, FOOTER_STATUS_WIDTH);
                 }
-            } else if (#system() == System.WEB) {
-                if (!host.touch()) {
-                    messages.printLine(statusAt, Status.MOVE_SHORT, FOOTER_STATUS_WIDTH);
-                } else if (host.keyboard()) {
-                    messages.printLine(statusAt, Status.MOVE_TOUCH_SHORT, FOOTER_STATUS_WIDTH);
+            } else if #system() == System::WEB {
+                if !host::touch() {
+                    messages::printLine(statusAt, Status::MOVE_SHORT, FOOTER_STATUS_WIDTH);
+                } else if host::keyboard() {
+                    messages::printLine(statusAt, Status::MOVE_TOUCH_SHORT, FOOTER_STATUS_WIDTH);
                 } else {
-                    messages.printLine(statusAt, Status.MOVE_SWIPE_SHORT, FOOTER_STATUS_WIDTH);
+                    messages::printLine(statusAt, Status::MOVE_SWIPE_SHORT, FOOTER_STATUS_WIDTH);
                 }
             } else {
-                messages.printLine(statusAt, Status.MOVE_SHORT, FOOTER_STATUS_WIDTH);
+                messages::printLine(statusAt, Status::MOVE_SHORT, FOOTER_STATUS_WIDTH);
             }
         } else {
-            messages.clearLine(statusAt, FOOTER_STATUS_WIDTH);
+            messages::clearLine(statusAt, FOOTER_STATUS_WIDTH);
         }
     }
-    if (FLUID) {
+    if FLUID {
         // The border 2048.8bs blanks to at start-up — the playing border.
         // <GameOver /> turns it red on the one frame a game ends, and the
         // next game's first <ScoreBar /> turns it back.
-        screen.setBorder(BorderColor.BLUE);
+        screen::setBorder(BorderColor::BLUE);
     }
 }

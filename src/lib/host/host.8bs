@@ -5,14 +5,14 @@
 // holding the game and the answers are the page's. An answer that is a
 // literal or a fact folds, so a branch on it costs the eight machines
 // nothing.
-import { Input } from "@8bitscript/system";
+use @8bitscript::system::Input;
 
-export namespace host {
-    function touch(): bool {
+pub mod host {
+    fn touch() -> bool {
         return false;
     }
 
-    function keyboard(): bool {
-        return Input.KEYBOARD;
+    fn keyboard() -> bool {
+        return Input::KEYBOARD;
     }
 }

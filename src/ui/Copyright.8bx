@@ -19,10 +19,10 @@
 // of the two. The placeholder is a space rather than a marker character for
 // the same reason: if a machine ever did drop the poke, the line degrades
 // to "C 2026 8BITSCRIPT" rather than showing punctuation nobody meant.
-import { text } from "@8bitscript/text";
-import { System } from "@8bitscript/system";
-import { Copyright as Copy } from "@8bitscript/i18n/catalog";
-import { copyrightAt, copyrightFits } from "@lib/text/copyright.8bs";
+use @8bitscript::text::text;
+use @8bitscript::system::System;
+use @8bitscript::i18n::catalog::{Copyright as Copy};
+use "@lib/text/copyright.8bs"::{copyrightAt, copyrightFits};
 
 const PAREN_OPEN: utinyint = 40;
 const PAREN_CLOSE: utinyint = 41;
@@ -32,15 +32,15 @@ const PAREN_CLOSE: utinyint = 41;
 // ui/Screen.8bx's test, so this element only ever prints. On a fixed grid
 // copyrightAt() folds to one literal; on the PET's header and the fluid
 // host it is a short computation, kept in one local.
-export component Copyright() {
-    if (copyrightFits()) {
+pub component Copyright() {
+    if copyrightFits() {
         let at: usmallint = copyrightAt();
-        if (#system() == System.NES) {
-            text.print(at, Copy.WORD);
+        if #system() == System::NES {
+            text::print(at, Copy::WORD);
         } else {
-            text.print(at, Copy.LINE);
-            text.putChar(at, PAREN_OPEN);
-            text.putChar(at + 2, PAREN_CLOSE);
+            text::print(at, Copy::LINE);
+            text::putChar(at, PAREN_OPEN);
+            text::putChar(at + 2, PAREN_CLOSE);
         }
     }
 }

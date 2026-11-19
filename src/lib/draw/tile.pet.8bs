@@ -29,11 +29,11 @@
 // ever stamps the eleven face values. The quadrant-block codes are
 // identical in both PET character sets, so the tile draws the same
 // whichever set @8bitscript/pet/text has selected for the HUD.
-import { Video } from "@8bitscript/system";
-import { DIGIT_TILES, TILE_DIGIT_AT, TILE_DIGIT } from "./font.8bs";
-import { tileCell } from "../layout/layout.8bs";
+use @8bitscript::system::Video;
+use self::font::{DIGIT_TILES, TILE_DIGIT_AT, TILE_DIGIT};
+use super::layout::layout::tileCell;
 
-const ROW: usmallint = Video.COLUMNS; // 40, or 80 on an 8032 build
+const ROW: usmallint = Video::COLUMNS; // 40, or 80 on an 8032 build
 const SCREEN: usmallint = 0x8000;
 
 const TILE_W: utinyint = 8;
@@ -66,47 +66,47 @@ const CORNER_BR: utinyint = 236;
 
 // One tile's square, 8×5 cells filled with `ink`: solid for a numbered
 // tile, the dither for the empty one — the same footprint either way.
-function fillSquare(origin: usmallint, ink: utinyint): void {
-    let rowCell: usmallint = origin;
-    let row: utinyint = 0;
-    while (row < TILE_H) {
-        let col: utinyint = 0;
-        while (col < TILE_W) {
-            memory.write(SCREEN + rowCell + col, ink);
-            col++;
+fn fillSquare(origin: usmallint, ink: utinyint) {
+    let mut rowCell: usmallint = origin;
+    let mut row: utinyint = 0;
+    while row < TILE_H {
+        let mut col: utinyint = 0;
+        while col < TILE_W {
+            memory::write(SCREEN + rowCell + col, ink);
+            col += 1;
         }
         rowCell = rowCell + ROW;
-        row++;
+        row += 1;
     }
     // The chamfer is about 160 bytes, and the German 4K build is already
     // 3072 — the ceiling — once the empty tile is a dither (measured
     // 2026-09-21). Builds with more RAM get the notch. Four adds rather
     // than a multiply: the multiply alone was most of that 160.
-    if (#fact(memory.ram) > 3071) {
+    if #fact(memory::ram) > 3071 {
         let bottom: usmallint = origin + ROW + ROW + ROW + ROW;
-        if (ink == DIM) {
-            memory.write(SCREEN + origin, DIM_CORNER_TL);
-            memory.write(SCREEN + bottom + 7, DIM_CORNER_BR);
+        if ink == DIM {
+            memory::write(SCREEN + origin, DIM_CORNER_TL);
+            memory::write(SCREEN + bottom + 7, DIM_CORNER_BR);
         } else {
-            memory.write(SCREEN + origin, CORNER_TL);
-            memory.write(SCREEN + origin + 7, CORNER_TR);
-            memory.write(SCREEN + bottom, CORNER_BL);
-            memory.write(SCREEN + bottom + 7, CORNER_BR);
+            memory::write(SCREEN + origin, CORNER_TL);
+            memory::write(SCREEN + origin + 7, CORNER_TR);
+            memory::write(SCREEN + bottom, CORNER_BL);
+            memory::write(SCREEN + bottom + 7, CORNER_BR);
         }
     }
     return;
 }
 
-function stampDigit(cell: usmallint, value: utinyint): void {
-    let base: utinyint = value * 6;
-    let rowCell: usmallint = cell;
-    let row: utinyint = 0;
-    while (row < 3) {
-        memory.write(SCREEN + rowCell, DIGIT_TILES[base]);
-        memory.write(SCREEN + rowCell + 1, DIGIT_TILES[base + 1]);
+fn stampDigit(cell: usmallint, value: utinyint) {
+    let mut base: utinyint = value * 6;
+    let mut rowCell: usmallint = cell;
+    let mut row: utinyint = 0;
+    while row < 3 {
+        memory::write(SCREEN + rowCell, DIGIT_TILES[base]);
+        memory::write(SCREEN + rowCell + 1, DIGIT_TILES[base + 1]);
         base = base + 2;
         rowCell = rowCell + ROW;
-        row++;
+        row += 1;
     }
     return;
 }
@@ -115,22 +115,22 @@ function stampDigit(cell: usmallint, value: utinyint): void {
 // (lib/layout/layout.pet.8bs's table), and the value as 2×3 block digits
 // stamped right-aligned on its second row. ui/Tile.8bx is this call
 // on the PET, and lib/draw/tile.8bs's on every other machine.
-export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+pub fn drawTile(row: utinyint, col: utinyint, exponent: utinyint) {
     let origin: usmallint = tileCell(row, col);
-    if (exponent == 0) {
+    if exponent == 0 {
         fillSquare(origin, DIM);
     } else {
         fillSquare(origin, SOLID);
     }
     let base: utinyint = TILE_DIGIT_AT[exponent];
     let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
-    if (count != 0) {
-        let at: usmallint = origin + ROW + (4 - count);
-        let i: utinyint = 0;
-        while (i < count) {
+    if count != 0 {
+        let mut at: usmallint = origin + ROW + (4 - count);
+        let mut i: utinyint = 0;
+        while i < count {
             stampDigit(at, TILE_DIGIT[base + i]);
             at = at + 2;
-            i++;
+            i += 1;
         }
     }
 }

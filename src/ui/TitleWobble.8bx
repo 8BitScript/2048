@@ -9,29 +9,29 @@
 //
 // Screen() redraws after every move. The list is built on the first of
 // those and left alone after: clearing it again would reset the wave.
-import { raster, Slot } from "@8bitscript/raster";
-import { BorderColor, BackgroundColor } from "@8bitscript/screen";
-import { SINE, band, wobbleBuilt } from "@lib/raster/wobble.8bs";
+use @8bitscript::raster::{raster, Slot};
+use @8bitscript::screen::{BorderColor, BackgroundColor};
+use "@lib/raster/wobble.8bs"::{SINE, band, wobbleBuilt};
 
 // Row 1 of that picture, in scanlines. A literal, not a read of the
 // layout: the only builds that compose this are the ones layout pins,
 // and a prop or a stored row would be a variable where a constant folds.
 const BAND_TOP: utinyint = 8;
 
-export component TitleWobble() {
-    if (wobbleBuilt) {
+pub component TitleWobble() {
+    if wobbleBuilt {
         return;
     }
     wobbleBuilt = true;
-    raster.clear();
-    raster.at(BAND_TOP - 8, Slot.BACKGROUND, band.BACKGROUND);
-    raster.at(BAND_TOP - 8, Slot.BORDER, band.BORDER);
-    for (let i: utinyint = 0; i < band.ENTRIES; i++) {
-        raster.at(BAND_TOP + i * 2, Slot.SCROLL_X, SINE[i]);
+    raster::clear();
+    raster::at(BAND_TOP - 8, Slot::BACKGROUND, band::BACKGROUND);
+    raster::at(BAND_TOP - 8, Slot::BORDER, band::BORDER);
+    for i: utinyint in 0..band::ENTRIES {
+        raster::at(BAND_TOP + i * 2, Slot::SCROLL_X, SINE[i]);
     }
-    raster.at(BAND_TOP + 8, Slot.SCROLL_X, 0);
-    raster.at(BAND_TOP + 16, Slot.BACKGROUND, BackgroundColor.BLACK);
-    raster.at(BAND_TOP + 16, Slot.BORDER, BorderColor.BLUE);
+    raster::at(BAND_TOP + 8, Slot::SCROLL_X, 0);
+    raster::at(BAND_TOP + 16, Slot::BACKGROUND, BackgroundColor::BLACK);
+    raster::at(BAND_TOP + 16, Slot::BORDER, BorderColor::BLUE);
 
-    raster.enable();
+    raster::enable();
 }

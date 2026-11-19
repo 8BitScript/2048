@@ -1,19 +1,19 @@
 // German message catalog. Latin extras (Ü) are transliterated into the
 // portable set at compile time: DRÜCKEN → DRUECKEN, two cells for Ü.
 
-export namespace Game {
+pub mod Game {
     const NAME: string = "2048";
     const SCORE: string = "PUNKTE";
     const GAME_OVER: string = "SPIEL VORBEI";
 }
 
-export namespace Prompt {
+pub mod Prompt {
     const RETRY: string = "{control}: NEUES SPIEL";
     const RETRY_COMPACT: string = "{control}: NEUES SPIEL";
     const TOUCH_RETRY: string = "TIPPEN: NEUES SPIEL";
 }
 
-export namespace Status {
+pub mod Status {
     const WON: string = "2048 GESCHAFFT";
     const WON_COMPACT: string = "GEWONNEN!";
     const MOVE: string = "PFEILE BEWEGEN";
@@ -25,7 +25,7 @@ export namespace Status {
     const MOVE_SWIPE_SHORT: string = "WISCHEN";
 }
 
-export namespace Copyright {
+pub mod Copyright {
     const LINE: string = " C  2026 8BITSCRIPT";
     const WORD: string = "COPYRIGHT 2026 8BITSCRIPT";
 }

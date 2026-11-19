@@ -7,12 +7,12 @@
 // screen too (<Screen />). One function for both, which is why every
 // build that animates is 60 bytes smaller than the hand-written program
 // that kept a second copy of this loop.
-import { board, shown } from "@lib/game/rules.8bs";
-import { Tile } from "./Tile.8bx";
+use "@lib/game/rules.8bs"::{board, shown};
+use self::Tile::Tile;
 
-export component Board() {
-    for (let i: utinyint = 0; i < 16; i++) {
-        if (board[i] != shown[i]) {
+pub component Board() {
+    for i: utinyint in 0..16 {
+        if board[i] != shown[i] {
             <Tile row={i >> 2} col={i & 3} exponent={board[i]} />;
             shown[i] = board[i];
         }

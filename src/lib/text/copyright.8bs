@@ -15,36 +15,36 @@
 // is long enough to read as a cursor. It runs alongside the game, not in
 // front of it: a move during the sweep is taken, and the slide does not
 // wait for the cursor (stepCopyright() is one frame of it).
-import { text } from "@8bitscript/text";
-import { screen } from "@8bitscript/screen";
-import { input } from "@8bitscript/input";
-import { System } from "@8bitscript/system";
-import { Game, Copyright as Copy } from "@8bitscript/i18n/catalog";
-import { COPYRIGHT_ON_HEADER, boardLeft, boardWidth, headerAt, statusAt } from "@lib/layout/layout.8bs";
+use @8bitscript::text::text;
+use @8bitscript::screen::screen;
+use @8bitscript::input::input;
+use @8bitscript::system::System;
+use @8bitscript::i18n::catalog::{Game, Copyright as Copy};
+use "@lib/layout/layout.8bs"::{COPYRIGHT_ON_HEADER, boardLeft, boardWidth, headerAt, statusAt};
 
-const FLUID: bool = screen.RESIZABLE;
+const FLUID: bool = screen::RESIZABLE;
 const SPACE: utinyint = 32;
 
 // Set once, by dismissCopyright(), and never cleared. No initializer: a
 // let's zero initialization is "still up", and an initializer would be a
 // store in the image for a value the let already has.
-export let copyrightDismissed: bool;
+pub let mut copyrightDismissed: bool;
 
 // How wide the line this build prints is: the NES spells COPYRIGHT out
 // (its font draws "(" and ")" blank — see ui/Copyright.8bx), every other
 // machine prints the short line. #system() folds, so one return survives.
-export function copyrightWidth(): utinyint {
-    if (#system() == System.NES) {
-        return Copy.WORD.length;
+pub fn copyrightWidth() -> utinyint {
+    if #system() == System::NES {
+        return Copy::WORD.length;
     }
-    return Copy.LINE.length;
+    return Copy::LINE.length;
 }
 
 // Whether there is room for it: always on a fixed grid, and on the fluid
 // host when the window is at least two rows tall and as wide as the line.
-export function copyrightFits(): bool {
-    if (FLUID) {
-        return text.rows() >= 2 && text.columns() >= Copy.LINE.length;
+pub fn copyrightFits() -> bool {
+    if FLUID {
+        return text::rows() >= 2 && text::columns() >= Copy::LINE.length;
     }
     return true;
 }
@@ -55,17 +55,17 @@ export function copyrightFits(): bool {
 // at 19 cells, it runs exactly from the board's left edge to its right.
 // The NES's spelled-out line is wider than its board, so it is centred
 // on the screen instead.
-export function copyrightAt(): usmallint {
-    if (COPYRIGHT_ON_HEADER) {
-        return headerAt + boardLeft + Game.NAME.length + 1;
+pub fn copyrightAt() -> usmallint {
+    if COPYRIGHT_ON_HEADER {
+        return headerAt + boardLeft + Game::NAME.length + 1;
     }
-    if (#system() == System.NES) {
-        return statusAt - boardLeft + ((text.COLUMNS - Copy.WORD.length) >> 1);
+    if #system() == System::NES {
+        return statusAt - boardLeft + (text::COLUMNS - Copy::WORD.length >> 1);
     }
-    if (boardWidth < Copy.LINE.length) {
+    if boardWidth < Copy::LINE.length {
         return statusAt - boardLeft;
     }
-    return statusAt + ((boardWidth - Copy.LINE.length) >> 1);
+    return statusAt + (boardWidth - Copy::LINE.length >> 1);
 }
 
 // Takes the line down, a frame at a time: a reverse-video block runs along
@@ -83,8 +83,8 @@ export function copyrightAt(): usmallint {
 // 8bitscript.config.ts).
 //
 // No initializer on either: zero is "not sweeping".
-let sweepCell: usmallint;
-let sweepLeft: utinyint;
+let mut sweepCell: usmallint;
+let mut sweepLeft: utinyint;
 
 // The footer is one row: the copyright's until the sweep has run
 // off its end, the status line's and the version's after. ui/ScoreBar.8bx
@@ -93,36 +93,36 @@ let sweepLeft: utinyint;
 // a Screen() during the sweep would have them erased by the cursor. Never
 // raised on the PET, whose copyright is on the header; the test that
 // raises it is a build fact.
-export let footerDue: bool;
+pub let mut footerDue: bool;
 
-export function footerFree(): bool {
+pub fn footerFree() -> bool {
     return copyrightDismissed && sweepLeft == 0;
 }
 
-export function dismissCopyright(): void {
+pub fn dismissCopyright() {
     copyrightDismissed = true;
-    if (!copyrightFits()) {
+    if !copyrightFits() {
         return;
     }
     sweepCell = copyrightAt();
     sweepLeft = copyrightWidth() + 1;
-    text.setReverse(true);
-    text.putChar(sweepCell, SPACE);
-    text.setReverse(false);
+    text::setReverse(true);
+    text::putChar(sweepCell, SPACE);
+    text::setReverse(false);
 }
 
-export function stepCopyright(): void {
-    if (sweepLeft == 0) {
+pub fn stepCopyright() {
+    if sweepLeft == 0 {
         return;
     }
-    text.putChar(sweepCell, SPACE);
+    text::putChar(sweepCell, SPACE);
     sweepLeft = sweepLeft - 1;
-    if (sweepLeft > 0) {
+    if sweepLeft > 0 {
         sweepCell = sweepCell + 1;
-        text.setReverse(true);
-        text.putChar(sweepCell, SPACE);
-        text.setReverse(false);
-    } else if (!COPYRIGHT_ON_HEADER) {
+        text::setReverse(true);
+        text::putChar(sweepCell, SPACE);
+        text::setReverse(false);
+    } else if !COPYRIGHT_ON_HEADER {
         footerDue = true;
     }
 }

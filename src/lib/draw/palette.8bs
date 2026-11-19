@@ -1,18 +1,18 @@
 // The tables every skin reads and none should own: what a tile is worth,
 // what colour it is, how many digits it shows. Written once here — they
 // used to be copied into each skin (POW2 five times, TILE_COLOR four).
-import { TextColor } from "@8bitscript/text";
+use @8bitscript::text::TextColor;
 
 // Exponent to face value — the drawing side's copy. The rules keep their
 // own in lib/game/rules.8bs; the two never share a module, and a skin that never
 // prints a number (the PET's block digits) never links this one.
-export const POW2: array<usmallint, 12> = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
+pub const POW2: [usmallint; 12] = [0, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
 
 // How many digits 2^exponent has. A twelve-byte table instead of the chain
 // of compares on the value that used to work it out: the compares cost the
 // unexpanded VIC-20 six times what the table does, and the exponent is
 // already in hand at every call site.
-export const TILE_DIGITS: array<utinyint, 12> = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4];
+pub const TILE_DIGITS: [utinyint; 12] = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4];
 
 // Exponent to colour, on the targets with per-cell colour — a deliberately
 // empty text.setColor() on the others (PET, NES, and stock Atari GR.0; see
@@ -24,19 +24,19 @@ export const TILE_DIGITS: array<utinyint, 12> = [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4
 // grey (color 12, #787878) — muted, and still a tile. VIC-20 character
 // color is only three bits, so 12 would become purple there; drawTile
 // keeps WHITE on that machine. A PET has no per-cell color at all.
-export const GREY: utinyint = 12;
+pub const GREY: utinyint = 12;
 
-export const TILE_COLOR: array<utinyint, 12> = [
-    TextColor.WHITE,  // 0: empty — drawTile substitutes GREY where it reads as grey
-    TextColor.WHITE,  // 2
-    TextColor.CYAN,   // 4
-    TextColor.GREEN,  // 8
-    TextColor.GREEN,  // 16
-    TextColor.YELLOW, // 32
-    TextColor.YELLOW, // 64
-    TextColor.PURPLE, // 128
-    TextColor.PURPLE, // 256
-    TextColor.RED,    // 512
-    TextColor.RED,    // 1024
-    TextColor.BLUE,   // 2048
+pub const TILE_COLOR: [utinyint; 12] = [
+    TextColor::WHITE, // 0: empty — drawTile substitutes GREY where it reads as grey
+    TextColor::WHITE, // 2
+    TextColor::CYAN, // 4
+    TextColor::GREEN, // 8
+    TextColor::GREEN, // 16
+    TextColor::YELLOW, // 32
+    TextColor::YELLOW, // 64
+    TextColor::PURPLE, // 128
+    TextColor::PURPLE, // 256
+    TextColor::RED, // 512
+    TextColor::RED, // 1024
+    TextColor::BLUE, // 2048
 ];

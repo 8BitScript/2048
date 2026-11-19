@@ -3,4 +3,4 @@
 // one file — bump the package and every build follows. The "v" the screen
 // puts in front is the element's (ui/Version.8bx); the string is
 // bare "0.6.0".
-export const VERSION: string = #package("version");
+pub const VERSION: string = #package("version");

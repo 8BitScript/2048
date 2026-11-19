@@ -10,43 +10,43 @@
 // fluid web host the border turns red too — two lines inside the board
 // are a quiet thing to say, and the border is the rest of the screen
 // saying it.
-import { screen, BorderColor } from "@8bitscript/screen";
-import { text, TextColor } from "@8bitscript/text";
-import { Input, System } from "@8bitscript/system";
-import { Input as Controls } from "@8bitscript/input";
-import { i18n } from "@8bitscript/i18n";
-import { Game, Prompt } from "@8bitscript/i18n/catalog";
-import { overAt, overPromptAt, overTouchAt, board, ENTER_KEY } from "@lib/layout/layout.8bs";
-import { host } from "@lib/host/host.8bs";
+use @8bitscript::screen::{screen, BorderColor};
+use @8bitscript::text::{text, TextColor};
+use @8bitscript::system::{Input, System};
+use @8bitscript::input::{Input as Controls};
+use @8bitscript::i18n::i18n;
+use @8bitscript::i18n::catalog::{Game, Prompt};
+use "@lib/layout/layout.8bs"::{overAt, overPromptAt, overTouchAt, board, ENTER_KEY};
+use "@lib/host/host.8bs"::host;
 
-const FLUID: bool = screen.RESIZABLE;
+const FLUID: bool = screen::RESIZABLE;
 
-export component GameOver() {
-    if (FLUID) {
-        screen.setBorder(BorderColor.RED);
-        text.setReverse(false);
-        text.setColor(TextColor.WHITE);
+pub component GameOver() {
+    if FLUID {
+        screen::setBorder(BorderColor::RED);
+        text::setReverse(false);
+        text::setColor(TextColor::WHITE);
     }
-    text.print(overAt, Game.GAME_OVER);
-    if (#system() == System.WEB) {
-        if (host.touch()) {
-            text.print(overTouchAt, Prompt.TOUCH_RETRY);
-        } else if (!FLUID && text.COLUMNS < board.FULL_WIDTH) {
-            text.print(overPromptAt, i18n.format(Prompt.RETRY_COMPACT, { control: Controls.CONFIRM_LABEL }));
-        } else if (ENTER_KEY) {
-            text.print(overPromptAt, i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }));
+    text::print(overAt, Game::GAME_OVER);
+    if #system() == System::WEB {
+        if host::touch() {
+            text::print(overTouchAt, Prompt::TOUCH_RETRY);
+        } else if !FLUID && text::COLUMNS < board::FULL_WIDTH {
+            text::print(overPromptAt, i18n::format(Prompt::RETRY_COMPACT, { control: Controls::CONFIRM_LABEL }));
+        } else if ENTER_KEY {
+            text::print(overPromptAt, i18n::format(Prompt::RETRY, { control: Controls::CONFIRM_LABEL }));
         } else {
-            text.print(overPromptAt, i18n.format(Prompt.RETRY, { control: "RETURN" }));
+            text::print(overPromptAt, i18n::format(Prompt::RETRY, { control: "RETURN" }));
         }
-    } else if (Input.KEYBOARD) {
-        if (text.COLUMNS < board.FULL_WIDTH) {
-            text.print(overPromptAt, i18n.format(Prompt.RETRY_COMPACT, { control: Controls.CONFIRM_LABEL }));
+    } else if Input::KEYBOARD {
+        if text::COLUMNS < board::FULL_WIDTH {
+            text::print(overPromptAt, i18n::format(Prompt::RETRY_COMPACT, { control: Controls::CONFIRM_LABEL }));
         } else {
-            text.print(overPromptAt, i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }));
+            text::print(overPromptAt, i18n::format(Prompt::RETRY, { control: Controls::CONFIRM_LABEL }));
         }
-    } else if (Input.PADS > 0) {
-        text.print(overPromptAt, i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }));
+    } else if Input::PADS > 0 {
+        text::print(overPromptAt, i18n::format(Prompt::RETRY, { control: Controls::CONFIRM_LABEL }));
     } else {
-        text.print(overPromptAt, i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }));
+        text::print(overPromptAt, i18n::format(Prompt::RETRY, { control: Controls::CONFIRM_LABEL }));
     }
 }

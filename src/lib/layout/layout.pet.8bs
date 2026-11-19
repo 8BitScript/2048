@@ -20,44 +20,44 @@
 // build carries, the 80-column one the 8032's. tileCell() is a table
 // rather than the multiply, because an index is smaller than the 16-bit
 // multiply the backend inlines for row × COLUMNS.
-import { text } from "@8bitscript/text";
-import { Video } from "@8bitscript/system";
-import { Input as Controls } from "@8bitscript/input";
-import { i18n } from "@8bitscript/i18n";
-import { Game, Prompt } from "@8bitscript/i18n/catalog";
+use @8bitscript::text::text;
+use @8bitscript::system::Video;
+use @8bitscript::input::{Input as Controls};
+use @8bitscript::i18n::i18n;
+use @8bitscript::i18n::catalog::{Game, Prompt};
 
-const ROW: usmallint = text.COLUMNS; // 40, or 80 on an 8032 build
+const ROW: usmallint = text::COLUMNS; // 40, or 80 on an 8032 build
 
 // ---- what the elements ask this skin ---------------------------------------
 
 // The PET's key, in the PET's words: the elements print RETURN here. Only
 // the web's arms read this, and those fold away on a PET build; it is
 // here so the import resolves.
-export const ENTER_KEY: bool = false;
+pub const ENTER_KEY: bool = false;
 
 // The 8×5 board uses every row but the header and the status line, so
 // the copyright sits on the header between the name and the score, and
 // the version shares the status row (flush right; the status text does
 // not reach it). layout.8bs's own is false — the copyright on the footer.
-export const COPYRIGHT_ON_HEADER: bool = true;
+pub const COPYRIGHT_ON_HEADER: bool = true;
 
 // Columns between the score's last digit and the screen's right edge: the
 // board's own right margin, so the score ends over the last tile instead
 // of running past it.
-export const HEADER_INSET: usmallint = 1; // 40 columns (a const cannot do arithmetic, 8BS3001); the 8032's 80 are not inset yet
+pub const HEADER_INSET: usmallint = 1; // 40 columns (a const cannot do arithmetic, 8BS3001); the 8032's 80 are not inset yet
 
 // A blank cell between the word SCORE and the number, on the header.
-export const SCORE_GAP: usmallint = 1;
+pub const SCORE_GAP: usmallint = 1;
 
 // Always block digits — an 8-wide tile has room for four of them, which
 // is the whole point of this arrangement. lib/draw/tile.pet.8bs stamps
 // them into video RAM, so neither of these is read on a PET build.
-export const BLOCK_DIGITS: bool = true;
-export function blockDigitsFit(): bool {
+pub const BLOCK_DIGITS: bool = true;
+pub fn blockDigitsFit() -> bool {
     return true;
 }
 
-export namespace board {
+pub mod board {
     const FULL_WIDTH: usmallint = 23; // ui/GameOver.8bx's narrow test — never narrow here
 }
 
@@ -68,31 +68,31 @@ const BOARD_WIDTH: usmallint = 38; // 4 tiles × 8 + 3 gaps of 2 — even, so it
 // Top-left cell of each board square: (1 + row×6)×COLUMNS + boardLeft +
 // col×10, for each width. Compile-time data; the other width's table is
 // pruned.
-const ORIGIN_40: array<usmallint, 16> = [
+const ORIGIN_40: [usmallint; 16] = [
     41, 51, 61, 71,
     281, 291, 301, 311,
     521, 531, 541, 551,
     761, 771, 781, 791,
 ];
-const ORIGIN_80: array<usmallint, 16> = [
+const ORIGIN_80: [usmallint; 16] = [
     101, 111, 121, 131,
     581, 591, 601, 611,
     1061, 1071, 1081, 1091,
     1541, 1551, 1561, 1571,
 ];
 
-export let tileW: usmallint;
-export let tileH: utinyint;
-export let boardLeft: usmallint;
-export let boardTop: usmallint;
-export let boardWidth: usmallint;
-export let headerAt: usmallint;      // row 0 — never stored, folds to 0 (see computeLayout)
-export let statusAt: usmallint;      // row 24, at the board's left — directly under the board
-export let overAt: usmallint;        // row 6: "GAME OVER", centred
-export let overPromptAt: usmallint;  // row 18: "PRESS RETURN TO TRY AGAIN", centred
-export let overTouchAt: usmallint;   // the web's; never read here
+pub let mut tileW: usmallint;
+pub let mut tileH: utinyint;
+pub let mut boardLeft: usmallint;
+pub let mut boardTop: usmallint;
+pub let mut boardWidth: usmallint;
+pub let mut headerAt: usmallint; // row 0 — never stored, folds to 0 (see computeLayout)
+pub let mut statusAt: usmallint; // row 24, at the board's left — directly under the board
+pub let mut overAt: usmallint; // row 6: "GAME OVER", centred
+pub let mut overPromptAt: usmallint; // row 18: "PRESS RETURN TO TRY AGAIN", centred
+pub let mut overTouchAt: usmallint; // the web's; never read here
 // The fluid host's own: never read on a PET build.
-export let rowWidth: usmallint;
+pub let mut rowWidth: usmallint;
 
 // Only the four a PET build reads and that are not zero are stored.
 // A store to a let nothing reads is still a store, and keeps the let in
@@ -105,19 +105,19 @@ export let rowWidth: usmallint;
 // initialization, and the linker folds it — `headerAt + boardLeft` in
 // ui/ScoreBar.8bx becomes `boardLeft`, and the one store cost 63
 // bytes and 2 of RAM.
-export function computeLayout(): void {
-    boardLeft = (ROW - BOARD_WIDTH) >> 1; // 1, or 21 on 80 columns — equal margins
-    statusAt = 24 * ROW + ((ROW - BOARD_WIDTH) >> 1);
+pub fn computeLayout() {
+    boardLeft = ROW - BOARD_WIDTH >> 1; // 1, or 21 on 80 columns — equal margins
+    statusAt = 24 * ROW + (ROW - BOARD_WIDTH >> 1);
     // Centred on the screen, from the length of the string a build prints,
     // so a translation moves the line with the words.
-    overAt = 6 * ROW + ((ROW - Game.GAME_OVER.length) >> 1);
-    overPromptAt = 18 * ROW + ((ROW - i18n.format(Prompt.RETRY, { control: Controls.CONFIRM_LABEL }).length) >> 1);
+    overAt = 6 * ROW + (ROW - Game::GAME_OVER.length >> 1);
+    overPromptAt = 18 * ROW + (ROW - i18n::format(Prompt::RETRY, { control: Controls::CONFIRM_LABEL }).length >> 1);
     return;
 }
 
-export function tileCell(row: utinyint, col: utinyint): usmallint {
+pub fn tileCell(row: utinyint, col: utinyint) -> usmallint {
     let cell: utinyint = row * 4 + col;
-    if (Video.COLUMNS != 40) {
+    if Video::COLUMNS != 40 {
         return ORIGIN_80[cell];
     }
     return ORIGIN_40[cell];

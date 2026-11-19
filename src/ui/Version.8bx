@@ -3,24 +3,24 @@
 // the board's edge, HEADER_INSET). A "v" and then package.json's number.
 // The row is the status line's too; the status text starts at the board's
 // left and does not reach this field.
-import { text } from "@8bitscript/text";
-import { Video } from "@8bitscript/system";
-import { VERSION } from "@lib/text/version.8bs";
-import { COPYRIGHT_ON_HEADER, HEADER_INSET, boardWidth, statusAt } from "@lib/layout/layout.8bs";
-import { footerFree } from "@lib/text/copyright.8bs";
+use @8bitscript::text::text;
+use @8bitscript::system::Video;
+use "@lib/text/version.8bs"::VERSION;
+use "@lib/layout/layout.8bs"::{COPYRIGHT_ON_HEADER, HEADER_INSET, boardWidth, statusAt};
+use "@lib/text/copyright.8bs"::footerFree;
 
-const ROW: usmallint = text.COLUMNS;
+const ROW: usmallint = text::COLUMNS;
 
-export component Version() {
-    if (COPYRIGHT_ON_HEADER) {
-        let cell: usmallint = (Video.ROWS - 1) * ROW + text.COLUMNS - HEADER_INSET - VERSION.length - 1;
-        text.print(cell, "v");
-        text.print(cell + 1, VERSION);
-    } else if (footerFree()) {
+pub component Version() {
+    if COPYRIGHT_ON_HEADER {
+        let cell: usmallint = (Video::ROWS - 1) * ROW + text::COLUMNS - HEADER_INSET - VERSION.length - 1;
+        text::print(cell, "v");
+        text::print(cell + 1, VERSION);
+    } else if footerFree() {
         // The footer: ending on the board's right edge, once the copyright
         // has given the row up (lib/text/copyright.8bs).
         let cell: usmallint = statusAt + boardWidth - VERSION.length - 1;
-        text.print(cell, "v");
-        text.print(cell + 1, VERSION);
+        text::print(cell, "v");
+        text::print(cell + 1, VERSION);
     }
 }

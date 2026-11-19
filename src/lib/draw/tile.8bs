@@ -6,28 +6,28 @@
 // lib/draw/font.8bs (the fluid web host, the web's PET replica); a fixed
 // grid paints its square inline in drawTile()'s other arm, the cheapest
 // form there, and never links these two.
-import { text, TextColor } from "@8bitscript/text";
-import { System, Video } from "@8bitscript/system";
-import { POW2, GREY, TILE_COLOR, TILE_DIGITS } from "./palette.8bs";
-import { DIGIT_TILES, TILE_DIGIT_AT, TILE_DIGIT } from "./font.8bs";
-import { tileCell, tileW, tileH, rowWidth, BLOCK_DIGITS, blockDigitsFit } from "../layout/layout.8bs";
+use @8bitscript::text::{text, TextColor};
+use @8bitscript::system::{System, Video};
+use self::palette::{POW2, GREY, TILE_COLOR, TILE_DIGITS};
+use self::font::{DIGIT_TILES, TILE_DIGIT_AT, TILE_DIGIT};
+use super::layout::layout::{tileCell, tileW, tileH, rowWidth, BLOCK_DIGITS, blockDigitsFit};
 
 // This machine's row width on a fixed grid, so cell = y * ROW + x.
-const ROW: usmallint = text.COLUMNS;
+const ROW: usmallint = text::COLUMNS;
 
 // What colour this tile is. Empty is GREY wherever color 12 is the C64's
 // medium grey. The VIC-20 keeps only three bits of a character color, so
 // 12 would land as purple; its web skin is 22 columns of the same palette.
 // Both of those return the table unchanged, and the branch is a build
 // fact, so neither image pays for a test.
-function tileColor(exponent: utinyint): utinyint {
-    if (#system() == System.VIC20 || (#system() == System.WEB && text.COLUMNS == 22)) {
-        if (exponent == 0) {
-            return TextColor.BLUE;
+fn tileColor(exponent: utinyint) -> utinyint {
+    if #system() == System::VIC20 || #system() == System::WEB && text::COLUMNS == 22 {
+        if exponent == 0 {
+            return TextColor::BLUE;
         }
         return TILE_COLOR[exponent];
     }
-    if (exponent == 0) {
+    if exponent == 0 {
         return GREY;
     }
     return TILE_COLOR[exponent];
@@ -42,26 +42,26 @@ function tileColor(exponent: utinyint): utinyint {
 // Machines without either glyph — Atari, NES, the X16's ISO set — keep
 // square corners. The VIC-20's chamfer is omitted too: four pokes put the
 // unexpanded build past $1E00.
-function roundCorners(origin: usmallint, stride: usmallint): void {
-    if (tileW < 2 || tileH < 2) {
+fn roundCorners(origin: usmallint, stride: usmallint) {
+    if tileW < 2 || tileH < 2 {
         return;
     }
     let right: usmallint = tileW - 1;
     let bottom: usmallint = origin + (tileH - 1) * stride;
-    if (#system() == System.WEB && Video.BLOCK_WIDTH == 2) {
-        text.putChar(origin, 144);
-        text.putChar(origin + right, 145);
-        text.putChar(bottom, 146);
-        text.putChar(bottom + right, 147);
+    if #system() == System::WEB && Video::BLOCK_WIDTH == 2 {
+        text::putChar(origin, 144);
+        text::putChar(origin + right, 145);
+        text::putChar(bottom, 146);
+        text::putChar(bottom + right, 147);
         return;
     }
-    if (#system() == System.C64 || #system() == System.C128 || #system() == System.VIC20 || #system() == System.MEGA65) {
-        text.setReverse(false);
-        text.putChar(origin, 254);
-        text.putChar(origin + right, 252);
-        text.putChar(bottom, 251);
-        text.putChar(bottom + right, 236);
-        text.setReverse(true);
+    if #system() == System::C64 || #system() == System::C128 || #system() == System::VIC20 || #system() == System::MEGA65 {
+        text::setReverse(false);
+        text::putChar(origin, 254);
+        text::putChar(origin + right, 252);
+        text::putChar(bottom, 251);
+        text::putChar(bottom + right, 236);
+        text::setReverse(true);
     }
     return;
 }
@@ -80,24 +80,24 @@ const DIM_EDGE: utinyint = 135;
 const DIM_CORNER_TL: utinyint = 142;
 const DIM_BLANK: utinyint = 143;
 
-function fillDim(origin: usmallint, stride: usmallint): void {
+fn fillDim(origin: usmallint, stride: usmallint) {
     let right: usmallint = tileW - 1;
-    let rowCell: usmallint = origin;
-    let line: usmallint = 0;
-    while (line < tileH - 1) {
+    let mut rowCell: usmallint = origin;
+    let mut line: usmallint = 0;
+    while line < tileH - 1 {
         // The whole row first, then its last glyph: putChar writes the
         // glyph and nothing else, and the reverse bit every one of these
         // codes is drawn under lives in the colour byte fill() writes.
-        text.fill(rowCell, tileW, DIM_FILL);
-        text.putChar(rowCell + right, DIM_EDGE);
+        text::fill(rowCell, tileW, DIM_FILL);
+        text::putChar(rowCell + right, DIM_EDGE);
         rowCell = rowCell + stride;
-        line++;
+        line += 1;
     }
-    text.fill(rowCell, tileW, DIM_EDGE);
-    text.putChar(origin, DIM_CORNER_TL);
-    text.putChar(origin + right, DIM_BLANK);
-    text.putChar(rowCell, DIM_BLANK);
-    text.putChar(rowCell + right, DIM_BLANK);
+    text::fill(rowCell, tileW, DIM_EDGE);
+    text::putChar(origin, DIM_CORNER_TL);
+    text::putChar(origin + right, DIM_BLANK);
+    text::putChar(rowCell, DIM_BLANK);
+    text::putChar(rowCell + right, DIM_BLANK);
     return;
 }
 
@@ -105,35 +105,35 @@ function fillDim(origin: usmallint, stride: usmallint): void {
 // An empty tile on a host with no per-cell color (the web's PET replica)
 // is a checkerboard instead of a solid one (fillDim), which is the grey
 // that host can draw.
-export function fillTile(origin: usmallint, exponent: utinyint): void {
-    text.setColor(tileColor(exponent));
-    text.setReverse(true);
-    if (#system() == System.WEB && !Video.COLOR_PER_CELL && exponent == 0) {
+pub fn fillTile(origin: usmallint, exponent: utinyint) {
+    text::setColor(tileColor(exponent));
+    text::setReverse(true);
+    if #system() == System::WEB && !Video::COLOR_PER_CELL && exponent == 0 {
         fillDim(origin, rowWidth);
         return;
     }
-    let rowCell: usmallint = origin;
-    let line: usmallint = 0;
-    while (line < tileH) {
-        text.fill(rowCell, tileW, 32);
+    let mut rowCell: usmallint = origin;
+    let mut line: usmallint = 0;
+    while line < tileH {
+        text::fill(rowCell, tileW, 32);
         rowCell = rowCell + rowWidth;
-        line++;
+        line += 1;
     }
     roundCorners(origin, rowWidth);
     return;
 }
 
 // One block digit: two glyphs per row, three rows, top-left at cell.
-export function drawDigit(cell: usmallint, value: utinyint): void {
-    let base: utinyint = value * 6;
-    let rowCell: usmallint = cell;
-    let row: utinyint = 0;
-    while (row < 3) {
-        text.putChar(rowCell, DIGIT_TILES[base]);
-        text.putChar(rowCell + 1, DIGIT_TILES[base + 1]);
+pub fn drawDigit(cell: usmallint, value: utinyint) {
+    let mut base: utinyint = value * 6;
+    let mut rowCell: usmallint = cell;
+    let mut row: utinyint = 0;
+    while row < 3 {
+        text::putChar(rowCell, DIGIT_TILES[base]);
+        text::putChar(rowCell + 1, DIGIT_TILES[base + 1]);
         base = base + 2;
         rowCell = rowCell + rowWidth;
-        row++;
+        row += 1;
     }
     return;
 }
@@ -158,11 +158,11 @@ export function drawDigit(cell: usmallint, value: utinyint): void {
 // ui/Tile.8bx is this call. A function with one caller is written
 // into it (8bitscript #184), so the element costs what the inline drawing
 // did.
-export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void {
+pub fn drawTile(row: utinyint, col: utinyint, exponent: utinyint) {
     let origin: usmallint = tileCell(row, col);
-    if (BLOCK_DIGITS) {
+    if BLOCK_DIGITS {
         fillTile(origin, exponent);
-        if (blockDigitsFit()) {
+        if blockDigitsFit() {
             // Digits are 2 cells wide and 3 rows tall. Across tileW that
             // is exact for every digit count, because both are even (the
             // layout keeps tileW even for exactly this). Down tileH it
@@ -170,57 +170,57 @@ export function drawTile(row: utinyint, col: utinyint, exponent: utinyint): void
             // whatever tileH this tile turned out to be.
             let base: utinyint = TILE_DIGIT_AT[exponent];
             let count: utinyint = TILE_DIGIT_AT[exponent + 1] - base;
-            if (count != 0) {
-                let vOffset: usmallint = (tileH - 3) >> 1;
-                let at: usmallint = origin + vOffset * rowWidth + ((tileW >> 1) - count);
-                let i: utinyint = 0;
-                while (i < count) {
+            if count != 0 {
+                let vOffset: usmallint = tileH - 3 >> 1;
+                let mut at: usmallint = origin + vOffset * rowWidth + ((tileW >> 1) - count);
+                let mut i: utinyint = 0;
+                while i < count {
                     drawDigit(at, TILE_DIGIT[base + i]);
                     at = at + 2;
-                    i++;
+                    i += 1;
                 }
             }
         } else {
             let value: usmallint = POW2[exponent];
-            if (value != 0) {
+            if value != 0 {
                 let width: utinyint = TILE_DIGITS[exponent];
                 let mid: usmallint = tileH >> 1;
                 let numRow: usmallint = origin + mid * rowWidth;
-                let offset: usmallint = (tileW - width) >> 1;
-                text.printNumber(numRow + offset, value, width);
+                let offset: usmallint = tileW - width >> 1;
+                text::printNumber(numRow + offset, value, width);
             }
         }
     } else {
         let value: usmallint = POW2[exponent];
-        text.setColor(tileColor(exponent));
-        text.setReverse(true);
+        text::setColor(tileColor(exponent));
+        text::setReverse(true);
         // A row cursor rather than origin + line * ROW: the backend inlines
         // a 16-bit multiply at every site, and this one is inside a loop.
-        let rowCell: usmallint = origin;
-        let numRow: usmallint = origin;
+        let mut rowCell: usmallint = origin;
+        let mut numRow: usmallint = origin;
         let mid: utinyint = tileH >> 1;
-        let line: utinyint = 0;
-        while (line < tileH) {
-            text.fill(rowCell, tileW, 32);
-            if (line == mid) {
+        let mut line: utinyint = 0;
+        while line < tileH {
+            text::fill(rowCell, tileW, 32);
+            if line == mid {
                 numRow = rowCell; // the row the digits go in, kept as the
-                                  // cursor passes it rather than multiplied for
+                // cursor passes it rather than multiplied for
             }
             rowCell = rowCell + ROW;
-            line++;
+            line += 1;
         }
         // Not the VIC-20: color 12 is not grey there (three-bit character
         // color), and four corner pokes put the unexpanded build 61 bytes
         // past $1E00 (measured 2026-09-21). The chamfer needs a glyph the
         // Atari, NES, and X16 text modes do not have either.
-        if (#system() == System.WEB || #system() == System.C64 || #system() == System.C128 || #system() == System.MEGA65 || #system() == System.VIC20) {
+        if #system() == System::WEB || #system() == System::C64 || #system() == System::C128 || #system() == System::MEGA65 || #system() == System::VIC20 {
             roundCorners(origin, ROW);
         }
-        if (value != 0) {
+        if value != 0 {
             let width: utinyint = TILE_DIGITS[exponent];
-            let offset: utinyint = (tileW - width) >> 1;
-            text.printNumber(numRow + offset, value, width);
+            let offset: utinyint = tileW - width >> 1;
+            text::printNumber(numRow + offset, value, width);
         }
     }
-    text.setReverse(false); // so the next print — this frame's or the next — is not inverted
+    text::setReverse(false); // so the next print — this frame's or the next — is not inverted
 }

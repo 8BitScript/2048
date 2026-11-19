@@ -3,15 +3,15 @@
 // rules and the board are rules.8bs's. Nothing here knows which machine
 // it is on.
 // Rules follow https://github.com/gabrielecirulli/2048 (MIT) — see rules.8bs.
-import { screen, BorderColor, BackgroundColor } from "@8bitscript/screen";
-import { text } from "@8bitscript/text";
-import { input } from "@8bitscript/input";
-import { Memory, Input } from "@8bitscript/system";
-import { wobble } from "@lib/raster/wobble.8bs";
-import { merged, stepped, moved, over, moveLines, stepLines, spawnTile, hasMoves, resetGame } from "@lib/game/rules.8bs";
-import { copyrightDismissed, dismissCopyright, stepCopyright } from "@lib/text/copyright.8bs";
-import { Screen } from "@ui/Screen.8bx";
-import { Board } from "@ui/Board.8bx";
+use @8bitscript::screen::{screen, BorderColor, BackgroundColor};
+use @8bitscript::text::text;
+use @8bitscript::input::input;
+use @8bitscript::system::{Memory, Input};
+use "@lib/raster/wobble.8bs"::wobble;
+use "@lib/game/rules.8bs"::{merged, stepped, moved, over, moveLines, stepLines, spawnTile, hasMoves, resetGame};
+use "@lib/text/copyright.8bs"::{copyrightDismissed, dismissCopyright, stepCopyright};
+use "@ui/Screen.8bx"::Screen;
+use "@ui/Board.8bx"::Board;
 
 // Builds with this much RAM to spare animate a move: tiles slide one board
 // cell per repaint instead of teleporting. Memory.RAM is a build-time fact
@@ -33,26 +33,26 @@ const ANIM_STEP_FRAMES: utinyint = 1;
 // repainted between steps — the score a merge just banked appears with
 // the settled board instead, and the header is not repainted five times
 // in 100ms.
-function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
-    for (let i: utinyint = 0; i < 16; i++) {
+fn animateMove(start: utinyint, step: utinyint, stride: utinyint) {
+    for i: utinyint in 0..16 {
         merged[i] = 0;
     }
     stepped = true;
-    while (stepped) {
+    while stepped {
         stepped = false;
         stepLines(start, step, stride);
-        if (stepped) {
+        if stepped {
             moved = true;
             Board();
-            for (let f: utinyint = 0; f < ANIM_STEP_FRAMES; f++) {
+            for f: utinyint in 0..ANIM_STEP_FRAMES {
                 waitFrame();
                 // The same guard as wobble.step() itself. Written out here
                 // so a build that never takes the effect does not keep the
                 // call: step() already has a second caller in 2048.8bs, and
                 // a function with two callers is not folded away even when
                 // its body is empty.
-                if (#fact(video.raster) && !screen.RESIZABLE && text.COLUMNS == 40 && #fact(video.palette) == 16) {
-                    wobble.step();
+                if #fact(video::raster) && !screen::RESIZABLE && text::COLUMNS == 40 && #fact(video::palette) == 16 {
+                    wobble::step();
                 }
                 // Every waitFrame() needs a poll() right behind it (see
                 // @8bitscript/pet/input.8bs and index.8bs's pia1PortB note):
@@ -66,7 +66,7 @@ function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
                 // fire at once" bug. Ignoring the result here (a move in
                 // progress cannot be interrupted) still keeps the matrix and
                 // the frame clock in sync for the next real move.
-                input.poll();
+                input::poll();
                 stepCopyright();
             }
         }
@@ -75,8 +75,8 @@ function animateMove(start: utinyint, step: utinyint, stride: utinyint): void {
 }
 
 // Deal again: blank, reset, redraw. One function for the two ways to ask.
-function deal(): void {
-    screen.blank(BorderColor.BLUE, BackgroundColor.BLACK);
+fn deal() {
+    screen::blank(BorderColor::BLUE, BackgroundColor::BLACK);
     resetGame();
     Screen();
 }
@@ -89,56 +89,56 @@ function deal(): void {
 // copy this build gets and deletes the other, where a parameterised
 // wrapper survives folding as a real function — 20 bytes measured back
 // onto the 4K PET image.
-export function turn(): void {
-    if (over) {
-        if (input.confirm()) {
+pub fn turn() {
+    if over {
+        if input::confirm() {
             deal();
         }
         // A click or a tap deals again too, where the build has a mouse: there a
         // tap is a pointer press, not a confirm, so a finished game would
         // otherwise wait for a key a phone does not have. Input.MOUSE is the
         // build's fact, so a build without one carries none of this.
-        if (Input.MOUSE) {
-            if (over) {
-                if (input.pointerButton()) {
+        if Input::MOUSE {
+            if over {
+                if input::pointerButton() {
                     deal();
                 }
             }
         }
     } else {
         moved = false;
-        if (Memory.RAM < ANIM_MIN_RAM) {
-            if (input.left()) {
+        if Memory::RAM < ANIM_MIN_RAM {
+            if input::left() {
                 moveLines(0, 1, 4);
-            } else if (input.right()) {
+            } else if input::right() {
                 moveLines(3, 255, 4);
-            } else if (input.up()) {
+            } else if input::up() {
                 moveLines(0, 4, 1);
-            } else if (input.down()) {
+            } else if input::down() {
                 moveLines(12, 252, 1);
             }
         } else {
-            if (input.left()) {
+            if input::left() {
                 animateMove(0, 1, 4);
-            } else if (input.right()) {
+            } else if input::right() {
                 animateMove(3, 255, 4);
-            } else if (input.up()) {
+            } else if input::up() {
                 animateMove(0, 4, 1);
-            } else if (input.down()) {
+            } else if input::down() {
                 animateMove(12, 252, 1);
             }
         }
 
-        if (moved) {
+        if moved {
             spawnTile();
-            if (!hasMoves()) {
+            if !hasMoves() {
                 over = true;
             }
             Screen();
             // The first move that changed the board is the end of the
             // greeting: the copyright line goes, after the board the
             // move earned is up, and stays gone for the rest of the run.
-            if (!copyrightDismissed) {
+            if !copyrightDismissed {
                 dismissCopyright();
             }
         }
